@@ -4,6 +4,7 @@
 
 /* Custom window title bar via UI Wizard (foo_ui_wizard) - frameless + our own controls */
 var TBH = Math.round(32*UISCALE), CAPBW = Math.round(46*UISCALE);
+var HB_NAV_BACK=null, HB_NAV_FWD=null, HB_BACK_BTN=null;
 var UIWizard=null; try{ UIWizard=new ActiveXObject('UIWizard'); }catch(e){ UIWizard=null; }
 var MENUS=[['File','file'],['Library','library'],['Help','help']];
 var MENU_END=0, capW=-1, capEnd=-1;
@@ -49,6 +50,9 @@ function setScroll(y){
   else if(view==='home') homeScroll=homeScrollT=px;
   else if(view==='songs') songsScroll=songsScrollT=px;
   else if(view==='search') searchScroll=searchScrollT=px;
+  else if(view==='albums') albumsScroll=albumsScrollT=px;
+  else if(view==='album') albumScroll=albumScrollT=px;
+  else if(view==='artists') artistsScroll=artistsScrollT=px;
   repaintMain();
 }
 function setScrollN(y){ if(!SBN) return; navScroll=navScrollT=Math.round(sbFrac(y,SBN.top,SBN.h,SBN.thumbH)*SBN.maxPx); repaintNav(); }
@@ -162,6 +166,7 @@ function drawOverlays(gr){
   }
   if(dupPrompt) drawDupPrompt(gr);
   if(rgPrompt) drawRgPrompt(gr);
+  if(songDetails) drawSongDetails(gr);
 }
 // wrapped paragraph; returns the y just past the last line drawn
 function tPara(gr,s,f,c,x,y,w,lh){
@@ -187,7 +192,25 @@ function drawTitleBar(gr){
     HB_MENU.push({x0:mx0,y0:0,x1:mx0+mw,y1:TBH,root:MENUS[mi][1],mx:mx0});
     mx0+=mw;
   }
-  if(mx0!==MENU_END){ MENU_END=mx0; applyCaption(); }
+  // navigation buttons (Spotify-style < and >)
+  HB_NAV_BACK=null; HB_NAV_FWD=null;
+  var nbSz=Math.round(22*UISCALE), nbY=Math.round((TBH-nbSz)/2);
+  var bx=mx0+14, fx=bx+nbSz+6;
+
+  var canBack=typeof navCanBack==='function'?navCanBack():false;
+  var bHot=canBack && hv(bx,nbY,bx+nbSz,nbY+nbSz);
+  if(bHot) gr.FillEllipse(bx,nbY,nbSz,nbSz,RGBA(255,255,255,30));
+  drawIcon(gr,'prev',canBack?(bHot?COL.text:COL.text2):COL.text3,bx,nbY,nbSz,nbSz,14);
+  if(canBack) HB_NAV_BACK={x0:bx,y0:nbY,x1:bx+nbSz,y1:nbY+nbSz};
+
+  var canFwd=typeof navCanForward==='function'?navCanForward():false;
+  var fHot=canFwd && hv(fx,nbY,fx+nbSz,nbY+nbSz);
+  if(fHot) gr.FillEllipse(fx,nbY,nbSz,nbSz,RGBA(255,255,255,30));
+  drawIcon(gr,'next',canFwd?(fHot?COL.text:COL.text2):COL.text3,fx,nbY,nbSz,nbSz,14);
+  if(canFwd) HB_NAV_FWD={x0:fx,y0:nbY,x1:fx+nbSz,y1:nbY+nbSz};
+
+  var endX=fx+nbSz+12;
+  if(endX!==MENU_END){ MENU_END=endX; applyCaption(); }
   // window controls (right)
   var closeX=W-CAPBW, maxX=W-CAPBW*2, minX=W-CAPBW*3;
   drawCapBtn(gr,GLYPH.cmin,minX,CAPBW,false);
