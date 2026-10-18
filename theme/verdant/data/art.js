@@ -291,70 +291,69 @@ function getArtistHeroImg(name){
   return null;
 }
 
+var artistWatchTimers={};
+
+function startArtistWatch(name){
+  if(artistWatchTimers[name]) return;
+  var checks=0;
+  var maxChecks=20; // 20 * 300ms = 6s
+  var cacheDir=fb.ProfilePath+'verdant\\cache\\artists\\';
+  var safeName=name.replace(/[\\/:*?"<>|]/g, '_');
+  var metaPath=cacheDir+safeName+'_meta.json';
+  var filePath=cacheDir+safeName+'.jpg';
+
+  var timer=window.SetInterval(function(){
+    checks++;
+    var metaExists=false, imgExists=false;
+    try{ metaExists=utils.FileTest && utils.FileTest(metaPath, 'e'); }catch(e){}
+    try{ imgExists=utils.FileTest && utils.FileTest(filePath, 'e'); }catch(e){}
+
+    if(metaExists || imgExists || checks>=maxChecks){
+      window.ClearInterval(timer);
+      delete artistWatchTimers[name];
+      extArtistPending[name]=false;
+
+      if(metaExists){
+        try{
+          var txt=utils.ReadTextFile(metaPath, 65001);
+          if(txt){
+            var parsed=JSON.parse(txt);
+            if(parsed) artistMetaCache[name]=parsed;
+          }
+        }catch(e2){}
+      }
+      if(imgExists){
+        try{
+          var raw=gdi.Image(filePath);
+          if(raw){
+            extArtistHeroCache[name]=raw;
+            extArtistImgCache={};
+          }
+        }catch(e3){}
+      }
+      artWarmRepaint();
+    }
+  }, 300);
+
+  artistWatchTimers[name]=timer;
+}
+
 function fetchArtistOnlineInfo(name){
-  if(!name || extArtistPending[name]) return;
+  if(!name || typeof name !== 'string' || extArtistPending[name]) return;
   extArtistPending[name]=true;
   var cacheDir=fb.ProfilePath+'verdant\\cache\\artists\\';
   var safeName=name.replace(/[\\/:*?"<>|]/g, '_');
-  var filePath=cacheDir+safeName+'.jpg';
-  var metaPath=cacheDir+safeName+'_meta.json';
+  var scriptPath=fb.ProfilePath+'verdant\\tools\\fetch_artist.ps1';
 
   try{
     if(utils.CreateFolder) utils.CreateFolder(cacheDir);
-    var dUrl='https://api.deezer.com/search/artist?q='+encodeURIComponent(name);
-    if(utils.HTTPRequestAsync){
-      utils.HTTPRequestAsync(0, dUrl).then(function(res){
-        try{
-          var data=JSON.parse(res);
-          if(data && data.data && data.data.length){
-            var item=data.data[0];
-            var picUrl=item.picture_xl || item.picture_big || item.picture_medium;
-            var fans=item.nb_fan || 0;
-            var meta={
-              id: item.id,
-              name: item.name,
-              fans: fans,
-              fansFormatted: fmtNum(fans),
-              albums: item.nb_album || 0,
-              link: item.link || '',
-              bio: '',
-              desc: ''
-            };
-
-            if(picUrl && utils.DownloadFileAsync){
-              utils.DownloadFileAsync(picUrl, filePath).then(function(){
-                try{
-                  var dlImg=gdi.Image(filePath);
-                  if(dlImg){
-                    extArtistHeroCache[name]=dlImg;
-                    artWarmRepaint();
-                  }
-                }catch(e){}
-              });
-            }
-
-            var wikiUrl='https://en.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent(name);
-            utils.HTTPRequestAsync(0, wikiUrl).then(function(wRes){
-              try{
-                var wData=JSON.parse(wRes);
-                if(wData){
-                  if(wData.extract) meta.bio=wData.extract;
-                  if(wData.description) meta.desc=wData.description;
-                }
-              }catch(we){}
-              artistMetaCache[name]=meta;
-              try{ if(utils.WriteTextFile) utils.WriteTextFile(metaPath, JSON.stringify(meta)); }catch(wfe){}
-              artWarmRepaint();
-            }).catch(function(){
-              artistMetaCache[name]=meta;
-              try{ if(utils.WriteTextFile) utils.WriteTextFile(metaPath, JSON.stringify(meta)); }catch(wfe){}
-              artWarmRepaint();
-            });
-          }
-        }catch(de){}
-      });
-    }
-  }catch(e){}
+    var sh=new ActiveXObject('WScript.Shell');
+    var cmd='powershell.exe -WindowStyle Hidden -ExecutionPolicy Bypass -File "' + scriptPath + '" -Artist "' + name.replace(/"/g, '`"') + '" -CacheDir "' + cacheDir.replace(/\\$/, '') + '"';
+    sh.Run(cmd, 0, false);
+    startArtistWatch(name);
+  }catch(e){
+    extArtistPending[name]=false;
+  }
 }
 
 function getExternalArtistImg(name, size){
