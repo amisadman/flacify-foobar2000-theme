@@ -240,12 +240,127 @@ function maskedArt(h,seed,size,mask,tag){
   if(art){ try{ var img=art.Resize(size,size); img.ApplyMask(mask); res=img; }catch(e){ res=null; } }
   capPut(cArtCache,cArtOrder,CART_CAP,k,res); return res;
 }
-var extArtistImgCache={}, extArtistPending={};
+var extArtistImgCache={}, extArtistHeroCache={}, extArtistPending={}, artistMetaCache={};
+
+function getArtistMeta(name){
+  if(!name || typeof name !== 'string') return null;
+  if(artistMetaCache.hasOwnProperty(name)) return artistMetaCache[name];
+
+  var cacheDir=fb.ProfilePath+'verdant\\cache\\artists\\';
+  var safeName=name.replace(/[\\/:*?"<>|]/g, '_');
+  var metaPath=cacheDir+safeName+'_meta.json';
+
+  var exists=false;
+  try{ exists=utils.FileTest && utils.FileTest(metaPath,'e'); }catch(e){}
+  if(exists){
+    try{
+      var txt=utils.ReadTextFile(metaPath, 65001);
+      if(txt){
+        var parsed=JSON.parse(txt);
+        if(parsed){
+          artistMetaCache[name]=parsed;
+          return parsed;
+        }
+      }
+    }catch(e2){}
+  }
+
+  fetchArtistOnlineInfo(name);
+  return null;
+}
+
+function getArtistHeroImg(name){
+  if(!name || typeof name !== 'string') return null;
+  if(extArtistHeroCache.hasOwnProperty(name)) return extArtistHeroCache[name];
+
+  var cacheDir=fb.ProfilePath+'verdant\\cache\\artists\\';
+  var safeName=name.replace(/[\\/:*?"<>|]/g, '_');
+  var filePath=cacheDir+safeName+'.jpg';
+
+  var exists=false;
+  try{ exists=utils.FileTest && utils.FileTest(filePath,'e'); }catch(e){}
+  if(exists){
+    try{
+      var raw=gdi.Image(filePath);
+      if(raw){
+        extArtistHeroCache[name]=raw;
+        return raw;
+      }
+    }catch(e2){}
+  }
+  return null;
+}
+
+function fetchArtistOnlineInfo(name){
+  if(!name || extArtistPending[name]) return;
+  extArtistPending[name]=true;
+  var cacheDir=fb.ProfilePath+'verdant\\cache\\artists\\';
+  var safeName=name.replace(/[\\/:*?"<>|]/g, '_');
+  var filePath=cacheDir+safeName+'.jpg';
+  var metaPath=cacheDir+safeName+'_meta.json';
+
+  try{
+    if(utils.CreateFolder) utils.CreateFolder(cacheDir);
+    var dUrl='https://api.deezer.com/search/artist?q='+encodeURIComponent(name);
+    if(utils.HTTPRequestAsync){
+      utils.HTTPRequestAsync(0, dUrl).then(function(res){
+        try{
+          var data=JSON.parse(res);
+          if(data && data.data && data.data.length){
+            var item=data.data[0];
+            var picUrl=item.picture_xl || item.picture_big || item.picture_medium;
+            var fans=item.nb_fan || 0;
+            var meta={
+              id: item.id,
+              name: item.name,
+              fans: fans,
+              fansFormatted: fmtNum(fans),
+              albums: item.nb_album || 0,
+              link: item.link || '',
+              bio: '',
+              desc: ''
+            };
+
+            if(picUrl && utils.DownloadFileAsync){
+              utils.DownloadFileAsync(picUrl, filePath).then(function(){
+                try{
+                  var dlImg=gdi.Image(filePath);
+                  if(dlImg){
+                    extArtistHeroCache[name]=dlImg;
+                    artWarmRepaint();
+                  }
+                }catch(e){}
+              });
+            }
+
+            var wikiUrl='https://en.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent(name);
+            utils.HTTPRequestAsync(0, wikiUrl).then(function(wRes){
+              try{
+                var wData=JSON.parse(wRes);
+                if(wData){
+                  if(wData.extract) meta.bio=wData.extract;
+                  if(wData.description) meta.desc=wData.description;
+                }
+              }catch(we){}
+              artistMetaCache[name]=meta;
+              try{ if(utils.WriteTextFile) utils.WriteTextFile(metaPath, JSON.stringify(meta)); }catch(wfe){}
+              artWarmRepaint();
+            }).catch(function(){
+              artistMetaCache[name]=meta;
+              try{ if(utils.WriteTextFile) utils.WriteTextFile(metaPath, JSON.stringify(meta)); }catch(wfe){}
+              artWarmRepaint();
+            });
+          }
+        }catch(de){}
+      });
+    }
+  }catch(e){}
+}
+
 function getExternalArtistImg(name, size){
   if(!name || typeof name !== 'string') return null;
   var key=name+'|'+size;
   if(extArtistImgCache.hasOwnProperty(key)) return extArtistImgCache[key];
-  if(extArtistPending[name]) return null;
 
   var cacheDir=fb.ProfilePath+'verdant\\cache\\artists\\';
   var safeName=name.replace(/[\\/:*?"<>|]/g, '_');
@@ -265,35 +380,7 @@ function getExternalArtistImg(name, size){
     }catch(e2){}
   }
 
-  extArtistPending[name]=true;
-  try{
-    if(utils.CreateFolder) utils.CreateFolder(cacheDir);
-    var url='https://api.deezer.com/search/artist?q='+encodeURIComponent(name);
-    if(utils.HTTPRequestAsync){
-      utils.HTTPRequestAsync(0, url).then(function(res){
-        try{
-          var data=JSON.parse(res);
-          if(data && data.data && data.data.length){
-            var picUrl=data.data[0].picture_big || data.data[0].picture_medium;
-            if(picUrl && utils.DownloadFileAsync){
-              utils.DownloadFileAsync(picUrl, filePath).then(function(){
-                try{
-                  var dlImg=gdi.Image(filePath);
-                  if(dlImg){
-                    var dlMasked=dlImg.Resize(size,size);
-                    dlMasked.ApplyMask(circleMask(size));
-                    extArtistImgCache[key]=dlMasked;
-                    artWarmRepaint();
-                  }
-                }catch(e4){}
-              });
-            }
-          }
-        }catch(e3){}
-      });
-    }
-  }catch(e){}
-
+  fetchArtistOnlineInfo(name);
   return null;
 }
 

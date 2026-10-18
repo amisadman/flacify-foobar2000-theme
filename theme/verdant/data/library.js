@@ -95,8 +95,16 @@ function artistCover(name,fallback){
 }
 // false while the scan can still move the choice: baking a card now would freeze its placeholder
 function artistCoverReady(name,fallback){ return coverPick('ar|'+name,artistCands(name,fallback),1).done; }
+var viewArtist='', artistAlbums=[], artistSingles=[], artistPopularTracks=[], artistLatestRelease=null, artistAppearsOn=[], artistTotalSongs=0, artistTotalSec=0;
+var artistScroll=0, artistScrollT=0, ARTIST_MAXPX=0, artistPopularExpanded=false;
+
 function loadArtist(name){
-  viewArtist=name; artScroll=0; artistAlbums=[];
+  viewArtist=name;
+  artistScroll=0; artistScrollT=0; artistPopularExpanded=false;
+  artistAlbums=[]; artistSingles=[]; artistPopularTracks=[];
+  artistLatestRelease=null; artistAppearsOn=[];
+  artistTotalSongs=0; artistTotalSec=0;
+
   getArtistList();
   var list=artistTracksMap?artistTracksMap[name]:null;
   if(!list || !list.length){
@@ -108,19 +116,114 @@ function loadArtist(name){
     }
   }
   if(!list || !list.length) return;
+
   var hl=fb.CreateHandleList();
   for(var h=0;h<list.length;h++) if(list[h]) hl.Add(list[h]);
   var albs=TF.album.EvalWithMetadbs(hl),
       titles=TF.title.EvalWithMetadbs(hl),
       lens=TF.len.EvalWithMetadbs(hl),
-      yrs=TF.year.EvalWithMetadbs(hl);
+      lensecs=TF.lensec.EvalWithMetadbs(hl),
+      yrs=TF.year.EvalWithMetadbs(hl),
+      dates=TF.date.EvalWithMetadbs(hl),
+      trkArtists=TF.artist.EvalWithMetadbs(hl),
+      albumArtists=TF.albumArtist.EvalWithMetadbs(hl);
+
   var map={}, order=[];
+  var totalSec=0;
+  var allTracks=[];
+
   for(var i=0;i<list.length;i++){
     var al=albs[i]||'Unknown Album';
-    if(!map[al]){ map[al]={album:al, handle:list[i], year:yrs[i], tracks:[]}; order.push(al); }
-    map[al].tracks.push({title:titles[i], dur:lens[i], handle:list[i]});
+    var s=parseInt(lensecs[i],10)||0;
+    totalSec+=s;
+    var trkObj={
+      title:titles[i]||'Unknown Track',
+      dur:lens[i]||'0:00',
+      sec:s,
+      handle:list[i],
+      album:al,
+      year:yrs[i]||'',
+      date:dates[i]||yrs[i]||'',
+      artist:trkArtists[i]||name,
+      albumArtist:albumArtists[i]||name
+    };
+    allTracks.push(trkObj);
+
+    if(!map[al]){
+      map[al]={
+        album:al,
+        artist:albumArtists[i]||name,
+        handle:list[i],
+        year:yrs[i]||'',
+        date:dates[i]||yrs[i]||'',
+        tracks:[]
+      };
+      order.push(al);
+    }
+    map[al].tracks.push(trkObj);
   }
-  for(var j=0;j<order.length;j++) artistAlbums.push(map[order[j]]);
+
+  artistTotalSongs=list.length;
+  artistTotalSec=totalSec;
+
+  // Sort albums newest to oldest
+  var albumObjList=[];
+  for(var j=0;j<order.length;j++) albumObjList.push(map[order[j]]);
+  albumObjList.sort(function(a,b){
+    var ya=a.date||a.year||'';
+    var yb=b.date||b.year||'';
+    return ya>yb?-1:(ya<yb?1:0);
+  });
+
+  for(var ki=0;ki<albumObjList.length;ki++){
+    var albItem=albumObjList[ki];
+    if(albItem.tracks.length>3){
+      artistAlbums.push(albItem);
+    } else {
+      artistSingles.push(albItem);
+    }
+  }
+  if(!artistAlbums.length && artistSingles.length){
+    artistAlbums=artistSingles;
+    artistSingles=[];
+  }
+
+  // Latest release
+  artistLatestRelease=albumObjList.length?albumObjList[0]:null;
+
+  // Popular tracks (Top 10)
+  artistPopularTracks=allTracks.slice(0, 10);
+
+  // Appears on: other albums containing tracks by this artist
+  getAlbumList();
+  var nameLow=name.toLowerCase();
+  var appearsSeen={};
+  for(var ai=0;ai<albumList.length;ai++){
+    var albL=albumList[ai];
+    var albArtLow=(albL.artist||'').toLowerCase();
+    if(albArtLow!==nameLow && albL.handles && albL.handles.length){
+      for(var hi=0;hi<albL.handles.length;hi++){
+        var th=albL.handles[hi];
+        if(th && th.Path){
+          for(var pli=0;pli<list.length;pli++){
+            if(list[pli] && list[pli].Path===th.Path){
+              if(!appearsSeen[albL.key]){
+                appearsSeen[albL.key]=1;
+                artistAppearsOn.push(albL);
+              }
+              break;
+            }
+          }
+        }
+        if(appearsSeen[albL.key]) break;
+      }
+    }
+    if(artistAppearsOn.length>=6) break;
+  }
+
+  // Trigger online Deezer / Wikipedia metadata lookup
+  if(typeof getArtistMeta === 'function') getArtistMeta(name);
+  if(typeof getArtistHeroImg === 'function') getArtistHeroImg(name);
 }
 
 /* ---- "All Songs" library view: one index of every library track (built once, invalidated by

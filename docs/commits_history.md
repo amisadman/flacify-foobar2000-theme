@@ -218,6 +218,30 @@ This document outlines the sequential states of the repository from the upstream
   - Added multi-disc track sorting (`discnumber * 1000 + tracknumber`).
 - **Rationale**: Ensures all songs of the same album stick together into a single cohesive album card even when metadata contains varied collaborator tags.
 
+### Commit 13: Spotify-Grade Artist Profile Redesign with Deezer & Wikipedia Integration
+- **Commit Title**: `feat(artist): redesign artist view with Deezer imagery, fan stats, popular tracks, and categorized discography`
+- **Scope**: Artist Profile view, Deezer/Wikipedia APIs, disk caching, full-page scrolling
+- **Modified Files**:
+  - `theme/verdant/data/art.js`
+  - `theme/verdant/data/library.js`
+  - `theme/verdant/views/artist.js`
+  - `theme/verdant/ui/chrome.js`
+  - `theme/verdant/app.js`
+- **Key Changes**:
+  - Implemented online artist metadata fetcher querying Deezer API (`picture_xl`, `nb_fan`) and Wikipedia summary REST endpoint for artist biographies, cached locally in `cache/artists/{safeName}_meta.json`.
+  - Added raw high-res unmasked image loader `getArtistHeroImg(name)` for cinematic 320px hero banner backgrounds with bottom gradient fade.
+  - Redesigned Artist view (`views/artist.js`) featuring:
+    - Verified Artist capsule badge with checkmark icon.
+    - Large dynamic typography and monthly listener stats paired with library stats.
+    - 56px green Play + 38px Shuffle + Follow capsule toggle buttons.
+    - Top Popular tracks list (Top 5 / expandable to Top 10 via "See more"/"Show less") with 40×40 cover thumbnails, rank numbers, equalizer animation, and hover play buttons.
+    - Latest Release spotlight card (88×88 art, type badge, track count, instant play).
+    - Categorized horizontal discography shelves for "Albums", "Singles and EPs", and "Appears On".
+    - "About" card featuring 130px circular portrait, listener count, and 4-line wrapped bio excerpt.
+    - Pinned sticky header bar when scrolled past the hero banner.
+    - 60fps continuous eased scrolling synchronized with draggable custom scrollbars and mouse wheel.
+- **Rationale**: Elevates the artist profile from a basic 43-line stub into a rich, modern music streaming platform experience.
+
 ---
 
 ## Git Staging Instructions for Forking
@@ -267,5 +291,9 @@ git commit -m "feat(home): add Recently Added shelf and update release packaging
 # Commit 12: Album Grouping Unification
 git add theme/verdant/core/tf.js theme/verdant/data/library.js docs/
 git commit -m "fix(library): unify tracks of the same album across multiple artists using album artist and directory path"
+
+# Commit 13: Artist Profile Redesign with Deezer & Wikipedia Integration
+git add theme/verdant/data/art.js theme/verdant/data/library.js theme/verdant/views/artist.js theme/verdant/ui/chrome.js theme/verdant/app.js docs/
+git commit -m "feat(artist): redesign artist view with Deezer imagery, fan stats, popular tracks, and categorized discography"
 ```
 
