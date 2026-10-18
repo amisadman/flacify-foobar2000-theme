@@ -205,6 +205,21 @@ This document outlines the sequential states of the repository from the upstream
 
 ---
 
+### Commit 12: Album Grouping Unification Across Multiple Artists
+- **Commit Title**: `fix(library): unify tracks of the same album across multiple artists using album artist and directory path`
+- **Scope**: Album grouping & track indexing
+- **Modified Files**:
+  - `theme/verdant/core/tf.js`
+  - `theme/verdant/data/library.js`
+- **Key Changes**:
+  - Solved split album duplication where tracks on the same album with differing guest artists were creating separate album cards.
+  - Implemented prioritized album grouping key: `%album artist%` -> Directory path (`$directory_path(%path%)`) -> Track Artist.
+  - Added intelligent predominant artist detection for albums missing explicit `ALBUM ARTIST` tags.
+  - Added multi-disc track sorting (`discnumber * 1000 + tracknumber`).
+- **Rationale**: Ensures all songs of the same album stick together into a single cohesive album card even when metadata contains varied collaborator tags.
+
+---
+
 ## Git Staging Instructions for Forking
 
 If you wish to apply these commits sequentially to a fresh fork or new branch, you can execute the following commands in order:
@@ -246,6 +261,11 @@ git add theme/verdant/views/album.js theme/verdant/data/library.js theme/verdant
 git commit -m "feat(album): redesign album details with 250px cover, sticky headers, and multi-artist support"
 
 # Commit 11: Home View Recently Added & Tokens
-git add theme/verdant/views/home.js theme/verdant/core/tokens.js docs/
+git add theme/verdant/views/home.js theme/verdant/core/tokens.js
 git commit -m "feat(home): add Recently Added shelf and update release packaging"
+
+# Commit 12: Album Grouping Unification
+git add theme/verdant/core/tf.js theme/verdant/data/library.js docs/
+git commit -m "fix(library): unify tracks of the same album across multiple artists using album artist and directory path"
 ```
+
