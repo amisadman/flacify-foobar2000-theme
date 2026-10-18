@@ -9,11 +9,16 @@ function openPlaylistMenu(pl,x,y){
   ctxMenu={kind:'pl', pl:pl, name:plman.GetPlaylistName(pl), x:x, y:y, items:items};
   repaintAll();
 }
-// right-click a playlist row. Locked/auto playlists offer nothing -> fall through to JSplitter's menu
 function openTrackMenu(pl,item,x,y){
-  if(!canEditPl(pl)) return false;
-  ctxMenu={kind:'track', pl:pl, item:item, x:x, y:y,
-           items:[{label:'Remove from this playlist',act:'trkremove',danger:true}]};
+  var it=getItems(pl), h=(it&&item<it.Count)?it[item]:null;
+  var items=[{label:'Song details / Credits',act:'details'}];
+  if(canEditPl(pl)) items.push({label:'Remove from this playlist',act:'trkremove',danger:true});
+  ctxMenu={kind:'track', pl:pl, item:item, handle:h, x:x, y:y, items:items};
+  repaintAll(); return true;
+}
+function openGenericTrackMenu(h,x,y){
+  if(!h) return false;
+  ctxMenu={kind:'track', handle:h, x:x, y:y, items:[{label:'Song details / Credits',act:'details'}]};
   repaintAll(); return true;
 }
 function canEditPl(pl){

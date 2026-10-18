@@ -2,14 +2,26 @@
    Part of Verdant, a Spotify-style theme for foobar2000. Loaded by main.js;
    every module shares one global scope, so load order is set there. */
 
+var HB_ALBUMS=null, HB_ARTISTS=null;
 // one sidebar row: cover + name + subtitle. pi<0 draws the library mosaic instead of a playlist cover.
 function drawNavRow(gr,y,h,on,hov,pi,name,sub){
   if(on||hov) gr.FillRoundRect(R.navLib.x+8,y,R.navLib.w-16,h-4,6,6,on?COL.rowActive:COL.rowHover);
-  var cs=44, cx=R.navLib.x+16, cy=y+(h-cs)/2;
-  if(pi>=0) drawPlCover(gr,cx,cy,cs,4,pi,name); else drawLibCover(gr,cx,cy,cs,4);
+  var cs=38, cx=R.navLib.x+16, cy=y+(h-cs)/2;
+  if(pi>=0) drawPlCover(gr,cx,cy,cs,4,pi,name);
+  else if(pi===-1) drawLibCover(gr,cx,cy,cs,4);
+  else if(pi===-2){
+    gr.FillRoundRect(cx,cy,cs,cs,4,4,RGBA(255,255,255,16));
+    drawIcon(gr,'album',on?COL.green:COL.text2,cx,cy,cs,cs,20);
+  } else if(pi===-3){
+    gr.FillEllipse(cx,cy,cs,cs,RGBA(255,255,255,16));
+    drawIcon(gr,'artist',on?COL.green:COL.text2,cx,cy,cs,cs,18);
+  } else {
+    gr.FillEllipse(cx,cy,cs,cs,RGBA(255,255,255,16));
+    drawIcon(gr,'home',on?COL.green:COL.text2,cx,cy,cs,cs,18);
+  }
   var tx=cx+cs+12, tw=R.navLib.x+R.navLib.w-16-tx-((hov&&pi>=0)?26:0);   // leave room for the "..." button
-  tL(gr,name,FONT.pl,on?COL.green:COL.text,tx,y+8,tw,20);
-  tL(gr,sub,FONT.plSub,COL.text2,tx,y+30,tw,16);
+  tL(gr,name,FONT.pl,on?COL.green:COL.text,tx,y+6,tw,20);
+  tL(gr,sub,FONT.plSub,COL.text2,tx,y+26,tw,16);
 }
 function drawNav(gr){
   HB_PL=[];
@@ -36,9 +48,11 @@ function drawNav(gr){
   tL(gr,'Your Library',FONT.lib,COL.text2,R.navLib.x+18,R.navLib.y+14,R.navLib.w-56,26);
   var active=plman.ActivePlaylist, pls=visiblePlaylists();
   var footH=72, footTop=R.navLib.y+R.navLib.h-footH;   // pinned "add playlist" footer, always visible
-  var pinY=R.navLib.y+48, pinH=58;                     // pinned "All Songs" row, drawn after the crop below
+  var pinY=R.navLib.y+44, pinH=44;                     // pinned "All Songs" row
+  var pinY2=pinY+pinH+2, pinH2=44;                     // pinned "Albums" row
+  var pinY3=pinY2+pinH2+2, pinH3=44;                   // pinned "Artists" row
   // scrollable playlist list (continuous pixel scroll), cropped just above the footer
-  var listTop=pinY+pinH+10, rh=58, cropY=footTop-6, viewH=cropY-listTop;
+  var listTop=pinY3+pinH3+10, rh=54, cropY=footTop-6, viewH=cropY-listTop;
   var contentH=pls.length*rh, maxPx=Math.max(0,contentH-viewH);
   NAV_MAX=maxPx;
   navScroll=clampPx(navScroll,maxPx); navScrollT=clampPx(navScrollT,maxPx);
@@ -58,20 +72,23 @@ function drawNav(gr){
     var ry=listTop+k*rh-navScroll; if(ry>=cropY) break;
     var i2=pls[k], nm=plName(i2);
     // clamp hover + click targets to the visible band: a row scrolled under the pinned
-    // "All Songs" header is painted over, so it must not answer the mouse there either
+    // header is painted over, so it must not answer the mouse there either
     var hy0=Math.max(ry,listTop), hy1=Math.min(ry+rh,cropY);
     var rowHov=(hy1>hy0) && hv(R.navLib.x,hy0,R.navLib.x+R.navLib.w,hy1);
     drawNavRow(gr,ry,rh,view==='playlist'&&i2===active,rowHov,i2,nm,plCount(i2)+' songs');
     if(rowHov && ry>=listTop) drawDots(gr,R.navLib.x+R.navLib.w-32,ry+(rh-24)/2,i2);
     if(hy1>hy0) HB_PL.push({x0:R.navLib.x,y0:hy0,x1:R.navLib.x+R.navLib.w,y1:hy1,i:i2});
   }
-  // crop partial rows top & bottom, redraw the sticky header block (title + All Songs), then the scrollbar
-  // (clear starts below the panel's rounded corners so a square fill can't square them off)
+  // crop partial rows top & bottom, redraw the sticky header block (title + All Songs + Albums + Artists), then the scrollbar
   gr.FillSolidRect(R.navLib.x,R.navLib.y+M.radius+2,R.navLib.w,listTop-R.navLib.y-M.radius-2,COL.base);
   gr.FillSolidRect(R.navLib.x,cropY,R.navLib.w,R.navLib.y+R.navLib.h-cropY,COL.base);
   tL(gr,'Your Library',FONT.lib,COL.text2,R.navLib.x+18,R.navLib.y+14,R.navLib.w-56,26);
   drawNavRow(gr,pinY,pinH,view==='songs',hv(R.navLib.x,pinY,R.navLib.x+R.navLib.w,pinY+pinH),-1,'All Songs',fmtNum(libCount())+' songs');
   HB_ALLSONGS={x0:R.navLib.x,y0:pinY,x1:R.navLib.x+R.navLib.w,y1:pinY+pinH};
+  drawNavRow(gr,pinY2,pinH2,view==='albums'||view==='album',hv(R.navLib.x,pinY2,R.navLib.x+R.navLib.w,pinY2+pinH2),-2,'Albums',fmtNum(getAlbumList().length)+' albums');
+  HB_ALBUMS={x0:R.navLib.x,y0:pinY2,x1:R.navLib.x+R.navLib.w,y1:pinY2+pinH2};
+  drawNavRow(gr,pinY3,pinH3,view==='artists'||view==='artist',hv(R.navLib.x,pinY3,R.navLib.x+R.navLib.w,pinY3+pinH3),-3,'Artists',fmtNum(getArtistList().length)+' artists');
+  HB_ARTISTS={x0:R.navLib.x,y0:pinY3,x1:R.navLib.x+R.navLib.w,y1:pinY3+pinH3};
   gr.DrawLine(R.navLib.x+16,listTop-6,R.navLib.x+R.navLib.w-16,listTop-6,1,COL.line);
   drawScrollbarN(gr,R.navLib.x+R.navLib.w-9,listTop,viewH,navScroll,maxPx,viewH,contentH,hv(R.navLib.x,R.navLib.y,R.navLib.x+R.navLib.w,R.navLib.y+R.navLib.h)||drag==='scrolln');
   drawAddPlaylist(gr,footTop,footH);
