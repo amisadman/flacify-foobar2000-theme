@@ -240,7 +240,69 @@ function maskedArt(h,seed,size,mask,tag){
   if(art){ try{ var img=art.Resize(size,size); img.ApplyMask(mask); res=img; }catch(e){ res=null; } }
   capPut(cArtCache,cArtOrder,CART_CAP,k,res); return res;
 }
+var extArtistImgCache={}, extArtistPending={};
+function getExternalArtistImg(name, size){
+  if(!name || typeof name !== 'string') return null;
+  var key=name+'|'+size;
+  if(extArtistImgCache.hasOwnProperty(key)) return extArtistImgCache[key];
+  if(extArtistPending[name]) return null;
+
+  var cacheDir=fb.ProfilePath+'verdant\\cache\\artists\\';
+  var safeName=name.replace(/[\\/:*?"<>|]/g, '_');
+  var filePath=cacheDir+safeName+'.jpg';
+
+  var exists=false;
+  try{ exists=utils.FileTest && utils.FileTest(filePath,'e'); }catch(e){ exists=false; }
+  if(exists){
+    try{
+      var raw=gdi.Image(filePath);
+      if(raw){
+        var masked=raw.Resize(size,size);
+        masked.ApplyMask(circleMask(size));
+        extArtistImgCache[key]=masked;
+        return masked;
+      }
+    }catch(e2){}
+  }
+
+  extArtistPending[name]=true;
+  try{
+    if(utils.CreateFolder) utils.CreateFolder(cacheDir);
+    var url='https://api.deezer.com/search/artist?q='+encodeURIComponent(name);
+    if(utils.HTTPRequestAsync){
+      utils.HTTPRequestAsync(0, url).then(function(res){
+        try{
+          var data=JSON.parse(res);
+          if(data && data.data && data.data.length){
+            var picUrl=data.data[0].picture_big || data.data[0].picture_medium;
+            if(picUrl && utils.DownloadFileAsync){
+              utils.DownloadFileAsync(picUrl, filePath).then(function(){
+                try{
+                  var dlImg=gdi.Image(filePath);
+                  if(dlImg){
+                    var dlMasked=dlImg.Resize(size,size);
+                    dlMasked.ApplyMask(circleMask(size));
+                    extArtistImgCache[key]=dlMasked;
+                    artWarmRepaint();
+                  }
+                }catch(e4){}
+              });
+            }
+          }
+        }catch(e3){}
+      });
+    }
+  }catch(e){}
+
+  return null;
+}
+
 function drawCircle(gr,x,y,size,h,seed){
+  var ext=getExternalArtistImg(seed,size);
+  if(ext){
+    gr.DrawImage(ext,x,y,size,size,0,0,ext.Width,ext.Height,0,255);
+    return;
+  }
   var ci=maskedArt(h,seed,size,circleMask(size),'c');
   if(ci) gr.DrawImage(ci,x,y,size,size,0,0,ci.Width,ci.Height,0,255);
   else gr.FillEllipse(x,y,size,size,coverCol(seed));
