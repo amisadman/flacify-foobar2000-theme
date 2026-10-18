@@ -34,18 +34,36 @@ function libTF(field){
 }
 
 /* ------------------------- library-backed artist list ------------------------- */
+function splitArtists(str){
+  if(!str) return [];
+  var raw=String(str).split(/\s*,\s*|\s*;\s*|\s*\/\s*|\s+feat\.?\s+|\s+ft\.?\s+|\s+featuring\s+/i);
+  var out=[], seen={};
+  for(var i=0;i<raw.length;i++){
+    var a=raw[i].trim();
+    if(a.length && !seen[a.toLowerCase()]){ seen[a.toLowerCase()]=1; out.push(a); }
+  }
+  return out;
+}
+
 var artistList=null, artistTracksMap=null, artistCandCache={};
 function getArtistList(){
   if(artistList) return artistList;
   var lib=libItems();
   var out=[]; artistTracksMap={};
   if(lib && lib.Count){
-    var names=libTF('artistName'), seen={};
+    var names=libTF('rawArtist');
+    if(!names || !names.length) names=libTF('artistName');
+    var seen={};
     for(var i=0;i<names.length;i++){
-      var nm=names[i]; if(!nm) continue;
-      if(!artistTracksMap[nm]) artistTracksMap[nm]=[];
-      artistTracksMap[nm].push(lib[i]);
-      if(!seen[nm]){ seen[nm]=1; out.push({name:nm, handle:lib[i]}); }
+      var raw=names[i]; if(!raw) continue;
+      var parts=splitArtists(raw);
+      if(!parts.length) parts=[raw.trim()];
+      for(var p=0;p<parts.length;p++){
+        var nm=parts[p]; if(!nm) continue;
+        if(!artistTracksMap[nm]) artistTracksMap[nm]=[];
+        artistTracksMap[nm].push(lib[i]);
+        if(!seen[nm]){ seen[nm]=1; out.push({name:nm, handle:lib[i]}); }
+      }
     }
     out.sort(function(a,b){ var an=a.name.toLowerCase(), bn=b.name.toLowerCase(); return an<bn?-1:(an>bn?1:0); });
   }
@@ -79,16 +97,28 @@ function artistCover(name,fallback){
 function artistCoverReady(name,fallback){ return coverPick('ar|'+name,artistCands(name,fallback),1).done; }
 function loadArtist(name){
   viewArtist=name; artScroll=0; artistAlbums=[];
-  var lib=libItems();
-  if(!lib || !lib.Count) return;
-  var arts=libTF('artistName'), albs=libTF('album'),
-      titles=libTF('title'), lens=libTF('len'), yrs=libTF('year');
+  getArtistList();
+  var list=artistTracksMap?artistTracksMap[name]:null;
+  if(!list || !list.length){
+    if(artistTracksMap && name){
+      var nLow=name.toLowerCase();
+      for(var k in artistTracksMap){
+        if(k.toLowerCase()===nLow){ list=artistTracksMap[k]; break; }
+      }
+    }
+  }
+  if(!list || !list.length) return;
+  var hl=fb.CreateHandleList();
+  for(var h=0;h<list.length;h++) if(list[h]) hl.Add(list[h]);
+  var albs=TF.album.EvalWithMetadbs(hl),
+      titles=TF.title.EvalWithMetadbs(hl),
+      lens=TF.len.EvalWithMetadbs(hl),
+      yrs=TF.year.EvalWithMetadbs(hl);
   var map={}, order=[];
-  for(var i=0;i<arts.length;i++){
-    if(arts[i]!==name) continue;
+  for(var i=0;i<list.length;i++){
     var al=albs[i]||'Unknown Album';
-    if(!map[al]){ map[al]={album:al, handle:lib[i], year:yrs[i], tracks:[]}; order.push(al); }
-    map[al].tracks.push({title:titles[i], dur:lens[i], handle:lib[i]});
+    if(!map[al]){ map[al]={album:al, handle:list[i], year:yrs[i], tracks:[]}; order.push(al); }
+    map[al].tracks.push({title:titles[i], dur:lens[i], handle:list[i]});
   }
   for(var j=0;j<order.length;j++) artistAlbums.push(map[order[j]]);
 }
@@ -270,3 +300,265 @@ function getPlOrder(pi){
 }
 function setPlSort(s){ plSort=s; plSortMenuOpen=false; repaintAll(); }
 function togglePlSortDir(){ plSortDir=(plSortDir==='asc')?'desc':'asc'; repaintAll(); }
+
+/* ------------------------- library-backed albums list ------------------------- */
+var albumList=null, albumMap={};
+function getAlbumList(){
+  if(albumList) return albumList;
+  var lib=libItems();
+  var out=[], map={};
+  if(lib && lib.Count){
+    var albs=libTF('album'),
+        artists=libTF('rawArtist');
+    if(!artists || !artists.length) artists=libTF('artistName');
+    var yrs=libTF('year');
+    for(var i=0;i<albs.length;i++){
+      var al=albs[i]||'Unknown Album';
+      var ar=artists[i]||'Unknown Artist';
+      var k=(al+'|'+ar).toLowerCase();
+      if(!map[k]){
+        map[k]={
+          name:al,
+          artist:ar,
+          year:yrs[i]||'',
+          handle:lib[i],
+          handles:[],
+          key:k
+        };
+        out.push(map[k]);
+      }
+      map[k].handles.push(lib[i]);
+    }
+    out.sort(function(a,b){
+      var an=a.name.toLowerCase(), bn=b.name.toLowerCase();
+      return an<bn?-1:(an>bn?1:0);
+    });
+  }
+  albumList=out; albumMap=map;
+  return out;
+}
+
+var currentAlbum=null;
+function loadAlbum(name, artist){
+  var lib=libItems();
+  currentAlbum=null;
+  if(!lib || !lib.Count) return null;
+  getAlbumList();
+  var k=(name+'|'+(artist||'')).toLowerCase();
+  var entry=albumMap[k];
+  if(!entry){
+    for(var j=0;j<albumList.length;j++){
+      if(albumList[j].name.toLowerCase()===name.toLowerCase()){
+        entry=albumList[j]; break;
+      }
+    }
+  }
+  if(!entry) return null;
+
+  var handles=entry.handles;
+  var hl=fb.CreateHandleList();
+  for(var hi=0;hi<handles.length;hi++) if(handles[hi]) hl.Add(handles[hi]);
+  var titles=TF.title.EvalWithMetadbs(hl),
+      lens=TF.len.EvalWithMetadbs(hl),
+      lensecs=TF.lensec.EvalWithMetadbs(hl),
+      tracks=TF.trackno.EvalWithMetadbs(hl),
+      trkArtists=TF.artist.EvalWithMetadbs(hl);
+
+  var first=entry.handle;
+  var barcode='', copyright='', codec='', bitrate='', bitdepth='', samplerate='', isrc='', comment='';
+  try{
+    barcode=TF.barcode.EvalWithMetadb(first);
+    copyright=TF.copyright.EvalWithMetadb(first);
+    isrc=TF.isrc.EvalWithMetadb(first);
+    comment=TF.comment.EvalWithMetadb(first);
+    codec=TF.codec.EvalWithMetadb(first);
+    bitrate=TF.bitrate.EvalWithMetadb(first);
+    bitdepth=TF.bitdepth.EvalWithMetadb(first);
+    samplerate=TF.samplerate.EvalWithMetadb(first);
+  }catch(e){}
+
+  if(!barcode && comment){
+    try{
+      var bm=comment.match(/\b\d{12,13}\b/);
+      if(bm) barcode=bm[0];
+    }catch(e2){}
+  }
+
+  var totalSec=0, trackRows=[];
+  for(var i=0;i<handles.length;i++){
+    var s=parseInt(lensecs[i],10)||0; totalSec+=s;
+    var num=parseInt(tracks[i],10)||(i+1);
+    trackRows.push({
+      idx:i,
+      trackno:num,
+      title:titles[i]||'Unknown Track',
+      artist:trkArtists[i]||entry.artist||'Unknown Artist',
+      dur:lens[i]||'0:00',
+      handle:handles[i]
+    });
+  }
+  trackRows.sort(function(a,b){ return a.trackno-b.trackno; });
+
+  // Gather collaborating artists, library statistics, other albums, and tracks
+  getArtistList();
+  var artistNames=splitArtists(entry.artist||'');
+  if(!artistNames.length && entry.artist) artistNames=[entry.artist.trim()];
+
+  // If album artist is Various Artists / VA, collect top distinct track artists
+  if(artistNames.length===1 && (artistNames[0].toLowerCase()==='various artists' || artistNames[0].toLowerCase()==='va')){
+    var vaSeen={}, vaList=[];
+    for(var tri=0;tri<trackRows.length;tri++){
+      var trkA=trackRows[tri].artist;
+      if(trkA && trkA.toLowerCase()!=='various artists' && trkA.toLowerCase()!=='va'){
+        var trkParts=splitArtists(trkA);
+        for(var tpi=0;tpi<trkParts.length;tpi++){
+          var tName=trkParts[tpi];
+          if(tName && !vaSeen[tName.toLowerCase()]){
+            vaSeen[tName.toLowerCase()]=1; vaList.push(tName);
+          }
+        }
+      }
+    }
+    if(vaList.length>0) artistNames=vaList.slice(0, 5);
+  }
+
+  var artists=[];
+  var currentNameLower=(entry.name||'').toLowerCase();
+
+  for(var ani=0;ani<artistNames.length;ani++){
+    var aName=artistNames[ani];
+    var aLow=aName.toLowerCase();
+    var aOtherAlbums=[];
+    var aAlbumCount=0;
+    var aHandle=null;
+
+    for(var ai=0;ai<albumList.length;ai++){
+      var albItem=albumList[ai];
+      var albParts=splitArtists(albItem.artist||'');
+      var matches=false;
+      for(var pi=0;pi<albParts.length;pi++){
+        if(albParts[pi].toLowerCase()===aLow){ matches=true; break; }
+      }
+      if(!matches && (albItem.artist||'').toLowerCase().indexOf(aLow)!==-1){
+        matches=true;
+      }
+      if(matches){
+        aAlbumCount++;
+        if(!aHandle && albItem.handle) aHandle=albItem.handle;
+        if(albItem.name.toLowerCase()!==currentNameLower){
+          aOtherAlbums.push(albItem);
+        }
+      }
+    }
+
+    var aTracks=null;
+    if(artistTracksMap){
+      if(artistTracksMap[aName]) aTracks=artistTracksMap[aName];
+      else {
+        for(var atk in artistTracksMap){
+          if(atk.toLowerCase()===aLow){ aTracks=artistTracksMap[atk]; break; }
+        }
+      }
+    }
+    var aSongCount=(aTracks&&aTracks.length)?aTracks.length:trackRows.length;
+    var bestCover=artistCover(aName, aHandle||first);
+
+    // Also collect other tracks by this artist not on this album
+    var aOtherTracks=[];
+    if(aTracks && aTracks.length){
+      for(var oti=0;oti<aTracks.length;oti++){
+        var oth=aTracks[oti]; if(!oth) continue;
+        var inThisAlb=false;
+        for(var thi=0;thi<handles.length;thi++){
+          if(handles[thi] && handles[thi].Path===oth.Path){ inThisAlb=true; break; }
+        }
+        if(!inThisAlb){
+          try{
+            aOtherTracks.push({
+              handle:oth,
+              title:TF.title.EvalWithMetadb(oth)||'Track',
+              album:TF.album.EvalWithMetadb(oth)||'',
+              dur:TF.len.EvalWithMetadb(oth)||''
+            });
+          }catch(e){}
+          if(aOtherTracks.length>=6) break;
+        }
+      }
+    }
+
+    artists.push({
+      name:aName,
+      handle:bestCover||aHandle||first,
+      albumCount:Math.max(1, aAlbumCount),
+      songCount:Math.max(1, aSongCount),
+      otherAlbums:aOtherAlbums,
+      otherTracks:aOtherTracks
+    });
+  }
+
+  if(!artists.length){
+    artists.push({
+      name:entry.artist||'Unknown Artist',
+      handle:first,
+      albumCount:1,
+      songCount:trackRows.length,
+      otherAlbums:[],
+      otherTracks:[]
+    });
+  }
+
+  currentAlbum={
+    name:entry.name,
+    artist:entry.artist,
+    artists:artists,
+    year:entry.year,
+    handle:first,
+    handles:handles,
+    trackRows:trackRows,
+    count:trackRows.length,
+    totalSec:totalSec,
+    barcode:barcode,
+    isrc:isrc,
+    copyright:copyright,
+    codec:codec,
+    bitrate:bitrate,
+    bitdepth:bitdepth,
+    samplerate:samplerate,
+    artistHandle:artists[0].handle,
+    artistAlbumCount:artists[0].albumCount,
+    artistSongCount:artists[0].songCount,
+    otherAlbums:artists[0].otherAlbums
+  };
+  return currentAlbum;
+}
+
+/* ------------------------- recently downloaded / added tracks ------------------------- */
+var recentTracksList=null;
+function getRecentTracks(limit){
+  if(recentTracksList) return recentTracksList.slice(0, limit||5);
+  var lib=libItems();
+  var out=[];
+  if(lib && lib.Count){
+    var mods=libTF('lastMod'),
+        titles=libTF('title'),
+        artists=libTF('artistName'),
+        albs=libTF('album'),
+        lens=libTF('len');
+    for(var i=0;i<lib.Count;i++){
+      out.push({
+        handle:lib[i],
+        title:titles[i]||'Unknown Track',
+        artist:artists[i]||'Unknown Artist',
+        album:albs[i]||'Unknown Album',
+        dur:lens[i]||'',
+        mod:mods[i]||''
+      });
+    }
+    out.sort(function(a,b){
+      var ma=a.mod, mb=b.mod;
+      return ma>mb?-1:(ma<mb?1:0);
+    });
+  }
+  recentTracksList=out;
+  return out.slice(0, limit||5);
+}
