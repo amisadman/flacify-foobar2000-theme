@@ -108,24 +108,45 @@ function readFirst(paths){
   return null;
 }
 function parseLyrics(text){
+  if(!text) return {lines:[], synced:false};
+  // Normalize slash-separated lines if text contains " / " with few/no newlines
+  if(text.indexOf('\n')===-1 && text.indexOf(' / ')!==-1){
+    text=text.replace(/\s+\/\s+/g, '\n');
+  }
   var raw=text.split(/\r?\n/), lines=[], synced=false, reAll=/\[(\d+):(\d+(?:\.\d+)?)\]/g, i, j, m;
   for(i=0;i<raw.length;i++){
-    var line=raw[i], times=[]; reAll.lastIndex=0;
+    var line=raw[i].trim(), times=[]; reAll.lastIndex=0;
     while((m=reAll.exec(line))!==null){ times.push(parseInt(m[1],10)*60+parseFloat(m[2])); }
     var txt=line.replace(reAll,'').trim();
-    if(times.length){ synced=true; for(j=0;j<times.length;j++) lines.push({t:times[j],text:txt}); }
-    else { if(/^\s*\[[a-zA-Z#]+:/.test(line)) continue; lines.push({t:-1,text:txt}); }
+    if(times.length){
+      synced=true;
+      for(j=0;j<times.length;j++) lines.push({t:times[j],text:txt});
+    } else {
+      if(/^\s*\[[a-zA-Z#]+:/.test(line)) continue;   // ignore metadata header tags like [ti:], [ar:], [by:]
+      if(txt.length || (!synced && lines.length)) lines.push({t:-1,text:txt});
+    }
   }
-  if(synced) lines.sort(function(a,b){ return a.t-b.t; });
+  if(synced){
+    var synLines=[];
+    for(i=0;i<lines.length;i++) if(lines[i].t>=0) synLines.push(lines[i]);
+    synLines.sort(function(a,b){ return a.t-b.t; });
+    lines=synLines;
+  }
   return {lines:lines, synced:synced};
 }
 function loadLyrics(){
   var key=NP?NP.Path:null;
   if(key===lyricsFor) return;
-  lyricsFor=key; lyrics='none'; lyScroll=0; lyTarget=0; lySnap=true; lyLay={lyr:null,w:-1};
+  lyricsFor=key; lyrics='none'; lyScroll=0; lyTarget=0; lySnap=true; lyLay={lyr:null,w:-1};
   lyStScroll=0; lyStMax=0;   // a new track's lyrics start at the top
   if(!key) return;
-  var base=key.replace(/\.[^.\\\/]+$/,'');
-  var text=readFirst([base+'.lrc', base+'.txt']);
-  if(text) lyrics=parseLyrics(text);
+  // 1. Read embedded lyrics tag first
+  var text='';
+  try{ text=TF.lyrics.EvalWithMetadb(NP); }catch(e){ text=''; }
+  // 2. If tag is empty, read external .lrc / .txt beside the track
+  if(!text || !text.trim().length){
+    var base=key.replace(/\.[^.\\\/]+$/,'');
+    text=readFirst([base+'.lrc', base+'.txt']);
+  }
+  if(text && text.trim().length) lyrics=parseLyrics(text);
 }
