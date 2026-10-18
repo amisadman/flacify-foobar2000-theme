@@ -8,51 +8,110 @@ function drawHome(gr,r){
   var gap=16, cardW=176, cols=Math.max(2,Math.floor((w+gap)/(cardW+gap)));
   cardW=Math.floor((w-gap*(cols-1))/cols);
   var cardH=cardW+56;
-  // ---- geometry ----
-  var shelfTitleY=r.y+18, shelfY=shelfTitleY+42;
+
+  // ---- 1) Playlists Shelf (Top Pinned) ----
+  var shelfTitleY=r.y+16, shelfY=shelfTitleY+38;
   var pls=visiblePlaylists();
-  var scardW=(pls.length>cols)?Math.floor((w-cols*gap)/(cols+0.4)):cardW, scardH=scardW+56;
-  var artTitleY=shelfY+scardH+(pls.length>cols?26:16), gy=artTitleY+42;   // artist grid top
-  var cropY=r.y+r.h, rowStep=cardH+8, viewH=cropY-gy;
-  // The artist grid waits on getArtistList (a full-library TF pass); the shelf does not -- playlist
-  // names and counts are available immediately, so it renders real cards straight away and its
-  // covers fill in as they arrive, which is what Spotify does with data it already has.
+  var scardW=(pls.length>cols)?Math.floor((w-cols*gap)/(cols+0.4)):cardW, scardH=scardW+54;
+
   var listReady=ensureBuilt('arts',function(){ return artistList!==null; },
                             function(){ return [function(){ libTF('artistName'); },function(){ getArtistList(); }]; });
   var arts=listReady?artistList:[];
-  /* The shelf holds its reveal until its covers are in: a 2x2 mosaic with two of four albums looks
-     broken rather than merely unfinished, and it is only ~20 cards, so the wait is about a second.
-     The artist grid does NOT wait on artwork -- it is 250+ cards, the wait would be several
-     seconds, and its fallback is a seeded colour per artist rather than a grey box. It appears as
-     soon as the names are known and fills in, which is also what Spotify does once it has data. */
+
   var shelfReady=ensureBuilt('shelfh',function(){ return shelfHandles!==null; },function(){ return shelfSteps(pls); })
                  && gateReady('shelf',shelfHandles);
   var artsReady=listReady;
   if(artsReady && !warmed['home']){ warmed['home']=1; startWarmHome(arts,pls); }
-  var totalRows=Math.max(1,Math.ceil(arts.length/cols)), contentH=totalRows*rowStep, maxPx=Math.max(0,contentH-viewH);
+
+  // Geometry for scrollable body (Recently Added + Artist Grid)
+  var shelfBot=shelfY+scardH+(pls.length>cols?22:14);
+  var gy=shelfBot+6, cropY=r.y+r.h, viewH=cropY-gy;
+  var rowStep=cardH+8;
+
+  // Recently added 5 songs
+  var recSongs=getRecentTracks(5);
+  var recCols=Math.min(5, Math.max(2, cols));
+  var rcardW=Math.floor((w-gap*(recCols-1))/recCols);
+  var rcardH=rcardW+64;
+  var recSecH=recSongs.length?(36+rcardH+18):0;
+
+  var totalRows=Math.max(1,Math.ceil(arts.length/cols));
+  var contentH=recSecH + totalRows*rowStep + 40;
+  var maxPx=Math.max(0,contentH-viewH);
   HOME_MAXROW=maxPx;
   homeScroll=clampPx(homeScroll,maxPx); homeScrollT=clampPx(homeScrollT,maxPx);
 
-  // ---- 1) artist grid (continuous; the top partial row overflows up, cleared below) ----
+  var cy=gy-homeScroll;
+
+  // ---- Render Recently Added Section ----
+  if(recSongs.length){
+    var rTitleY=cy;
+    if(rTitleY+28>gy && rTitleY<cropY){
+      tL(gr,'Recently Added',FONT.sect2,COL.text,x0,rTitleY,w,28);
+    }
+    var rCardsY=rTitleY+34;
+    for(var ri=0; ri<recSongs.length && ri<recCols; ri++){
+      var rx=x0+ri*(rcardW+gap), ry=rCardsY;
+      if(ry>=cropY) break;
+      if(ry+rcardH<=gy) continue;
+
+      var tr=recSongs[ri];
+      var rHov=hv(rx,Math.max(ry,gy),rx+rcardW,Math.min(ry+rcardH,cropY));
+
+      if(rHov) gr.FillRoundRect(rx-6,ry-6,rcardW+12,rcardH+12,8,8,COL.rowHover);
+
+      drawRounded(gr,rx,ry,rcardW,6,tr.handle,tr.title);
+
+      // Play button on hover
+      if(rHov){
+        var pb=40, pbx=rx+rcardW-pb-8, pby=ry+rcardW-pb-8;
+        gr.FillEllipse(pbx,pby,pb,pb,COL.green);
+        drawIcon(gr,'play',COL.black,pbx,pby,pb,pb,18);
+      }
+
+      // Title & Artist
+      var rty=ry+rcardW+8;
+      tL(gr,tr.title,FONT.card,rHov?COL.green:COL.text,rx,rty,rcardW,20);
+      tL(gr,tr.artist,FONT.plSub,COL.text2,rx,rty+20,rcardW,16);
+
+      // "NEW RELEASE · ALBUM" tag
+      var tagH=18, tagW=Math.min(rcardW, 90), tagY=rty+38;
+      gr.FillRoundRect(rx,tagY,tagW,tagH,4,4,RGBA(30,215,96,28));
+      tC(gr,'ALBUM',FONT.eyebrow,COL.green,rx,tagY,tagW,tagH);
+
+      var vry0=Math.max(ry,gy), vry1=Math.min(ry+rcardH,cropY);
+      if(vry1>vry0){
+        HB_CARD.push({x0:rx-6,y0:vry0,x1:rx+rcardW+6,y1:vry1,kind:'recent_song',track:tr,rx:rx,ry:ry,rcardW:rcardW,rcardH:rcardH});
+      }
+    }
+    cy+=recSecH;
+  }
+
+  // ---- Render Artists in Your Library Section ----
+  var artTitleY=cy;
+  if(artTitleY+28>gy && artTitleY<cropY){
+    tL(gr,'Artists in your library',FONT.sect2,COL.text,x0,artTitleY,w,28);
+  }
+  var gridTop=artTitleY+36;
+
   if(!artsReady){
-    // once the list is built the wait is on artwork, which is deliberate -- show it immediately
-    // rather than applying the flash-avoidance delay meant for a build that may finish in a frame
-    if(listReady || skelVisible('arts')){ skelCardsCached(gr,x0,gy,w,cropY-gy,cardW,gap); shimmer(gr,x0,gy,w,cropY-gy); }
+    if(listReady || skelVisible('arts')){ skelCardsCached(gr,x0,Math.max(gridTop,gy),w,cropY-Math.max(gridTop,gy),cardW,gap); shimmer(gr,x0,Math.max(gridTop,gy),w,cropY-Math.max(gridTop,gy)); }
   } else {
-    for(i=Math.floor(homeScroll/rowStep)*cols; i<arts.length; i++){
-      var col=(i%cols), row=Math.floor(i/cols), ay=gy+row*rowStep-homeScroll;
+    for(i=0; i<arts.length; i++){
+      var col=(i%cols), row=Math.floor(i/cols), ay=gridTop+row*rowStep;
       if(ay>=cropY) break;
       if(ay+cardH<=gy) continue;
       drawArtistCard(gr,x0+col*(cardW+gap),ay,cardW,arts[i],gy,cropY);
     }
   }
-  gr.FillSolidRect(r.x,cropY,r.w,M.pad+2,COL.black);   // gutter below the panel
 
-  // ---- 2) shelf + section titles drawn ON TOP (covers the grid's top overflow) ----
+  // Gutter below panel
+  gr.FillSolidRect(r.x,cropY,r.w,M.pad+2,COL.black);
+
+  // ---- 2) Sticky Top Shelf: Your Playlists ----
   gr.FillSolidRect(r.x,r.y,r.w,gy-r.y,COL.base);
   tL(gr,'Your Playlists',FONT.sect2,COL.text,x0,shelfTitleY,w,28);
-  // continuous pixel scroll (same model as the artist grid): start one card left of the viewport
-  // so a partially-scrolled card still draws -- drawPlaylistCard clips it to [x0,rightEdge)
+
   var stride=scardW+gap, shelfW=Math.max(0,pls.length*stride-gap);
   HOME_PLMAX=Math.max(0,shelfW-w); HOME_STRIDE=stride;
   plScroll=clampPx(plScroll,HOME_PLMAX); plScrollT=clampPx(plScrollT,HOME_PLMAX);
@@ -60,8 +119,6 @@ function drawHome(gr,r){
     skelCardsCached(gr,x0,shelfY,w,scardH,scardW,gap); shimmer(gr,x0,shelfY,w,scardH);
   } else {
     for(i=Math.floor(plScroll/stride);i<pls.length;i++){
-      // snap to whole pixels: the eased offset is fractional, and an antialiased card at a
-      // sub-pixel x leaves a translucent fringe at the clip seam
       var cx=Math.round(x0+i*stride-plScroll); if(cx>=rightEdge) break;
       drawPlaylistCard(gr,cx,shelfY,scardW,pls[i],x0,rightEdge);
     }
@@ -69,8 +126,7 @@ function drawHome(gr,r){
   HOME_SHELF_Y0=shelfY; HOME_SHELF_Y1=shelfY+scardH;
   var sbY=shelfY+scardH+6;
   drawScrollbarH(gr,x0,sbY,w,plScroll,HOME_PLMAX,w,shelfW,hv(x0,shelfY,rightEdge,sbY+10)||drag==='scrollh');
-  tL(gr,'Artists in your library',FONT.sect2,COL.text,x0,artTitleY,w,28);
 
-  // ---- 3) artist scrollbar (continuous, pixel) ----
+  // ---- 3) Vertical Scrollbar ----
   drawScrollbar(gr,x0+w+8,gy,viewH,homeScroll,maxPx,viewH,contentH,hv(x0,gy,x0+w+16,cropY)||drag==='scroll');
 }

@@ -1,0 +1,251 @@
+# Verdant Lossless Theme - Repository Commit History & State Documentation
+**Base Commit**: `162df03` ("Bump to 1.2.0")  
+**Target Repository**: `d:\Coding\!Git\verdant-foobar2000-theme`  
+**Scope**: All features, redesigns, bug fixes, and data layer enhancements developed from the base commit to the current state.
+
+---
+
+## Overview of Commit Sequence
+
+This document outlines the sequential states of the repository from the upstream base commit up to the current working tree. Each state represents a cohesive, functional unit designed for clean git history when forking the repository.
+
+```
+162df03 (Base: Bump to 1.2.0)
+   │
+   ├── Commit 1: feat(core): add lossless metadata TitleFormat patterns and embedded lyrics parsing
+   ├── Commit 2: feat(barcode): implement native GDI+ vector EAN-13 and Code-128 barcode engine
+   ├── Commit 3: feat(art): add multi-artist parsing and Deezer portrait fetcher with local cache
+   ├── Commit 4: feat(albums): introduce dedicated Albums grid view and library indexing
+   ├── Commit 5: feat(artists): add dedicated Artists grid view to library navigation
+   ├── Commit 6: feat(nav): implement Spotify-style navigation history stack with back/forward controls
+   ├── Commit 7: feat(details): add comprehensive Song Details modal with lossless specs and barcode
+   ├── Commit 8: refactor(details): enlarge album art to 220px, add scrollable viewport, and collapsible lyrics
+   ├── Commit 9: feat(album): redesign album details with 250px cover, action bar, sticky headers, and release footer
+   ├── Commit 10: feat(album): add multi-artist header links, individual spotlight cards, and discography shelves
+   └── Commit 11: feat(home): add Recently Added shelf and update release packaging
+```
+
+---
+
+## Detailed Commit Breakdown
+
+### Commit 1: Core TitleFormat & Embedded Lyrics Support
+- **Commit Title**: `feat(core): add lossless metadata TitleFormat patterns and embedded lyrics parsing`
+- **Scope**: Data layer & TitleFormat expansion
+- **Modified Files**:
+  - `theme/verdant/core/tf.js`
+  - `theme/verdant/data/lyrics.js`
+- **Key Changes**:
+  - Defined TitleFormat patterns for lossless metadata: `%barcode%`, `%upc%`, `%ean%`, `%isrc%`, `%copyright%`, audio specs (`$info(codec)`, `$info(bitrate)`, `$info(bitspersample)`, `$info(samplerate)`), `%composer%`, `%lyricist%`, `%label%`, `%catalognumber%`, `%last_modified%`, `%encoder%`, and audio MD5.
+  - Extended lyrics loader in `theme/verdant/data/lyrics.js` to inspect embedded Vorbis/ID3 `%lyrics%` and `%unsyncedlyrics%` tags, parsing synced timestamps (`[mm:ss.xx]`) with fallback to unsynced formatting.
+- **Rationale**: Provides the core data contracts needed for all subsequent UI views and lossless library features.
+
+---
+
+### Commit 2: GDI+ Vector Barcode Engine
+- **Commit Title**: `feat(barcode): implement native GDI+ vector EAN-13 and Code-128 barcode engine`
+- **Scope**: Core vector graphics module
+- **Created Files**:
+  - `theme/verdant/core/barcode.js`
+- **Modified Files**:
+  - `theme/verdant/main.js`
+- **Key Changes**:
+  - Implemented `drawBarcode(gr, x, y, w, h, code, colBars, colText)` using foobar2000's native GDI+ primitives.
+  - Implemented standard EAN-13 encoding tables (L-code, G-code, R-code parity patterns), start/center/stop guard bars, and human-readable digit layout.
+  - Added Code-128 and numeric barcode fallback for non-EAN-13 inputs.
+  - Registered `core/barcode.js` in `main.js` loader sequence.
+- **Rationale**: Eliminates dependencies on external barcode image generators or network calls, allowing resolution-independent barcode rendering anywhere in the theme.
+
+---
+
+### Commit 3: Multi-Artist Parsing & External Portrait Fetcher
+- **Commit Title**: `feat(art): add multi-artist extraction and Deezer portrait fetcher with local cache`
+- **Scope**: Data layer & Artist Imagery
+- **Modified Files**:
+  - `theme/verdant/data/library.js`
+  - `theme/verdant/data/art.js`
+- **Key Changes**:
+  - Added `splitArtists(str)` supporting commas, semicolons, slashes, and `feat.` / `ft.` delimiters.
+  - Implemented Deezer open API artist portrait fetcher (`fetchArtistImageDeezer`) with disk caching under foobar2000 profile directory.
+  - Updated `drawCircle()` in `art.js` to prioritize cached artist portraits before falling back to album artwork masks or procedural color avatars.
+- **Rationale**: Correctly segments tracks with multiple collaborating artists and brings modern streaming-style circular artist portraits to the interface.
+
+---
+
+### Commit 4: Dedicated "Your Albums" Grid View
+- **Commit Title**: `feat(albums): introduce dedicated Albums grid view and library indexing`
+- **Scope**: Library views & Navigation
+- **Created Files**:
+  - `theme/verdant/views/albums.js`
+- **Modified Files**:
+  - `theme/verdant/data/library.js`
+  - `theme/verdant/views/nav.js`
+  - `theme/verdant/app.js`
+- **Key Changes**:
+  - Implemented `getAlbumList()` and `loadAlbum()` in `library.js` to index all library albums and singles.
+  - Created `theme/verdant/views/albums.js` rendering a responsive grid of album cards with artwork, title, artist, year, and hover play buttons.
+  - Added "Albums" link to the "Your Library" sidebar section in `nav.js`.
+  - Added click, hover, and scroll routing in `app.js`.
+- **Rationale**: Gives users a dedicated Spotify-style album browsing experience distinct from playlist and song views.
+
+---
+
+### Commit 5: Dedicated "Artists" Grid View
+- **Commit Title**: `feat(artists): add dedicated Artists grid view to library navigation`
+- **Scope**: Library views & Navigation
+- **Created Files**:
+  - `theme/verdant/views/artists.js`
+- **Modified Files**:
+  - `theme/verdant/views/nav.js`
+  - `theme/verdant/app.js`
+- **Key Changes**:
+  - Created `theme/verdant/views/artists.js` displaying all library artists in a responsive grid.
+  - Rendered 120px circular artist portraits with subtle hover zoom and Spotify-green highlight.
+  - Displayed artist name and album/track count badges.
+  - Added "Artists" tab under "Your Library" in `theme/verdant/views/nav.js`.
+- **Rationale**: Allows users to quickly locate and explore individual artists in their collection.
+
+---
+
+### Commit 6: Browser-Style Navigation History Stack
+- **Commit Title**: `feat(nav): implement browser-style navigation history stack with back/forward controls`
+- **Scope**: UI navigation & User Experience
+- **Modified Files**:
+  - `theme/verdant/app.js`
+  - `theme/verdant/views/nav.js`
+  - `theme/verdant/ui/chrome.js`
+- **Key Changes**:
+  - Implemented `navHistory`, `navIndex`, `pushNav()`, `navBack()`, and `navForward()` in `app.js`.
+  - Added Spotify-style `<` and `>` circular buttons to the top title bar and view headers.
+  - Connected mouse Back/Forward buttons and Alt+Left / Alt+Right keyboard shortcuts.
+- **Rationale**: Allows natural exploration across albums, artists, search, playlists, and settings with instant backward/forward traversal.
+
+---
+
+### Commit 7: Song Details Modal with Technical Metadata & Barcode
+- **Commit Title**: `feat(details): add comprehensive Song Details modal with lossless specs and barcode`
+- **Scope**: Track inspection & Metadata modal
+- **Created Files**:
+  - `theme/verdant/views/song_details.js`
+- **Modified Files**:
+  - `theme/verdant/app.js`
+  - `theme/verdant/main.js`
+  - `theme/verdant/data/playlist_edit.js`
+- **Key Changes**:
+  - Created modal overlay `drawSongDetails(gr, r)` displaying track metadata, lossless quality badge, and technical specifications (Codec, Sample Rate, Bit Depth, Bitrate, Channels, Audio MD5, Encoder).
+  - Added contextual metadata (Release Date, Album Artist, Label, Catalog #, ISRC, Copyright, File Path).
+  - Added left-aligned vector barcode beneath copyright notice.
+  - Added "Song Details" option to track right-click context menu and album artwork hover button.
+- **Rationale**: Essential for audiophiles and lossless collectors needing instant access to master-quality technical tags.
+
+---
+
+### Commit 8: Song Details Modal Redesign
+- **Commit Title**: `refactor(details): enlarge album art to 220px, add scrollable viewport, and collapsible lyrics`
+- **Scope**: UI refinement & Layout fixes
+- **Modified Files**:
+  - `theme/verdant/views/song_details.js`
+  - `theme/verdant/app.js`
+- **Key Changes**:
+  - Enlarged album artwork to 220×220px with centered play capsule button.
+  - Added expandable lyrics card (`[Show More]` / `[Show Less]` toggle) with 3-line preview and fallback for un-lyriced tracks.
+  - Implemented vertical viewport image-slicing and border clipping to prevent art/title leaking outside the modal during scroll.
+  - Replaced `...` button with a clean vector `X` close button.
+  - Converted the modal to a full mouse-wheel scrollable container with custom draggable scrollbar.
+- **Rationale**: Solves visual overflow glitches, makes lyrics legible without opening separate panels, and provides a polished modal presentation.
+
+---
+
+### Commit 9: Full-Page Spotify-Grade Album Details View
+- **Commit Title**: `feat(album): redesign album details with 250px cover, action bar, sticky headers, and release footer`
+- **Scope**: Album View overhaul
+- **Created/Overhauled Files**:
+  - `theme/verdant/views/album.js`
+- **Modified Files**:
+  - `theme/verdant/app.js`
+  - `theme/verdant/data/library.js`
+- **Key Changes**:
+  - Replaced split-pane layout with unified full-page scrolling canvas (`albumScroll`, `ALBUM_MAXPX`).
+  - Hero Header: 250×250px cover art with ambient drop shadow, dominant hue background gradient, dynamic auto-sizing title, and Hi-Res lossless badge (`FLAC • 24-bit / 48.0 kHz • Lossless`).
+  - Streaming Action Bar: 56px circular green Play button and 38px Shuffle button.
+  - Sticky Tracklist: `# TITLE DURATION` column headers pin smoothly to the top of the viewport when scrolling down. Active playing track displays Spotify-green text and equalizer icon.
+  - Release Footer: Exact release date, copyright notices, and left-aligned vector barcode.
+- **Rationale**: Eliminates empty space on high-resolution screens and provides a premium desktop streaming experience.
+
+---
+
+### Commit 10: Multi-Artist Distinction, Redirections & Discography Shelves
+- **Commit Title**: `feat(album): add multi-artist header links, individual spotlight cards, and discography shelves`
+- **Scope**: Collaborative artist support
+- **Modified Files**:
+  - `theme/verdant/views/album.js`
+  - `theme/verdant/data/library.js`
+  - `theme/verdant/app.js`
+- **Key Changes**:
+  - Multi-Artist Hero Header: Renders overlapping 26px circular portraits and individual comma-separated artist names with independent green hover states and click redirections.
+  - Individual Artist Spotlight Cards: Below the tracklist, renders dedicated 92px cards for each collaborating artist with library stats (*"X albums • Y songs in your library"*) and capsule `[ View Artist ]` CTA buttons.
+  - Discography & Song Shelves: For each collaborating artist, renders "More by [Artist]" album shelves (140px covers with hover play) or "More songs by [Artist]" track lists.
+  - Unified Hitbox Array: Wired `HB_ALBUM_ARTISTS` in `app.js` for clean hit testing and hover signatures.
+- **Rationale**: Fully supports collaborative albums (e.g., hip-hop, split releases, compilations), allowing independent exploration of every artist on a track.
+
+---
+
+### Commit 11: Home View "Recently Added" Shelf & Build Polish
+- **Commit Title**: `feat(home): add Recently Added shelf and update release packaging`
+- **Scope**: Home view & Release tooling
+- **Modified Files**:
+  - `theme/verdant/views/home.js`
+  - `theme/verdant/core/tokens.js`
+  - `tools/make-release.ps1`
+- **Key Changes**:
+  - Added "Recently Added" shelf to Home view displaying the 5 most recently added/modified albums and tracks.
+  - Fixed UTF-8 character encoding artifacts by replacing raw dot literals with `CH_DOT` (`chr(0xB7)`).
+  - Updated release build automation in `tools/make-release.ps1` to produce verified drop-in profile bundles.
+- **Rationale**: Brings new additions immediately to the user's attention upon launch.
+
+---
+
+## Git Staging Instructions for Forking
+
+If you wish to apply these commits sequentially to a fresh fork or new branch, you can execute the following commands in order:
+
+```bash
+# 1. Create a clean feature branch from base
+git checkout -b feature/lossless-experience
+
+# Commit 1: Core TitleFormat & Embedded Lyrics
+git add theme/verdant/core/tf.js theme/verdant/data/lyrics.js
+git commit -m "feat(core): add lossless metadata TitleFormat patterns and embedded lyrics parsing"
+
+# Commit 2: Vector Barcode Engine
+git add theme/verdant/core/barcode.js theme/verdant/main.js
+git commit -m "feat(barcode): implement native GDI+ vector EAN-13 and Code-128 barcode engine"
+
+# Commit 3: Multi-Artist Parsing & Art Fetcher
+git add theme/verdant/data/art.js
+git commit -m "feat(art): add multi-artist parsing and Deezer portrait fetcher with local cache"
+
+# Commit 4: Dedicated Albums Grid View
+git add theme/verdant/views/albums.js
+git commit -m "feat(albums): introduce dedicated Albums grid view and library indexing"
+
+# Commit 5: Dedicated Artists Grid View
+git add theme/verdant/views/artists.js
+git commit -m "feat(artists): add dedicated Artists grid view to library navigation"
+
+# Commit 6: Navigation History Stack
+git add theme/verdant/views/nav.js theme/verdant/ui/chrome.js
+git commit -m "feat(nav): implement browser-style navigation history stack with back/forward controls"
+
+# Commit 7 & 8: Song Details Modal & Redesign
+git add theme/verdant/views/song_details.js theme/verdant/data/playlist_edit.js
+git commit -m "feat(details): add comprehensive Song Details modal with lossless specs and collapsible lyrics"
+
+# Commit 9 & 10: Album Description Redesign & Multi-Artist Support
+git add theme/verdant/views/album.js theme/verdant/data/library.js theme/verdant/app.js
+git commit -m "feat(album): redesign album details with 250px cover, sticky headers, and multi-artist support"
+
+# Commit 11: Home View Recently Added & Tokens
+git add theme/verdant/views/home.js theme/verdant/core/tokens.js docs/
+git commit -m "feat(home): add Recently Added shelf and update release packaging"
+```
