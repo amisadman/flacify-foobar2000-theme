@@ -309,26 +309,84 @@ function getAlbumList(){
   var out=[], map={};
   if(lib && lib.Count){
     var albs=libTF('album'),
-        artists=libTF('rawArtist');
-    if(!artists || !artists.length) artists=libTF('artistName');
-    var yrs=libTF('year');
-    for(var i=0;i<albs.length;i++){
-      var al=albs[i]||'Unknown Album';
-      var ar=artists[i]||'Unknown Artist';
-      var k=(al+'|'+ar).toLowerCase();
+        albumArtists=libTF('albumArtist'),
+        rawArtists=libTF('rawArtist'),
+        folders=libTF('folder'),
+        yrs=libTF('year');
+
+    for(var i=0;i<lib.Count;i++){
+      var rawAlb=albs[i]||'';
+      var al=rawAlb.trim()||'Unknown Album';
+      var albArt=(albumArtists[i]||'').trim();
+      var rawArt=(rawArtists[i]||'').trim()||'Unknown Artist';
+      var fld=(folders[i]||'').trim();
+
+      // Robust album grouping key:
+      // Priority 1: If ALBUM ARTIST is explicitly tagged, group by (Album + AlbumArtist).
+      // Priority 2: If no Album Artist, group by (Album + Folder) so tracks in the same directory stay unified!
+      // Priority 3: Fallback to (Album + Artist).
+      var k;
+      if(albArt && albArt.toLowerCase()!=='unknown artist'){
+        k=(al+'|'+albArt).toLowerCase();
+      } else if(fld && al.toLowerCase()!=='unknown album'){
+        k=(al+'|'+fld).toLowerCase();
+      } else {
+        k=(al+'|'+rawArt).toLowerCase();
+      }
+
       if(!map[k]){
         map[k]={
           name:al,
-          artist:ar,
+          artist:albArt||rawArt||'Unknown Artist',
+          albumArtist:albArt,
+          folder:fld,
           year:yrs[i]||'',
           handle:lib[i],
           handles:[],
-          key:k
+          key:k,
+          artistsSeen:{}
         };
         out.push(map[k]);
       }
-      map[k].handles.push(lib[i]);
+
+      var entry=map[k];
+      entry.handles.push(lib[i]);
+      if(yrs[i] && (!entry.year || yrs[i]<entry.year)) entry.year=yrs[i];
+
+      // Tally artist names across all songs in this album
+      var parts=splitArtists(rawArt);
+      for(var pi=0;pi<parts.length;pi++){
+        var pName=parts[pi];
+        if(pName){
+          entry.artistsSeen[pName]=(entry.artistsSeen[pName]||0)+1;
+        }
+      }
     }
+
+    // Refine displayed artist for albums where ALBUM ARTIST was not explicitly set
+    for(var oi=0;oi<out.length;oi++){
+      var aItem=out[oi];
+      if(!aItem.albumArtist && aItem.handles.length>1){
+        var bestArtist='', maxCount=0, totalArtists=0;
+        for(var aName in aItem.artistsSeen){
+          totalArtists++;
+          if(aItem.artistsSeen[aName]>maxCount){
+            maxCount=aItem.artistsSeen[aName];
+            bestArtist=aName;
+          }
+        }
+        // If one artist is predominant across >= 50% of the tracks, use it as album artist
+        if(bestArtist && maxCount>=Math.ceil(aItem.handles.length*0.5)){
+          aItem.artist=bestArtist;
+        } else if(totalArtists>2){
+          aItem.artist='Various Artists';
+        }
+      }
+      // Index by (name + '|' + artist) in albumMap as well so lookups by name+artist always find it
+      var normK=(aItem.name+'|'+aItem.artist).toLowerCase();
+      if(!map[normK]) map[normK]=aItem;
+    }
+
     out.sort(function(a,b){
       var an=a.name.toLowerCase(), bn=b.name.toLowerCase();
       return an<bn?-1:(an>bn?1:0);
@@ -347,9 +405,15 @@ function loadAlbum(name, artist){
   var k=(name+'|'+(artist||'')).toLowerCase();
   var entry=albumMap[k];
   if(!entry){
+    var nLow=name.toLowerCase();
+    var aLow=(artist||'').toLowerCase();
     for(var j=0;j<albumList.length;j++){
-      if(albumList[j].name.toLowerCase()===name.toLowerCase()){
-        entry=albumList[j]; break;
+      var item=albumList[j];
+      if(item.name.toLowerCase()===nLow){
+        if(!aLow || item.artist.toLowerCase()===aLow || (item.key && item.key.indexOf(aLow)!==-1)){
+          entry=item; break;
+        }
+        if(!entry) entry=item;
       }
     }
   }
@@ -362,6 +426,7 @@ function loadAlbum(name, artist){
       lens=TF.len.EvalWithMetadbs(hl),
       lensecs=TF.lensec.EvalWithMetadbs(hl),
       tracks=TF.trackno.EvalWithMetadbs(hl),
+      discs=TF.disc.EvalWithMetadbs(hl),
       trkArtists=TF.artist.EvalWithMetadbs(hl);
 
   var first=entry.handle;
@@ -388,16 +453,21 @@ function loadAlbum(name, artist){
   for(var i=0;i<handles.length;i++){
     var s=parseInt(lensecs[i],10)||0; totalSec+=s;
     var num=parseInt(tracks[i],10)||(i+1);
+    var dnum=parseInt(discs[i],10)||1;
     trackRows.push({
       idx:i,
       trackno:num,
+      discno:dnum,
       title:titles[i]||'Unknown Track',
       artist:trkArtists[i]||entry.artist||'Unknown Artist',
       dur:lens[i]||'0:00',
       handle:handles[i]
     });
   }
-  trackRows.sort(function(a,b){ return a.trackno-b.trackno; });
+  trackRows.sort(function(a,b){
+    if(a.discno!==b.discno) return a.discno-b.discno;
+    return a.trackno-b.trackno;
+  });
 
   // Gather collaborating artists, library statistics, other albums, and tracks
   getArtistList();

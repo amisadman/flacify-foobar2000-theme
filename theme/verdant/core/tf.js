@@ -36,6 +36,7 @@ var TF = {
   path:fb.TitleFormat('%path%'),
   encoder:fb.TitleFormat('[$if4($info(tool),$info(encoder),$meta(writing application),%__writing_application%)]'),
   audioMd5:fb.TitleFormat('[$if2($info(md5),$info(flac_md5))]'),
-  albumArtist:fb.TitleFormat('[$if2($meta(album artist),$meta(album_performer))]'),
-  catalog:fb.TitleFormat('[$if2($meta(catalognumber),$meta(catalog))]')
+  albumArtist:fb.TitleFormat('[$if4($meta(album artist),$meta(albumartist),$meta(album_performer),$meta(band),%album artist%)]'),
+  catalog:fb.TitleFormat('[$if2($meta(catalognumber),$meta(catalog))]'),
+  folder:fb.TitleFormat('$directory_path(%path%)')
 };
