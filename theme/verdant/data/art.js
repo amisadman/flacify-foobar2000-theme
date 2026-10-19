@@ -231,13 +231,85 @@ function roundMask(size,rad){
   g.FillSolidRect(0,0,size,size,RGB(255,255,255)); g.SetSmoothingMode(2); g.FillRoundRect(0,0,size,size,rad,rad,RGB(0,0,0));
   m.ReleaseGraphics(g); maskCache[k]=m; return m;
 }
+function aspectFillSquare(raw, size){
+  if(!raw) return null;
+  var w=raw.Width, h=raw.Height;
+  if(w<=0 || h<=0) return null;
+  if(w===h){
+    try{ return raw.Resize(size, size); }catch(e){ return null; }
+  }
+  try{
+    var out=gdi.CreateImage(size, size);
+    if(!out) return raw.Resize(size, size);
+    var g=out.GetGraphics();
+    g.SetInterpolationMode(7); // HighQualityBicubic
+    var scale=Math.max(size/w, size/h);
+    var nw=Math.round(w*scale);
+    var nh=Math.round(h*scale);
+    var nx=Math.round((size-nw)/2);
+    var ny=Math.round((size-nh)/2);
+    g.DrawImage(raw, nx, ny, nw, nh, 0, 0, w, h);
+    out.ReleaseGraphics(g);
+    return out;
+  }catch(e){
+    try{ return raw.Resize(size, size); }catch(e2){ return null; }
+  }
+}
+
+function cleanBioText(str){
+  if(!str || typeof str !== 'string') return '';
+  var s = str;
+  // 1. Unwrap HTML anchors: <a ...>Inner Text</a> -> Inner Text
+  s = s.replace(/<a\b[^>]*>([\s\S]*?)<\/a>/gi, '$1');
+  // 2. Remove other HTML tags
+  s = s.replace(/<[^>]+>/g, '');
+  // 3. Decode common named HTML entities
+  s = s.replace(/&amp;/g, '&')
+       .replace(/&quot;/g, '"')
+       .replace(/&apos;/g, "'")
+       .replace(/&lt;/g, '<')
+       .replace(/&gt;/g, '>')
+       .replace(/&nbsp;/g, ' ')
+       .replace(/&hellip;/g, '...')
+       .replace(/&mdash;/g, '—')
+       .replace(/&ndash;/g, '–');
+  // 4. Decode decimal HTML entities (&#34; -> ", &#39; -> ', etc.)
+  s = s.replace(/&#(\d+);/g, function(match, dec){
+    var code = parseInt(dec, 10);
+    if(code >= 32 && code <= 126) return String.fromCharCode(code);
+    if(code === 10 || code === 13) return '\n';
+    return '';
+  });
+  // 5. Remove hex entities (e.g. &#x1faf5; emojis)
+  s = s.replace(/&#x[0-9a-fA-F]+;/gi, '');
+  // 6. Remove surrogate pair emojis (SMP code points) which DrawTextW cannot render
+  s = s.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, '');
+  // 7. Remove Unicode line/paragraph separators & non-breaking spaces
+  s = s.replace(/[\u2028\u2029]/g, ' ')
+       .replace(/[\u00A0]/g, ' ')
+       .replace(/[\u200B-\u200D\uFEFF]/g, '');
+  // 8. Clean up whitespace
+  s = s.replace(/[ \t]+/g, ' ')
+       .replace(/\n{3,}/g, '\n\n')
+       .replace(/^\s+|\s+$/g, '');
+  return s;
+}
+
 function maskedArt(h,seed,size,mask,tag){
   var k=(h?albKey(h):(seed||''))+'|'+size+'|'+tag;   // keyed by album, not the seed label ('np' is constant -> stale art)
   if(cArtCache.hasOwnProperty(k)) return cArtCache[k];
   var art=h?getArt(h):null;
   if(h && !artLoaded(albKey(h))) return null;   // still loading -> placeholder, don't cache
   var res=null;
-  if(art){ try{ var img=art.Resize(size,size); img.ApplyMask(mask); res=img; }catch(e){ res=null; } }
+  if(art){
+    try{
+      var img=aspectFillSquare(art, size);
+      if(img){
+        img.ApplyMask(mask);
+        res=img;
+      }
+    }catch(e){ res=null; }
+  }
   capPut(cArtCache,cArtOrder,CART_CAP,k,res); return res;
 }
 var extArtistImgCache={}, extArtistHeroCache={}, extArtistPending={}, artistMetaCache={};
@@ -280,6 +352,8 @@ function getArtistMeta(name){
       if(txt){
         var parsed=JSON.parse(txt);
         if(parsed){
+          if(parsed.bio) parsed.bio = cleanBioText(parsed.bio);
+          if(parsed.desc) parsed.desc = cleanBioText(parsed.desc);
           artistMetaCache[name]=parsed;
           return parsed;
         }
@@ -326,10 +400,12 @@ function getExternalArtistImg(name, size){
     try{
       var raw=gdi.Image(filePath);
       if(raw){
-        var masked=raw.Resize(size,size);
-        masked.ApplyMask(circleMask(size));
-        extArtistImgCache[key]=masked;
-        return masked;
+        var square=aspectFillSquare(raw, size);
+        if(square){
+          square.ApplyMask(circleMask(size));
+          extArtistImgCache[key]=square;
+          return square;
+        }
       }
     }catch(e2){}
   }
@@ -362,10 +438,12 @@ function getExternalArtistCard(name, size, rad){
     try{
       var raw=gdi.Image(filePath);
       if(raw){
-        var masked=raw.Resize(size,size);
-        masked.ApplyMask(roundMask(size,rad));
-        extArtistCardCache[key]=masked;
-        return masked;
+        var square=aspectFillSquare(raw, size);
+        if(square){
+          square.ApplyMask(roundMask(size, rad));
+          extArtistCardCache[key]=square;
+          return square;
+        }
       }
     }catch(e2){}
   }

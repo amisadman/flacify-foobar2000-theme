@@ -437,6 +437,10 @@ git commit -m "fix(navigation): scope view hitboxes and clear stale click target
 # Commit 20: Spotify Web Scraper GraphQL Integration for Avatars & Listeners
 git add theme/verdant/tools/sync_artists.ps1 dist/Verdant-v1.2.0.zip docs/commits_history.md
 git commit -m "feat(sync): integrate Spotify Web Scraper GraphQL API for official artist avatars and monthly listeners"
+
+# Commit 21: Prevent Image Stretching with aspectFillSquare & Sanitize Bio Entities and Emojis
+git add theme/verdant/data/art.js theme/verdant/views/artist.js theme/verdant/tools/sync_artists.ps1 theme/verdant/tools/clean_artist_cache.ps1 docs/commits_history.md
+git commit -m "fix(artist): prevent image stretching with aspectFillSquare and sanitize HTML entities and emojis in bios"
 ```
 
 ---
@@ -455,6 +459,27 @@ git commit -m "feat(sync): integrate Spotify Web Scraper GraphQL API for officia
   - Reinforced zero-resync offline-first cache guard ensuring cached artists are never re-queried over the network.
   - Updated release distribution package.
 - **Rationale**: Delivers genuine Spotify artist photos and verified listener statistics directly inside the foobar2000 theme with zero setup overhead for users.
+
+---
+
+### Commit 21: Aspect-Fill Square Cropping & Bio Entity Sanitization
+- **Commit Title**: `fix(artist): prevent image stretching with aspectFillSquare and sanitize HTML entities and emojis in bios`
+- **Scope**: Rendering engine, text layout & offline cache
+- **Created Files**:
+  - `theme/verdant/tools/clean_artist_cache.ps1`
+- **Modified Files**:
+  - `theme/verdant/data/art.js`
+  - `theme/verdant/views/artist.js`
+  - `theme/verdant/tools/sync_artists.ps1`
+  - `docs/commits_history.md`
+- **Key Changes**:
+  - Implemented `aspectFillSquare(raw, size)` using GDI+ HighQualityBicubic interpolation to center-crop non-square portraits, eliminating horizontal/vertical stretching on cards and circular avatars.
+  - Implemented `cleanBioText(str)` in `data/art.js` to strip raw HTML tags (`<a ...>`, etc.), decode HTML entities (`&#34;`, `&#39;`, `&#64;`, `&amp;`), remove un-renderable 4-byte surrogate emojis, strip Unicode line/paragraph separators (`\u2028`, `\u2029`), and clean non-breaking whitespace.
+  - Enhanced `wrapText` in `views/artist.js` with smart ellipsis truncation on max line bounds.
+  - Added `clean_artist_cache.ps1` and cleaned all 107 metadata files and square-cropped 165 non-square images in `D:\Music\foobar2000\profile\verdant\cache\artists`.
+  - Integrated `Crop-ToSquare` and `Clean-BioText` directly into `tools/sync_artists.ps1` for all future sync operations.
+- **Rationale**: Ensures every portrait renders in pristine 1:1 proportion without distortion and eliminates all unknown replacement glyphs or broken raw HTML markup from artist bios.
+
 
 
 

@@ -12,18 +12,33 @@ function wrapText(gr, str, font, maxW, maxLines){
   if(!str) return [];
   var words=String(str).split(/\s+/);
   var lines=[], curLine='';
+  var truncated=false;
   for(var i=0; i<words.length; i++){
     var testLine=curLine ? (curLine+' '+words[i]) : words[i];
     if(gr.CalcTextWidth(testLine, font) > maxW && curLine){
       lines.push(curLine);
       curLine=words[i];
-      if(maxLines && lines.length>=maxLines-1) break;
+      if(maxLines && lines.length>=maxLines){
+        truncated=true;
+        break;
+      }
     } else {
       curLine=testLine;
     }
   }
   if(curLine && (!maxLines || lines.length<maxLines)){
     lines.push(curLine);
+  } else if(curLine){
+    truncated=true;
+  }
+  if(truncated && lines.length>0){
+    var last=lines[lines.length-1];
+    if(!/\.\.\.$/.test(last)){
+      while(last.length>0 && gr.CalcTextWidth(last+'...', font)>maxW){
+        last=last.substring(0, last.length-1).replace(/\s+$/, '');
+      }
+      lines[lines.length-1]=last+'...';
+    }
   }
   return lines;
 }
@@ -482,7 +497,8 @@ function drawArtist(gr, r){
       tL(gr, lines[li], FONT.pl, COL.text2, btx, bioY+54+li*22, btw, 22);
     }
 
-    tL(gr, 'Verified profile via Deezer & Wikipedia', FONT.eyebrow, COL.text3, btx, bioY+bioH-30, btw, 16);
+    var srcName = (meta && meta.imageSource) ? meta.imageSource : 'Deezer & Wikipedia';
+    tL(gr, 'Verified profile via ' + srcName, FONT.eyebrow, COL.text3, btx, bioY+bioH-30, btw, 16);
   }
   curY+=bioH+64;
 

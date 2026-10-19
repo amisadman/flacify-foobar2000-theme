@@ -26,6 +26,73 @@ if ($Stop) {
 }
 
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 -bor [Net.SecurityProtocolType]::Tls13
+Add-Type -AssemblyName System.Drawing
+
+function Clean-BioText([string]$str) {
+    if (-not $str) { return "" }
+    $s = $str
+    $s = [regex]::Replace($s, '<a\b[^>]*>([\s\S]*?)<\/a>', '$1', 'IgnoreCase')
+    $s = [regex]::Replace($s, '<[^>]+>', '')
+    $s = $s.Replace('&amp;', '&').Replace('&quot;', '"').Replace('&apos;', "'").Replace('&lt;', '<').Replace('&gt;', '>').Replace('&nbsp;', ' ')
+    $s = [regex]::Replace($s, '&#(\d+);', { param($m)
+        $code = [int]$m.Groups[1].Value
+        if ($code -ge 32 -and $code -le 126) { return [char]$code }
+        if ($code -eq 10 -or $code -eq 13) { return "`n" }
+        return ''
+    })
+    $s = [regex]::Replace($s, '&#x[0-9a-fA-F]+;', '')
+    $s = [regex]::Replace($s, '[\uD800-\uDBFF][\uDC00-\uDFFF]', '')
+    $s = [regex]::Replace($s, '[\u2028\u2029\u00A0]', ' ')
+    $s = [regex]::Replace($s, '[\u200B-\u200D\uFEFF]', '')
+    $s = [regex]::Replace($s, '[ \t]+', ' ')
+    $s = [regex]::Replace($s, '\n{3,}', "`n`n")
+    $s = [regex]::Replace($s, '^\s+|\s+$', '')
+    return $s
+}
+
+function Crop-ToSquare([string]$imagePath) {
+    if (-not (Test-Path $imagePath)) { return $false }
+    try {
+        $bytes = [System.IO.File]::ReadAllBytes($imagePath)
+        $ms = New-Object System.IO.MemoryStream($bytes, 0, $bytes.Length)
+        $src = [System.Drawing.Image]::FromStream($ms)
+        $w = $src.Width
+        $h = $src.Height
+        if ($w -eq $h) {
+            $src.Dispose()
+            $ms.Dispose()
+            return $false
+        }
+
+        $sz = [System.Math]::Min($w, $h)
+        $x = [System.Math]::Floor(($w - $sz) / 2)
+        $y = [System.Math]::Floor(($h - $sz) / 2)
+
+        $cropRect = New-Object System.Drawing.Rectangle($x, $y, $sz, $sz)
+        $bmp = New-Object System.Drawing.Bitmap($sz, $sz, [System.Drawing.Imaging.PixelFormat]::Format32bppRgb)
+        $g = [System.Drawing.Graphics]::FromImage($bmp)
+        $g.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
+        $g.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::HighQuality
+        $g.PixelOffsetMode = [System.Drawing.Drawing2D.PixelOffsetMode]::HighQuality
+        $g.DrawImage($src, 0, 0, $cropRect, [System.Drawing.GraphicsUnit]::Pixel)
+
+        $src.Dispose()
+        $ms.Dispose()
+        $g.Dispose()
+
+        $tempPath = $imagePath + ".tmp.jpg"
+        $codec = [System.Drawing.Imaging.ImageCodecInfo]::GetImageEncoders() | Where-Object { $_.MimeType -eq "image/jpeg" }
+        $encoderParams = New-Object System.Drawing.Imaging.EncoderParameters(1)
+        $encoderParams.Param[0] = New-Object System.Drawing.Imaging.EncoderParameter([System.Drawing.Imaging.Encoder]::Quality, 92)
+        $bmp.Save($tempPath, $codec, $encoderParams)
+        $bmp.Dispose()
+
+        Move-Item -Path $tempPath -Destination $imagePath -Force
+        return $true
+    } catch {
+        return $false
+    }
+}
 
 if (-not (Test-Path $CacheDir)) {
     New-Item -ItemType Directory -Force -Path $CacheDir | Out-Null
@@ -384,6 +451,11 @@ foreach ($art in $artistNames) {
     }
 
     if ($fetchedMeta -or $fetchedImage) {
+        if ($metaObj.bio) { $metaObj.bio = Clean-BioText $metaObj.bio }
+        if ($metaObj.desc) { $metaObj.desc = Clean-BioText $metaObj.desc }
+        if (Test-Path $jpgPath) {
+            Crop-ToSquare $jpgPath | Out-Null
+        }
         try {
             $jsonStr = $metaObj | ConvertTo-Json -Compress
             [System.IO.File]::WriteAllText($metaPath, $jsonStr, [System.Text.Encoding]::UTF8)
