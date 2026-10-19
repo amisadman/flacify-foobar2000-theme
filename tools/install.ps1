@@ -36,7 +36,7 @@ $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 # broken, show robocopy's own words rather than a bare number.
 function Copy-Tree($from, $to, $mirror) {
     $args = @($from, $to, '/NFL', '/NDL', '/NJH', '/NJS', '/NP', '/R:2', '/W:2')
-    $args += $(if ($mirror) { '/MIR' } else { '/E' })
+    if ($mirror) { $args += @('/MIR', '/XD', 'cache', '.git') } else { $args += '/E' }
     for ($attempt = 1; $attempt -le 3; $attempt++) {
         $out = & robocopy @args 2>&1
         if ($LASTEXITCODE -lt 8) { $global:LASTEXITCODE = 0; return }
@@ -187,6 +187,17 @@ $themeDest = Join-Path $fb.Profile 'flacify'
 if (Test-Path $themeDest) { Note 'replacing an existing flacify\ folder'; [void]$restored.Add($themeDest); Copy-Item $themeDest -Destination (Join-Path $backupDir 'flacify') -Recurse -Force }
 else { [void]$added.Add($themeDest) }
 Copy-Tree $P.Theme $themeDest $true
+New-Item -ItemType Directory -Force -Path (Join-Path $themeDest 'cache\artists') | Out-Null
+New-Item -ItemType Directory -Force -Path (Join-Path $themeDest 'cache\playlist_covers') | Out-Null
+
+# Migrate existing cache from verdant if present and flacify is empty
+$oldCache = Join-Path $fb.Profile 'verdant\cache'
+$newCache = Join-Path $themeDest 'cache'
+if ((Test-Path $oldCache) -and (-not (Test-Path (Join-Path $newCache 'artists\index.json')))) {
+    Note 'migrating existing artist and cover cache from verdant...'
+    Copy-Tree $oldCache $newCache $false
+    Ok 'cache migrated from verdant'
+}
 Ok ("theme -> {0}" -f $themeDest)
 
 # ---------------------------------------------------------------------------

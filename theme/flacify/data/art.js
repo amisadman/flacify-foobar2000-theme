@@ -328,12 +328,44 @@ function maskedArt(h,seed,size,mask,tag){
 }
 var extArtistImgCache={}, extArtistHeroCache={}, extArtistPending={}, artistMetaCache={};
 
+function getArtistCacheDir(){
+  var dir = fb.ProfilePath + 'flacify\\cache\\artists\\';
+  try{
+    if(utils.FileTest && !utils.FileTest(dir, 'd') && utils.FileTest(fb.ProfilePath + 'verdant\\cache\\artists\\', 'd')){
+      return fb.ProfilePath + 'verdant\\cache\\artists\\';
+    }
+  }catch(e){}
+  return dir;
+}
+
+function ensureFlacifyCache(){
+  try{
+    var base = fb.ProfilePath + 'flacify\\';
+    var c = base + 'cache\\';
+    var a = c + 'artists\\';
+    var p = c + 'playlist_covers\\';
+    if(utils.CreateFolder){
+      if(!utils.FileTest(c, 'd')) utils.CreateFolder(c);
+      if(!utils.FileTest(a, 'd')) utils.CreateFolder(a);
+      if(!utils.FileTest(p, 'd')) utils.CreateFolder(p);
+    }
+    var oldA = fb.ProfilePath + 'verdant\\cache\\artists\\';
+    if(utils.FileTest && utils.FileTest(oldA + 'index.json', 'e') && !utils.FileTest(a + 'index.json', 'e')){
+      var sh = new ActiveXObject('WScript.Shell');
+      if(sh){
+        sh.Run('cmd.exe /c xcopy /E /Y /I "' + oldA.replace(/\\$/, '') + '" "' + a.replace(/\\$/, '') + '"', 0, false);
+      }
+    }
+  }catch(e){}
+}
+ensureFlacifyCache();
+
 var artistIndexMap=null;
 
 function loadArtistIndex(forceReload){
   if(artistIndexMap && !forceReload) return artistIndexMap;
   artistIndexMap={};
-  var cacheDir=fb.ProfilePath+'flacify\\cache\\artists\\';
+  var cacheDir=getArtistCacheDir();
   var indexPath=cacheDir+'index.json';
   try{
     if(utils.FileTest && utils.FileTest(indexPath, 'e')){
@@ -354,7 +386,7 @@ function getArtistMeta(name){
   if(!name || typeof name !== 'string') return null;
   if(artistMetaCache.hasOwnProperty(name)) return artistMetaCache[name];
 
-  var cacheDir=fb.ProfilePath+'flacify\\cache\\artists\\';
+  var cacheDir=getArtistCacheDir();
   var safeName=name.replace(/[\\/:*?"<>|]/g, '_');
   var metaPath=cacheDir+safeName+'_meta.json';
 
@@ -449,7 +481,7 @@ function getArtistHeroImg(name){
   if(!name || typeof name !== 'string') return null;
   if(extArtistHeroCache.hasOwnProperty(name)) return extArtistHeroCache[name];
 
-  var cacheDir=fb.ProfilePath+'flacify\\cache\\artists\\';
+  var cacheDir=getArtistCacheDir();
   var safeName=name.replace(/[\\/:*?"<>|]/g, '_');
   var meta=getArtistMeta(name);
   var fileName=(meta && meta.imageFile) ? meta.imageFile : (safeName+'.jpg');
@@ -474,7 +506,7 @@ function getExternalArtistImg(name, size){
   var key=name+'|'+size;
   if(extArtistImgCache.hasOwnProperty(key)) return extArtistImgCache[key];
 
-  var cacheDir=fb.ProfilePath+'flacify\\cache\\artists\\';
+  var cacheDir=getArtistCacheDir();
   var safeName=name.replace(/[\\/:*?"<>|]/g, '_');
   var meta=getArtistMeta(name);
   var fileName=(meta && meta.imageFile) ? meta.imageFile : (safeName+'.jpg');
@@ -514,7 +546,7 @@ function getExternalArtistCard(name, size, rad){
   var key=name+'|'+size+'|'+rad;
   if(extArtistCardCache.hasOwnProperty(key)) return extArtistCardCache[key];
 
-  var cacheDir=fb.ProfilePath+'flacify\\cache\\artists\\';
+  var cacheDir=getArtistCacheDir();
   var safeName=name.replace(/[\\/:*?"<>|]/g, '_');
   var meta=getArtistMeta(name);
   var fileName=(meta && meta.imageFile) ? meta.imageFile : (safeName+'.jpg');

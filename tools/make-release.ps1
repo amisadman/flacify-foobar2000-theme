@@ -45,6 +45,12 @@ $null = robocopy $need['components'] (Join-Path $stage 'profile\user-components-
 if ($LASTEXITCODE -ge 8) { throw 'staging components failed' }
 $global:LASTEXITCODE = 0   # robocopy returns 1 for "files copied"; don't let it look like failure
 
+# Ensure cache directories exist out-of-the-box
+New-Item -ItemType Directory -Force -Path (Join-Path $stage 'profile\flacify\cache\artists') | Out-Null
+New-Item -ItemType Directory -Force -Path (Join-Path $stage 'profile\flacify\cache\playlist_covers') | Out-Null
+Set-Content -Path (Join-Path $stage 'profile\flacify\cache\artists\.gitkeep') -Value ''
+Set-Content -Path (Join-Path $stage 'profile\flacify\cache\playlist_covers\.gitkeep') -Value ''
+
 New-Item -ItemType Directory -Force -Path (Join-Path $stage 'profile\configuration') | Out-Null
 foreach ($f in 'foo_ui_columns.dll.cfg','foo_uie_jsplitter.dll.cfg','foo_ui_wizard.dll.cfg') {
     $src = Join-Path $repo "dist-config\$f"

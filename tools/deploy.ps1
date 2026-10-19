@@ -61,11 +61,23 @@ $dest = Join-Path $FoobarProfile 'flacify'
 function Sync-Theme {
     # /MIR so a module deleted here also disappears from the profile -- a stale .js left behind
     # would still be include()d and would silently shadow the current code.
-    $null = robocopy $src $dest /MIR /NFL /NDL /NJH /NJS /NP
+    # /XD cache .git ensures user artwork and portraits are NEVER deleted.
+    $null = robocopy $src $dest /MIR /XD cache .git /NFL /NDL /NJH /NJS /NP
     # robocopy is not a normal exit-code citizen: 0 = nothing to do, 1 = files copied,
     # anything >= 8 is a real failure. Clear it so a successful copy doesn't look like one.
     if ($LASTEXITCODE -ge 8) { throw "robocopy failed with exit code $LASTEXITCODE" }
     $global:LASTEXITCODE = 0
+
+    # Ensure cache directories exist and migrate from verdant if needed
+    New-Item -ItemType Directory -Force -Path (Join-Path $dest 'cache\artists') | Out-Null
+    New-Item -ItemType Directory -Force -Path (Join-Path $dest 'cache\playlist_covers') | Out-Null
+    $oldCache = Join-Path $FoobarProfile 'verdant\cache'
+    $newCache = Join-Path $dest 'cache'
+    if ((Test-Path $oldCache) -and (-not (Test-Path (Join-Path $newCache 'artists\index.json')))) {
+        & robocopy $oldCache $newCache /E /NFL /NDL /NJH /NJS /NP
+        $global:LASTEXITCODE = 0
+    }
+
     $n = (Get-ChildItem -Recurse -File $src).Count
     Write-Host ("[{0}] deployed {1} files -> {2}" -f (Get-Date -Format 'HH:mm:ss'), $n, $dest)
 }
