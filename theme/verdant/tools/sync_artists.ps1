@@ -25,13 +25,32 @@ if ($Stop) {
     exit 0
 }
 
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+[Console]::InputEncoding  = [System.Text.Encoding]::UTF8
+$OutputEncoding           = [System.Text.Encoding]::UTF8
+
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 -bor [Net.SecurityProtocolType]::Tls13
 Add-Type -AssemblyName System.Drawing
 
 function Clean-BioText([string]$str) {
     if (-not $str) { return "" }
     $s = $str
+    # 1. Decode CP437 Mojibake artifacts (e.g. ΓÇÖ -> ', ΓÇ£/ΓÇ¥ -> ", etc.)
+    $gamma = [char]0x0393
+    $cedilla = [char]0x00C7
+    $pattern = "$gamma$cedilla"
+    if ($s.Contains($pattern)) {
+        $s = $s.Replace("$gamma$cedilla$([char]0x00D6)", "'")
+        $s = $s.Replace("$gamma$cedilla$([char]0x00A3)", '"')
+        $s = $s.Replace("$gamma$cedilla$([char]0x00A5)", '"')
+        $s = $s.Replace("$gamma$cedilla$([char]0x00F6)", "-")
+        $s = $s.Replace("$gamma$cedilla$([char]0x00F3)", "--")
+        $s = $s.Replace("$gamma$cedilla$([char]0x00AA)", "...")
+        $s = [regex]::Replace($s, [regex]::Escape($pattern) + '.', "'")
+    }
+    # 2. Unwrap HTML anchors: <a ...>Inner Text</a> -> Inner Text
     $s = [regex]::Replace($s, '<a\b[^>]*>([\s\S]*?)<\/a>', '$1', 'IgnoreCase')
+    # 3. Strip remaining HTML tags
     $s = [regex]::Replace($s, '<[^>]+>', '')
     $s = $s.Replace('&amp;', '&').Replace('&quot;', '"').Replace('&apos;', "'").Replace('&lt;', '<').Replace('&gt;', '>').Replace('&nbsp;', ' ')
     $s = [regex]::Replace($s, '&#(\d+);', { param($m)

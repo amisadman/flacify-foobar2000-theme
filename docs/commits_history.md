@@ -480,6 +480,22 @@ git commit -m "fix(artist): prevent image stretching with aspectFillSquare and s
   - Integrated `Crop-ToSquare` and `Clean-BioText` directly into `tools/sync_artists.ps1` for all future sync operations.
 - **Rationale**: Ensures every portrait renders in pristine 1:1 proportion without distortion and eliminates all unknown replacement glyphs or broken raw HTML markup from artist bios.
 
+---
+
+### Commit 22: UTF-8 Console Output Encoding & Mojibake Elimination
+- **Commit Title**: `fix(encoding): enforce UTF-8 console output encoding to eliminate CP437 mojibake in artist bios`
+- **Scope**: Character encoding & metadata parsing
+- **Modified Files**:
+  - `theme/verdant/data/art.js`
+  - `theme/verdant/tools/sync_artists.ps1`
+  - `theme/verdant/tools/clean_artist_cache.ps1`
+  - `docs/commits_history.md`
+- **Key Changes**:
+  - Set `[Console]::OutputEncoding = [System.Text.Encoding]::UTF8` in sync and cache scripts, stopping Windows PowerShell from interpreting UTF-8 CLI (`curl.exe`) stdout as IBM437 (which converted `’` into `ΓÇÖ`).
+  - Added CP437 and Windows-1252 mojibake reversal patterns to `cleanBioText` in `data/art.js` and `Clean-BioText` in PowerShell scripts.
+  - Repaired all 71 existing metadata files in the artist cache that contained `ΓÇÖ` / mojibake artifacts.
+- **Rationale**: Completely eradicates `ΓÇÖ` and related CP437 corrupted characters from ever appearing in artist biographies on screen or disk.
+
 
 
 

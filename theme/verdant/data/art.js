@@ -280,15 +280,29 @@ function cleanBioText(str){
     if(code === 10 || code === 13) return '\n';
     return '';
   });
-  // 5. Remove hex entities (e.g. &#x1faf5; emojis)
+  // 5. Decode CP437 & Windows-1252 Mojibake artifacts (e.g. ΓÇÖ -> ', ΓÇ£/ΓÇ¥ -> ", ΓÇô/ΓÇö -> -)
+  s = s.replace(/\u0393\u00C7\u00D6/g, "'")
+       .replace(/\u0393\u00C7\u00A3/g, '"')
+       .replace(/\u0393\u00C7\u00A5/g, '"')
+       .replace(/\u0393\u00C7\u00F6/g, '-')
+       .replace(/\u0393\u00C7\u00F3/g, '--')
+       .replace(/\u0393\u00C7\u00AA/g, '...')
+       .replace(/\u0393\u00C7[\s\S]/g, "'")
+       .replace(/â€™/g, "'")
+       .replace(/â€œ/g, '"')
+       .replace(/â€\x9d/g, '"')
+       .replace(/â€“/g, '-')
+       .replace(/â€”/g, '--')
+       .replace(/â€¦/g, '...');
+  // 6. Remove hex entities (e.g. &#x1faf5; emojis)
   s = s.replace(/&#x[0-9a-fA-F]+;/gi, '');
-  // 6. Remove surrogate pair emojis (SMP code points) which DrawTextW cannot render
+  // 7. Remove surrogate pair emojis (SMP code points) which DrawTextW cannot render
   s = s.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, '');
-  // 7. Remove Unicode line/paragraph separators & non-breaking spaces
+  // 8. Remove Unicode line/paragraph separators & non-breaking spaces
   s = s.replace(/[\u2028\u2029]/g, ' ')
        .replace(/[\u00A0]/g, ' ')
        .replace(/[\u200B-\u200D\uFEFF]/g, '');
-  // 8. Clean up whitespace
+  // 9. Clean up whitespace
   s = s.replace(/[ \t]+/g, ' ')
        .replace(/\n{3,}/g, '\n\n')
        .replace(/^\s+|\s+$/g, '');
