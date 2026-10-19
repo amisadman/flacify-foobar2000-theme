@@ -242,6 +242,28 @@ This document outlines the sequential states of the repository from the upstream
     - 60fps continuous eased scrolling synchronized with draggable custom scrollbars and mouse wheel.
 - **Rationale**: Elevates the artist profile from a basic 43-line stub into a rich, modern music streaming platform experience.
 
+### Commit 14: Offline-First Artist Cloud Sync Manager & Unresponsive Script Fix
+- **Commit Title**: `feat(sync): add offline-first Artist Cloud Sync manager, live progress page, and fix unresponsive script warning`
+- **Scope**: Performance hotfix, offline caching, dedicated Artist Sync full-page view, background worker
+- **Modified Files**:
+  - `theme/verdant/data/art.js`
+  - `theme/verdant/views/artist_sync.js`
+  - `theme/verdant/tools/sync_artists.ps1`
+  - `theme/verdant/views/nav.js`
+  - `theme/verdant/views/artists.js`
+  - `theme/verdant/core/tokens.js`
+  - `theme/verdant/main.js`
+  - `theme/verdant/ui/chrome.js`
+  - `theme/verdant/app.js`
+- **Key Changes**:
+  - Eliminated "Warning: Unresponsive script" by removing paint-time process spawning from `getExternalArtistImg`, `drawCircle`, and `getArtistMeta`. Rendering is now 100% offline-first reading only from local cache.
+  - Added persistent artist state manifest (`cache/artists/index.json`) tracking which artists are cached, their fan count, and metadata state.
+  - Implemented dedicated full-page Artist Cloud Sync & Media Manager view (`views/artist_sync.js`) accessible from the sidebar navigation ("Artist Sync") and Artists view header ("Cloud Sync" button).
+  - Designed live progress bar, artist library metrics (Total, Cached, Missing), and controls: `[ Fetch Missing ]`, `[ Refresh All ]`, `[ Stop Sync ]`, and `[ Open Cache Folder ]`.
+  - Added interactive table of all library artists displaying circular portraits, track count, listeners, status badges (`✓ Cached`, `⏳ Fetching`, `— Missing`), and individual `[ Fetch ]` buttons.
+  - Implemented detached rate-limited background worker (`tools/sync_artists.ps1`) updating `sync_progress.json` without blocking foobar2000's UI thread.
+- **Rationale**: Gives users complete control over when and how online artist media is fetched, with visual progress feedback and guaranteed zero UI freezes.
+
 ---
 
 ## Git Staging Instructions for Forking
@@ -295,5 +317,9 @@ git commit -m "fix(library): unify tracks of the same album across multiple arti
 # Commit 13: Artist Profile Redesign with Deezer & Wikipedia Integration
 git add theme/verdant/data/art.js theme/verdant/data/library.js theme/verdant/views/artist.js theme/verdant/ui/chrome.js theme/verdant/app.js docs/
 git commit -m "feat(artist): redesign artist view with Deezer imagery, fan stats, popular tracks, and categorized discography"
+
+# Commit 14: Offline-First Artist Cloud Sync Manager & Unresponsive Script Fix
+git add theme/verdant/data/art.js theme/verdant/views/artist_sync.js theme/verdant/tools/sync_artists.ps1 theme/verdant/views/nav.js theme/verdant/views/artists.js theme/verdant/core/tokens.js theme/verdant/main.js theme/verdant/ui/chrome.js theme/verdant/app.js docs/
+git commit -m "feat(sync): add offline-first Artist Cloud Sync manager, live progress page, and fix unresponsive script warning"
 ```
 

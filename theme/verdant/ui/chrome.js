@@ -54,6 +54,7 @@ function setScroll(y){
   else if(view==='album') albumScroll=albumScrollT=px;
   else if(view==='artists') artistsScroll=artistsScrollT=px;
   else if(view==='artist') artistScroll=artistScrollT=px;
+  else if(view==='artist_sync') artistSyncScroll=artistSyncScrollT=px;
   repaintMain();
 }
 function setScrollN(y){ if(!SBN) return; navScroll=navScrollT=Math.round(sbFrac(y,SBN.top,SBN.h,SBN.thumbH)*SBN.maxPx); repaintNav(); }

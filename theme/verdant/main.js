@@ -61,6 +61,7 @@ include('views/playlist.js');
 include('views/home.js');
 include('views/artist.js');
 include('views/artists.js');
+include('views/artist_sync.js');
 include('views/album.js');
 include('views/albums.js');
 include('views/songs.js');

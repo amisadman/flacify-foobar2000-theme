@@ -2,7 +2,7 @@
    Part of Verdant, a Spotify-style theme for foobar2000. Loaded by main.js;
    every module shares one global scope, so load order is set there. */
 
-var HB_ALBUMS=null, HB_ARTISTS=null;
+var HB_ALBUMS=null, HB_ARTISTS=null, HB_ARTIST_SYNC=null;
 // one sidebar row: cover + name + subtitle. pi<0 draws the library mosaic instead of a playlist cover.
 function drawNavRow(gr,y,h,on,hov,pi,name,sub){
   if(on||hov) gr.FillRoundRect(R.navLib.x+8,y,R.navLib.w-16,h-4,6,6,on?COL.rowActive:COL.rowHover);
@@ -15,6 +15,9 @@ function drawNavRow(gr,y,h,on,hov,pi,name,sub){
   } else if(pi===-3){
     gr.FillEllipse(cx,cy,cs,cs,RGBA(255,255,255,16));
     drawIcon(gr,'artist',on?COL.green:COL.text2,cx,cy,cs,cs,18);
+  } else if(pi===-4){
+    gr.FillEllipse(cx,cy,cs,cs,RGBA(255,255,255,16));
+    drawIcon(gr,'sync',on?COL.green:COL.text2,cx,cy,cs,cs,18);
   } else {
     gr.FillEllipse(cx,cy,cs,cs,RGBA(255,255,255,16));
     drawIcon(gr,'home',on?COL.green:COL.text2,cx,cy,cs,cs,18);
@@ -51,8 +54,9 @@ function drawNav(gr){
   var pinY=R.navLib.y+44, pinH=44;                     // pinned "All Songs" row
   var pinY2=pinY+pinH+2, pinH2=44;                     // pinned "Albums" row
   var pinY3=pinY2+pinH2+2, pinH3=44;                   // pinned "Artists" row
+  var pinY4=pinY3+pinH3+2, pinH4=44;                   // pinned "Artist Sync" row
   // scrollable playlist list (continuous pixel scroll), cropped just above the footer
-  var listTop=pinY3+pinH3+10, rh=54, cropY=footTop-6, viewH=cropY-listTop;
+  var listTop=pinY4+pinH4+10, rh=54, cropY=footTop-6, viewH=cropY-listTop;
   var contentH=pls.length*rh, maxPx=Math.max(0,contentH-viewH);
   NAV_MAX=maxPx;
   navScroll=clampPx(navScroll,maxPx); navScrollT=clampPx(navScrollT,maxPx);
@@ -79,7 +83,7 @@ function drawNav(gr){
     if(rowHov && ry>=listTop) drawDots(gr,R.navLib.x+R.navLib.w-32,ry+(rh-24)/2,i2);
     if(hy1>hy0) HB_PL.push({x0:R.navLib.x,y0:hy0,x1:R.navLib.x+R.navLib.w,y1:hy1,i:i2});
   }
-  // crop partial rows top & bottom, redraw the sticky header block (title + All Songs + Albums + Artists), then the scrollbar
+  // crop partial rows top & bottom, redraw the sticky header block (title + All Songs + Albums + Artists + Sync), then the scrollbar
   gr.FillSolidRect(R.navLib.x,R.navLib.y+M.radius+2,R.navLib.w,listTop-R.navLib.y-M.radius-2,COL.base);
   gr.FillSolidRect(R.navLib.x,cropY,R.navLib.w,R.navLib.y+R.navLib.h-cropY,COL.base);
   tL(gr,'Your Library',FONT.lib,COL.text2,R.navLib.x+18,R.navLib.y+14,R.navLib.w-56,26);
@@ -89,6 +93,8 @@ function drawNav(gr){
   HB_ALBUMS={x0:R.navLib.x,y0:pinY2,x1:R.navLib.x+R.navLib.w,y1:pinY2+pinH2};
   drawNavRow(gr,pinY3,pinH3,view==='artists'||view==='artist',hv(R.navLib.x,pinY3,R.navLib.x+R.navLib.w,pinY3+pinH3),-3,'Artists',fmtNum(getArtistList().length)+' artists');
   HB_ARTISTS={x0:R.navLib.x,y0:pinY3,x1:R.navLib.x+R.navLib.w,y1:pinY3+pinH3};
+  drawNavRow(gr,pinY4,pinH4,view==='artist_sync',hv(R.navLib.x,pinY4,R.navLib.x+R.navLib.w,pinY4+pinH4),-4,'Artist Sync','Cloud media manager');
+  HB_ARTIST_SYNC={x0:R.navLib.x,y0:pinY4,x1:R.navLib.x+R.navLib.w,y1:pinY4+pinH4};
   gr.DrawLine(R.navLib.x+16,listTop-6,R.navLib.x+R.navLib.w-16,listTop-6,1,COL.line);
   drawScrollbarN(gr,R.navLib.x+R.navLib.w-9,listTop,viewH,navScroll,maxPx,viewH,contentH,hv(R.navLib.x,R.navLib.y,R.navLib.x+R.navLib.w,R.navLib.y+R.navLib.h)||drag==='scrolln');
   drawAddPlaylist(gr,footTop,footH);

@@ -242,6 +242,28 @@ function maskedArt(h,seed,size,mask,tag){
 }
 var extArtistImgCache={}, extArtistHeroCache={}, extArtistPending={}, artistMetaCache={};
 
+var artistIndexMap=null;
+
+function loadArtistIndex(forceReload){
+  if(artistIndexMap && !forceReload) return artistIndexMap;
+  artistIndexMap={};
+  var cacheDir=fb.ProfilePath+'verdant\\cache\\artists\\';
+  var indexPath=cacheDir+'index.json';
+  try{
+    if(utils.FileTest && utils.FileTest(indexPath, 'e')){
+      var txt=utils.ReadTextFile(indexPath, 65001);
+      if(txt){
+        var parsed=JSON.parse(txt);
+        if(parsed && parsed.artists){
+          artistIndexMap=parsed.artists;
+          return artistIndexMap;
+        }
+      }
+    }
+  }catch(e){}
+  return artistIndexMap;
+}
+
 function getArtistMeta(name){
   if(!name || typeof name !== 'string') return null;
   if(artistMetaCache.hasOwnProperty(name)) return artistMetaCache[name];
@@ -264,8 +286,6 @@ function getArtistMeta(name){
       }
     }catch(e2){}
   }
-
-  fetchArtistOnlineInfo(name);
   return null;
 }
 
@@ -291,71 +311,6 @@ function getArtistHeroImg(name){
   return null;
 }
 
-var artistWatchTimers={};
-
-function startArtistWatch(name){
-  if(artistWatchTimers[name]) return;
-  var checks=0;
-  var maxChecks=20; // 20 * 300ms = 6s
-  var cacheDir=fb.ProfilePath+'verdant\\cache\\artists\\';
-  var safeName=name.replace(/[\\/:*?"<>|]/g, '_');
-  var metaPath=cacheDir+safeName+'_meta.json';
-  var filePath=cacheDir+safeName+'.jpg';
-
-  var timer=window.SetInterval(function(){
-    checks++;
-    var metaExists=false, imgExists=false;
-    try{ metaExists=utils.FileTest && utils.FileTest(metaPath, 'e'); }catch(e){}
-    try{ imgExists=utils.FileTest && utils.FileTest(filePath, 'e'); }catch(e){}
-
-    if(metaExists || imgExists || checks>=maxChecks){
-      window.ClearInterval(timer);
-      delete artistWatchTimers[name];
-      extArtistPending[name]=false;
-
-      if(metaExists){
-        try{
-          var txt=utils.ReadTextFile(metaPath, 65001);
-          if(txt){
-            var parsed=JSON.parse(txt);
-            if(parsed) artistMetaCache[name]=parsed;
-          }
-        }catch(e2){}
-      }
-      if(imgExists){
-        try{
-          var raw=gdi.Image(filePath);
-          if(raw){
-            extArtistHeroCache[name]=raw;
-            extArtistImgCache={};
-          }
-        }catch(e3){}
-      }
-      artWarmRepaint();
-    }
-  }, 300);
-
-  artistWatchTimers[name]=timer;
-}
-
-function fetchArtistOnlineInfo(name){
-  if(!name || typeof name !== 'string' || extArtistPending[name]) return;
-  extArtistPending[name]=true;
-  var cacheDir=fb.ProfilePath+'verdant\\cache\\artists\\';
-  var safeName=name.replace(/[\\/:*?"<>|]/g, '_');
-  var scriptPath=fb.ProfilePath+'verdant\\tools\\fetch_artist.ps1';
-
-  try{
-    if(utils.CreateFolder) utils.CreateFolder(cacheDir);
-    var sh=new ActiveXObject('WScript.Shell');
-    var cmd='powershell.exe -WindowStyle Hidden -ExecutionPolicy Bypass -File "' + scriptPath + '" -Artist "' + name.replace(/"/g, '`"') + '" -CacheDir "' + cacheDir.replace(/\\$/, '') + '"';
-    sh.Run(cmd, 0, false);
-    startArtistWatch(name);
-  }catch(e){
-    extArtistPending[name]=false;
-  }
-}
-
 function getExternalArtistImg(name, size){
   if(!name || typeof name !== 'string') return null;
   var key=name+'|'+size;
@@ -378,8 +333,6 @@ function getExternalArtistImg(name, size){
       }
     }catch(e2){}
   }
-
-  fetchArtistOnlineInfo(name);
   return null;
 }
 

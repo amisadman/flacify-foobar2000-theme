@@ -2,10 +2,11 @@
    Part of Verdant, a Spotify-style theme for foobar2000. Loaded by main.js;
    every module shares one global scope, so load order is set there. */
 
-var artistsScroll=0, artistsScrollT=0, ARTISTS_MAXPX=0;
+var artistsScroll=0, artistsScrollT=0, ARTISTS_MAXPX=0, HB_ARTISTS_SYNC_BTN=null;
 
 function drawArtists(gr, r){
   HB_CARD=[];
+  HB_ARTISTS_SYNC_BTN=null;
   var pad=M.cpad, x0=r.x+pad, w=r.w-pad*2, i;
   var list=getArtistList();
 
@@ -66,6 +67,15 @@ function drawArtists(gr, r){
   gr.FillSolidRect(r.x,r.y,r.w,gy-r.y,COL.base);
   tL(gr,'Artists',FONT.sect2,COL.text,x0,titleY,w,30);
   tL(gr,fmtNum(list.length)+' artists in your library',FONT.meta,COL.text2,x0,titleY+32,w,20);
+
+  // Cloud Sync Header Button
+  var csBtnW=130, csBtnH=32, csBtnX=x0+w-csBtnW, csBtnY=titleY+8;
+  var csBtnHot=hv(csBtnX,csBtnY,csBtnX+csBtnW,csBtnY+csBtnH);
+  gr.FillRoundRect(csBtnX,csBtnY,csBtnW,csBtnH,csBtnH/2,csBtnH/2,csBtnHot?RGBA(255,255,255,24):RGBA(255,255,255,10));
+  strokeRound(gr,csBtnX,csBtnY,csBtnW,csBtnH,csBtnH/2,1,csBtnHot?COL.green:RGBA(255,255,255,24));
+  drawIcon(gr,'sync',csBtnHot?COL.green:COL.text2,csBtnX+8,csBtnY+8,16,16,14);
+  tC(gr,'Cloud Sync',FONT.plSub,csBtnHot?COL.green:COL.text,csBtnX+14,csBtnY,csBtnW-14,csBtnH);
+  HB_ARTISTS_SYNC_BTN={x0:csBtnX,y0:csBtnY,x1:csBtnX+csBtnW,y1:csBtnY+csBtnH};
 
   // Bottom gutter
   gr.FillSolidRect(r.x,cropY,r.w,M.pad+2,COL.black);

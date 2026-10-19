@@ -59,6 +59,7 @@ function scrollTick(){
   var d7=albumScrollT-albumScroll, d8=albumsScrollT-albumsScroll, d9=(typeof artistsScrollT!=='undefined'?artistsScrollT-artistsScroll:0);
   var d10=(typeof songDetScrollT!=='undefined'?songDetScrollT-songDetScroll:0);
   var d11=(typeof artistScrollT!=='undefined'?artistScrollT-artistScroll:0);
+  var d12=(typeof artistSyncScrollT!=='undefined'?artistSyncScrollT-artistSyncScroll:0);
   if(Math.abs(d1)>=0.5){ firstRow+=d1*0.25; mm=true; } else firstRow=firstRowT;
   if(Math.abs(d3)>=0.5){ homeScroll+=d3*0.25; mm=true; } else homeScroll=homeScrollT;
   if(Math.abs(d4)>=0.5){ songsScroll+=d4*0.25; mm=true; } else songsScroll=songsScrollT;
@@ -69,11 +70,12 @@ function scrollTick(){
   if(Math.abs(d9)>=0.5){ artistsScroll+=d9*0.25; mm=true; } else if(typeof artistsScrollT!=='undefined') artistsScroll=artistsScrollT;
   if(Math.abs(d10)>=0.5){ songDetScroll+=d10*0.25; repaintAll(); } else if(typeof songDetScrollT!=='undefined') songDetScroll=songDetScrollT;
   if(Math.abs(d11)>=0.5){ artistScroll+=d11*0.25; mm=true; } else if(typeof artistScrollT!=='undefined') artistScroll=artistScrollT;
+  if(Math.abs(d12)>=0.5){ artistSyncScroll+=d12*0.25; mm=true; } else if(typeof artistSyncScrollT!=='undefined') artistSyncScroll=artistSyncScrollT;
   if(Math.abs(d2)>=0.5){ navScroll+=d2*0.25; nm=true; } else navScroll=navScrollT;
   if(mm) repaintMain();
   if(nm) repaintNav();
   // one more frame after the scroll settles, so shimSettle can restart the sweep it suppressed
-  if(!mm && !nm && Math.abs(d10)<0.5 && Math.abs(d11)<0.5){ stopScrollAnim(); if(shimCount>0) repaintMain(); }
+  if(!mm && !nm && Math.abs(d10)<0.5 && Math.abs(d11)<0.5 && Math.abs(d12)<0.5){ stopScrollAnim(); if(shimCount>0) repaintMain(); }
 }
 function startScrollAnim(){ if(!scrollTimer) scrollTimer=window.SetInterval(scrollTick,16); }
 function stopScrollAnim(){ if(scrollTimer){ window.ClearInterval(scrollTimer); scrollTimer=null; } }
@@ -135,6 +137,9 @@ function applyNavEntry(entry){
     artistsScroll=artistsScrollT=0;
   } else if(view==='search'){
     searchScroll=searchScrollT=0;
+  } else if(view==='artist_sync'){
+    artistSyncScroll=artistSyncScrollT=0;
+    startSyncProgressPoll();
   } else if(view==='home'){
     homeScroll=homeScrollT=0;
   }
@@ -258,6 +263,7 @@ function drawMain(gr){
   if(view==='albums'){ drawAlbums(gr,r); return; }
   if(view==='album'){ drawAlbum(gr,r); return; }
   if(view==='artists'){ drawArtists(gr,r); return; }
+  if(view==='artist_sync'){ drawArtistSync(gr,r); return; }
   drawPlaylist(gr,r);
 }
 
@@ -620,6 +626,28 @@ function on_mouse_lbtn_up(x,y){
   if(HB_ALLSONGS && inRect(x,y,HB_ALLSONGS)){ if(view!=='songs'){ pushNav('songs'); view='songs'; songsScroll=songsScrollT=0; } repaintAll(); return; }
   if(HB_ALBUMS && inRect(x,y,HB_ALBUMS)){ if(view!=='albums'){ pushNav('albums'); view='albums'; albumsScroll=albumsScrollT=0; } repaintAll(); return; }
   if(HB_ARTISTS && inRect(x,y,HB_ARTISTS)){ if(view!=='artists'){ pushNav('artists'); view='artists'; artistsScroll=artistsScrollT=0; } repaintAll(); return; }
+  if((HB_ARTIST_SYNC && inRect(x,y,HB_ARTIST_SYNC)) || (HB_ARTISTS_SYNC_BTN && inRect(x,y,HB_ARTISTS_SYNC_BTN))){
+    if(view!=='artist_sync'){ pushNav('artist_sync'); view='artist_sync'; artistSyncScroll=artistSyncScrollT=0; startSyncProgressPoll(); }
+    repaintAll(); return;
+  }
+  if(HB_SYNC_FETCH_MISSING && inRect(x,y,HB_SYNC_FETCH_MISSING)){ triggerArtistSync('missing'); return; }
+  if(HB_SYNC_FETCH_ALL && inRect(x,y,HB_SYNC_FETCH_ALL)){ triggerArtistSync('all'); return; }
+  if(HB_SYNC_STOP && inRect(x,y,HB_SYNC_STOP)){ stopArtistSync(); return; }
+  if(HB_SYNC_OPEN_DIR && inRect(x,y,HB_SYNC_OPEN_DIR)){ openArtistCacheFolder(); return; }
+  if(HB_SYNC_ROWS && HB_SYNC_ROWS.length){
+    for(var sri=0; sri<HB_SYNC_ROWS.length; sri++){
+      var sRow=HB_SYNC_ROWS[sri];
+      if(inRect(x,y,sRow)){
+        if(sRow.fetchBtn && inRect(x,y,sRow.fetchBtn)){
+          if(sRow.isCached){ loadArtist(sRow.artist); artistScroll=artistScrollT=0; pushNav('artist',{artist:sRow.artist}); view='artist'; }
+          else triggerArtistSync('single', sRow.artist);
+        } else if(sRow.artist){
+          loadArtist(sRow.artist); artistScroll=artistScrollT=0; pushNav('artist',{artist:sRow.artist}); view='artist';
+        }
+        repaintAll(); return;
+      }
+    }
+  }
   if(HB_ADDPL && inRect(x,y,HB_ADDPL)){ var np=createNewPlaylist(); plman.ActivePlaylist=np; revealPlaylist(np); firstRow=firstRowT=0; pushNav('playlist',{pl:np}); view='playlist'; repaintAll(); return; }
   if(HB_PLADD_FILES && inRect(x,y,HB_PLADD_FILES)){ addFilesToPl(plman.ActivePlaylist); return; }
   if(HB_PLADD_FOLDER && inRect(x,y,HB_PLADD_FOLDER)){ addFolderToPl(plman.ActivePlaylist); return; }
@@ -743,6 +771,17 @@ function hoverSig(x,y){
       if(inRect(x,y,HB_ARTIST_APPEARS[api])) return 'artapp'+api;
     }
   }
+  if(HB_ARTIST_SYNC && inRect(x,y,HB_ARTIST_SYNC)) return 'artsync';
+  if(HB_ARTISTS_SYNC_BTN && inRect(x,y,HB_ARTISTS_SYNC_BTN)) return 'artsyncbtn';
+  if(HB_SYNC_FETCH_MISSING && inRect(x,y,HB_SYNC_FETCH_MISSING)) return 'syncmiss';
+  if(HB_SYNC_FETCH_ALL && inRect(x,y,HB_SYNC_FETCH_ALL)) return 'syncall';
+  if(HB_SYNC_STOP && inRect(x,y,HB_SYNC_STOP)) return 'syncstop';
+  if(HB_SYNC_OPEN_DIR && inRect(x,y,HB_SYNC_OPEN_DIR)) return 'syncopendir';
+  if(HB_SYNC_ROWS && HB_SYNC_ROWS.length){
+    for(var sri2=0; sri2<HB_SYNC_ROWS.length; sri2++){
+      if(inRect(x,y,HB_SYNC_ROWS[sri2])) return 'syncrow'+sri2;
+    }
+  }
   if(HB_SG && inRect(x,y,HB_SG)) return 'sgb';
   if(HB_RGNORM && inRect(x,y,HB_RGNORM)) return 'nzb';
   if(HB_PLSORT && inRect(x,y,HB_PLSORT)) return 'psb';
@@ -787,6 +826,7 @@ function scrollSection(x,y){
     if(view==='album') return 'alb';
     if(view==='artists') return 'artgr';
     if(view==='artist') return 'art';
+    if(view==='artist_sync') return 'artsync';
   }
   return '';
 }
@@ -848,6 +888,7 @@ function on_mouse_wheel(step){
   else if(view==='artist'){ artistScrollT=clampPx(artistScrollT-step*WHEEL_PX,ARTIST_MAXPX); startScrollAnim(); return; }
   else if(view==='albums'){ albumsScrollT=clampPx(albumsScrollT-step*Math.round(WHEEL_PX*1.7),ALBUMS_MAXPX); startScrollAnim(); return; }
   else if(view==='artists'){ artistsScrollT=clampPx(artistsScrollT-step*Math.round(WHEEL_PX*1.7),ARTISTS_MAXPX); startScrollAnim(); return; }
+  else if(view==='artist_sync'){ artistSyncScrollT=clampPx(artistSyncScrollT-step*WHEEL_PX,ARTIST_SYNC_MAXPX); startScrollAnim(); return; }
   else if(view==='album'){ albumScrollT=clampPx(albumScrollT-step*WHEEL_PX,ALBUM_MAXPX); startScrollAnim(); return; }
   firstRowT=clampPx(firstRowT-step*WHEEL_PX,PL_MAXPX); startScrollAnim();
 }
