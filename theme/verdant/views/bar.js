@@ -134,6 +134,12 @@ function drawBar(gr){
   drawIcon(gr,'expand',hv(fsx-8,gearC-16,fsx+30,gearC+16)?COL.text:COL.text2,fsx,gearC-13,26,26,22);
   HB_CTRL.push({x0:fsx-8,y0:gearC-16,x1:fsx+30,y1:gearC+16,act:'fullscreen'});
   var volW=104, volX=fsx-24-volW, volY=gearC-2;
-  drawIcon(gr,'volume',COL.text2,volX-32,gearC-13,26,26,22);
-  HB_VOL=drawTrackBar(gr,volX,volY,volW,5,COL.seekbg,clamp01(vol2pos(fb.Volume)));
+  var isMuted=(fb.Volume<=-99);
+  var spkIco=isMuted?'volumeMute':'volume';
+  var spkX=volX-32, spkY=gearC-13, spkW=26, spkH=26;
+  var spkHov=hv(spkX-6,gearC-16,spkX+spkW+4,gearC+16);
+  var spkCol=spkHov?COL.text:(isMuted?RGB(220,80,80):COL.text2);
+  drawIcon(gr,spkIco,spkCol,spkX,spkY,spkW,spkH,22);
+  HB_CTRL.push({x0:spkX-6,y0:gearC-16,x1:spkX+spkW+4,y1:gearC+16,act:'mute'});
+  HB_VOL=drawTrackBar(gr,volX,volY,volW,5,COL.seekbg,isMuted?0:clamp01(vol2pos(fb.Volume)));
 }

@@ -11,7 +11,32 @@ function pos2vol(p){ return p<=0?-100:Math.max(-100,Math.min(VOL_CEIL,10*Math.lo
 /* foobar remembers its volume across restarts and its own menu/keys are not bound by the ceiling,
    so a session left louder than it is pulled back down once at load. Only at load: fighting
    foobar's native controls on every change would make them look broken. A no-op at the default. */
-function capVolume(){ try{ if(fb.Volume>VOL_CEIL) fb.Volume=VOL_CEIL; }catch(e){} }
+var lastNonMuteVol = -12;
+function capVolume(){
+  try{
+    if(fb.Volume>VOL_CEIL) fb.Volume=VOL_CEIL;
+    if(fb.Volume>-99) lastNonMuteVol=fb.Volume;
+  }catch(e){}
+}
+function toggleMute(){
+  if(fb.Volume > -99){
+    lastNonMuteVol = fb.Volume;
+    try {
+      if(typeof fb.VolumeMute === 'function') fb.VolumeMute();
+      else fb.RunMainMenuCommand("Playback/Volume/Mute");
+    } catch(e){}
+    if(fb.Volume > -99) fb.Volume = -100;
+  } else {
+    var restoreVol = (lastNonMuteVol > -99) ? lastNonMuteVol : -12;
+    try {
+      if(typeof fb.VolumeMute === 'function') fb.VolumeMute();
+      else fb.RunMainMenuCommand("Playback/Volume/Mute");
+    } catch(e){}
+    if(fb.Volume <= -99) fb.Volume = restoreVol;
+  }
+  repaintBar();
+  if(typeof view !== 'undefined' && view === 'fullscreen') repaintAll();
+}
 function readOrder(){ try{ return plman.PlaybackOrder; }catch(e){ return 0; } }
 function setOrder(o){ try{ plman.PlaybackOrder=o; }catch(e){} }
 // Repeat maps to native PlaybackOrder; shuffle is ours (a hidden shuffled copy -> accurate "next up").

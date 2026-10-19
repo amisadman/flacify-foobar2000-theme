@@ -277,7 +277,14 @@ function drawMain(gr){
 
 /* ------------------------- input ------------------------- */
 function seekFrac(x){ return HB_SEEK?clamp01((x-HB_SEEK.x)/HB_SEEK.w):0; }
-function applyVol(x){ if(HB_VOL){ fb.Volume=pos2vol(clamp01((x-HB_VOL.x)/HB_VOL.w)); repaintBar(); } }
+function applyVol(x){
+  if(HB_VOL){
+    var v=pos2vol(clamp01((x-HB_VOL.x)/HB_VOL.w));
+    fb.Volume=v;
+    if(v>-99) lastNonMuteVol=v;
+    repaintBar();
+  }
+}
 function on_mouse_lbtn_down(x,y){
   if(songDetails){
     if(SONG_DET_SB && inRect(x,y,SONG_DET_SB)){ drag='songDetScroll'; setSongDetScroll(y); return; }
@@ -377,6 +384,7 @@ function doCtrl(act){
   else if(act==='shuffle') toggleShuffle();
   else if(act==='repeat') cycleRepeat();
   else if(act==='fullscreen'){ enterFullscreen(); return; }
+  else if(act==='mute'){ toggleMute(); return; }
   else if(act==='like'){ if(NP) toggleLike(NP); return; }
   else if(act==='details'){ if(NP){ openSongDetails(NP); } return; }
   else if(act==='add_to_pl'){ if(NP){ openAddToPlaylistMenu(NP, Math.max(16, Math.min(mx-80, W-260)), Math.min(my-140, H-260)); } return; }
@@ -1027,7 +1035,10 @@ function on_mouse_wheel(step){
     // lyrics with no timestamps don't roll themselves, so here the wheel scrolls them; with nothing
     // to scroll (synced, short enough to fit, or another view) it stays the volume control
     if(fsView==='lyrics' && lyStWheel(step)){ repaintAll(); return; }
-    fb.Volume=pos2vol(clamp01(vol2pos(fb.Volume)+step*0.04)); repaintAll(); return;
+    var v=pos2vol(clamp01(vol2pos(fb.Volume)+step*0.04));
+    fb.Volume=v;
+    if(v>-99) lastNonMuteVol=v;
+    repaintAll(); return;
   }
   // right pane: same deal on the Lyrics tab. Consume the wheel either way -- it belongs to this
   // panel, and falling through would scroll the playlist behind the pointer.
@@ -1143,7 +1154,11 @@ function on_playback_time(){
 function on_playback_seek(){ repaintAll(); }
 function on_playback_order_changed(){ syncOrderFromFb(); repaintAll(); }
 function on_playback_queue_changed(){ repaintAll(); }
-function on_volume_change(){ repaintBar(); }
+function on_volume_change(){
+  if(fb.Volume>-99) lastNonMuteVol=fb.Volume;
+  repaintBar();
+  if(fsMode) repaintAll();
+}
 // ReplayGain can also be switched from foobar's own Playback menu -- keep the pill honest
 function on_replaygain_mode_changed(){ repaintMain(); }
 // rgStat included: a ReplayGain scan lands as a tag write, so this is how the pill learns it finished
