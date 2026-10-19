@@ -13,11 +13,38 @@ $safe = ($PlaylistName -replace '[\/\\:\*\?"<>\|]', '_').Trim()
 if (-not (Test-Path $CacheDir)) {
   New-Item -ItemType Directory -Path $CacheDir -Force | Out-Null
 }
+$isArtist = ($CacheDir -like "*artists*")
 $targetPath = Join-Path $CacheDir "$safe.jpg"
+$metaPath = Join-Path $CacheDir "$safe`_meta.json"
+$customFile = $null
+
+if ($isArtist) {
+  $timestamp = (Get-Date).ToString("yyyyMMddHHmmss")
+  $customFile = "${safe}_custom_${timestamp}.jpg"
+  $targetPath = Join-Path $CacheDir $customFile
+}
 
 if ($Action -eq "remove") {
-  if (Test-Path $targetPath) {
-    Remove-Item -Path $targetPath -Force -ErrorAction SilentlyContinue
+  $defPath = Join-Path $CacheDir "$safe.jpg"
+  if (Test-Path $defPath) {
+    Remove-Item -Path $defPath -Force -ErrorAction SilentlyContinue
+  }
+  if ($isArtist) {
+    Get-ChildItem -Path $CacheDir -Filter "${safe}_custom_*.jpg" -ErrorAction SilentlyContinue | ForEach-Object {
+      Remove-Item -Path $_.FullName -Force -ErrorAction SilentlyContinue
+    }
+    if (Test-Path $metaPath) {
+      try {
+        $meta = Get-Content $metaPath -Raw -Encoding UTF8 | ConvertFrom-Json
+        if ($meta) {
+          if ($meta.PSObject.Properties['imageFile']) { $meta.imageFile = $null }
+          if ($meta.PSObject.Properties['isCustom']) { $meta.isCustom = $false }
+          $meta.imageSource = "Default"
+          $json = $meta | ConvertTo-Json -Depth 5
+          [System.IO.File]::WriteAllText($metaPath, $json, [System.Text.Encoding]::UTF8)
+        }
+      } catch {}
+    }
   }
   exit 0
 }
@@ -65,5 +92,28 @@ if ($res -eq [System.Windows.Forms.DialogResult]::OK -and (Test-Path $dialog.Fil
     $src.Dispose()
   } catch {
     Copy-Item -Path $dialog.FileName -Destination $targetPath -Force
+  }
+
+  if ($isArtist -and (Test-Path $targetPath)) {
+    try {
+      $meta = $null
+      if (Test-Path $metaPath) {
+        try { $meta = Get-Content $metaPath -Raw -Encoding UTF8 | ConvertFrom-Json } catch {}
+      }
+      if ($null -eq $meta -or -not ($meta -is [System.Management.Automation.PSCustomObject])) {
+        $meta = [pscustomobject]@{}
+      }
+      $meta | Add-Member -MemberType NoteProperty -Name "name" -Value $PlaylistName -Force
+      $meta | Add-Member -MemberType NoteProperty -Name "imageFile" -Value $customFile -Force
+      $meta | Add-Member -MemberType NoteProperty -Name "isCustom" -Value $true -Force
+      $meta | Add-Member -MemberType NoteProperty -Name "imageSource" -Value "Custom Upload" -Force
+      $metaJson = $meta | ConvertTo-Json -Depth 5
+      [System.IO.File]::WriteAllText($metaPath, $metaJson, [System.Text.Encoding]::UTF8)
+
+      # Clean up older custom files for this artist (silently continue if locked)
+      Get-ChildItem -Path $CacheDir -Filter "${safe}_custom_*.jpg" -ErrorAction SilentlyContinue | Where-Object { $_.Name -ne $customFile } | ForEach-Object {
+        Remove-Item -Path $_.FullName -Force -ErrorAction SilentlyContinue
+      }
+    } catch {}
   }
 }

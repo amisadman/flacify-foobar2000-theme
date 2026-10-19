@@ -399,7 +399,12 @@ function chooseArtistPhoto(artistName){
     meta.isCustom=true;
     meta.imageSource="Custom Upload";
     saveArtistMeta(artistName, meta);
+    if(typeof artistStudioModal!=='undefined' && artistStudioModal && artistStudioModal.artist===artistName){
+      artistStudioModal.meta = meta;
+    }
+    dirtyAll=true;
     repaintAll();
+    if(window.Repaint) window.Repaint();
   }catch(e){}
 }
 
@@ -412,7 +417,19 @@ function removeArtistPhoto(artistName){
     var cmd='powershell.exe -WindowStyle Hidden -ExecutionPolicy Bypass -File "' + script + '" -PlaylistName "' + artistName.replace(/"/g, '`"') + '" -CacheDir "' + cacheDir + '" -Action remove';
     sh.Run(cmd, 0, true);
     clearArtistCache(artistName);
+    var meta=getArtistMeta(artistName);
+    if(meta){
+      delete meta.imageFile;
+      meta.isCustom=false;
+      meta.imageSource="Default";
+      saveArtistMeta(artistName, meta);
+    }
+    if(typeof artistStudioModal!=='undefined' && artistStudioModal && artistStudioModal.artist===artistName){
+      artistStudioModal.meta = meta || { name: artistName, bio: '', fans: 0, fansFormatted: '', isCustom: false };
+    }
+    dirtyAll=true;
     repaintAll();
+    if(window.Repaint) window.Repaint();
   }catch(e){}
 }
 
@@ -434,7 +451,9 @@ function getArtistHeroImg(name){
 
   var cacheDir=fb.ProfilePath+'verdant\\cache\\artists\\';
   var safeName=name.replace(/[\\/:*?"<>|]/g, '_');
-  var filePath=cacheDir+safeName+'.jpg';
+  var meta=getArtistMeta(name);
+  var fileName=(meta && meta.imageFile) ? meta.imageFile : (safeName+'.jpg');
+  var filePath=cacheDir+fileName;
 
   var exists=false;
   try{ exists=utils.FileTest && utils.FileTest(filePath,'e'); }catch(e){}
@@ -457,7 +476,9 @@ function getExternalArtistImg(name, size){
 
   var cacheDir=fb.ProfilePath+'verdant\\cache\\artists\\';
   var safeName=name.replace(/[\\/:*?"<>|]/g, '_');
-  var filePath=cacheDir+safeName+'.jpg';
+  var meta=getArtistMeta(name);
+  var fileName=(meta && meta.imageFile) ? meta.imageFile : (safeName+'.jpg');
+  var filePath=cacheDir+fileName;
 
   var exists=false;
   try{ exists=utils.FileTest && utils.FileTest(filePath,'e'); }catch(e){ exists=false; }
@@ -495,7 +516,9 @@ function getExternalArtistCard(name, size, rad){
 
   var cacheDir=fb.ProfilePath+'verdant\\cache\\artists\\';
   var safeName=name.replace(/[\\/:*?"<>|]/g, '_');
-  var filePath=cacheDir+safeName+'.jpg';
+  var meta=getArtistMeta(name);
+  var fileName=(meta && meta.imageFile) ? meta.imageFile : (safeName+'.jpg');
+  var filePath=cacheDir+fileName;
 
   var exists=false;
   try{ exists=utils.FileTest && utils.FileTest(filePath,'e'); }catch(e){ exists=false; }
@@ -514,6 +537,7 @@ function getExternalArtistCard(name, size, rad){
   }
   return null;
 }
+
 
 function drawArtistPhoto(gr,x,y,size,rad,h,seed){
   var ext=getExternalArtistCard(seed,size,rad);

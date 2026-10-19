@@ -586,20 +586,24 @@ function openArtistStudio(artistName){
   caretOn=true;
   startCaret();
   applyKeyMode();
+  dirtyAll=true;
   repaintAll();
+  if(window.Repaint) window.Repaint();
 }
 
 function closeArtistStudio(){
   artistStudioModal=null;
   ARTIST_STUDIO_HB=null;
   applyKeyMode();
+  dirtyAll=true;
   repaintAll();
+  if(window.Repaint) window.Repaint();
 }
 
 function saveArtistStudio(){
   if(!artistStudioModal) return;
   var m=artistStudioModal;
-  var meta=m.meta||{};
+  var meta=getArtistMeta(m.artist)||(m.meta||{});
   meta.name=m.artist;
   meta.bio=m.bio.trim();
   meta.isCustom=true;
@@ -652,7 +656,9 @@ function drawArtistStudioModal(gr){
   drawCircle(gr, px, py, pSz, null, m.artist);
   strokeRound(gr, px, py, pSz, pSz, pSz/2, 1, RGBA(255, 255, 255, 40));
 
-  var chBtnW=100, chBtnH=26, chBtnX=px-10, chBtnY=py+pSz+8;
+  var chTxtW=Math.round(gr.CalcTextWidth('Change Photo', FONT.meta));
+  var chBtnW=Math.max(116, chTxtW+28), chBtnH=28;
+  var chBtnX=px+Math.round((pSz-chBtnW)/2), chBtnY=py+pSz+10;
   var chHot=hv(chBtnX, chBtnY, chBtnX+chBtnW, chBtnY+chBtnH);
   gr.FillRoundRect(chBtnX, chBtnY, chBtnW, chBtnH, chBtnH/2, chBtnH/2, chHot ? RGBA(255, 255, 255, 30) : RGBA(255, 255, 255, 14));
   strokeRound(gr, chBtnX, chBtnY, chBtnW, chBtnH, chBtnH/2, 1, chHot ? COL.green : RGBA(255, 255, 255, 40));

@@ -226,7 +226,7 @@ function on_paint(gr){
   // A partial paint skips drawOverlays, so a modal's dim backdrop would not be reapplied over the
   // region it redraws (the bar's 1 Hz repaint would flash back to full brightness). While an
   // overlay owns the screen, every paint takes the full path.
-  var modal=renameEdit||ctxMenu||confirmDel||dupPrompt||rgPrompt||songDetails;
+  var modal=renameEdit||ctxMenu||confirmDel||dupPrompt||rgPrompt||songDetails||(typeof artistStudioModal!=='undefined'&&artistStudioModal);
   if(dirtyAll || !anyPartial || modal || stale){ // full paint, or an OS/stale paint we can't scope
     clearDirty();
     HB_DOTS=[];
@@ -290,7 +290,7 @@ function on_mouse_lbtn_down(x,y){
     if(SONG_DET_SB && inRect(x,y,SONG_DET_SB)){ drag='songDetScroll'; setSongDetScroll(y); return; }
     return;
   }
-  if(ctxMenu||confirmDel||renameEdit||sgMenuOpen||plSortMenuOpen||vizMenuOpen||dupPrompt||rgPrompt) return;   // overlays are modal; dismissal/actions handled on button-up
+  if(ctxMenu||confirmDel||renameEdit||sgMenuOpen||plSortMenuOpen||vizMenuOpen||dupPrompt||rgPrompt||(typeof artistStudioModal!=='undefined'&&artistStudioModal)) return;   // overlays are modal; dismissal/actions handled on button-up
   if(HB_SEEK && inRect(x,y,HB_SEEK)){ drag='seek'; dragFrac=seekFrac(x); repaintBar(); return; }
   if(HB_VOL && inRect(x,y,HB_VOL)){ drag='vol'; applyVol(x); return; }
   if(SBH && inRect(x,y,SBH)){ drag='scrollh'; setScrollH(x); return; }
@@ -298,7 +298,7 @@ function on_mouse_lbtn_down(x,y){
   if(SB && inRect(x,y,SB)){ drag='scroll'; setScroll(y); return; }
 }
 function on_mouse_rbtn_up(x,y){
-  if(ctxMenu||confirmDel||renameEdit||dupPrompt||rgPrompt||songDetails) return true;   // a modal is open: swallow
+  if(ctxMenu||confirmDel||renameEdit||dupPrompt||rgPrompt||songDetails||(typeof artistStudioModal!=='undefined'&&artistStudioModal)) return true;   // a modal is open: swallow
   var i;
   for(i=0;i<HB_TR.length;i++){
     if(inRect(x,y,HB_TR[i])){
