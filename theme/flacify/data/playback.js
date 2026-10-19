@@ -56,20 +56,8 @@ var ROUTE='__flacify_np__'; // hidden playlist used to play library tracks (arti
 var SHUF='__flacify_shuffle__', shufSrcName='', lastShufIdx=-1;   // shufSrcName = the real source playlist
 function isHiddenPl(nm){
   if(!nm) return false;
-  return nm===ROUTE || nm===SHUF || nm==='__verdant_np__' || nm==='__verdant_shuffle__' || /^__(?:verdant|flacify)_.+__$/.test(nm) || nm===(typeof LIKED_PLAYLIST_NAME!=='undefined'?LIKED_PLAYLIST_NAME:'Liked Songs');
+  return nm===ROUTE || nm===SHUF || /^__flacify_.+__$/.test(nm) || nm===(typeof LIKED_PLAYLIST_NAME!=='undefined'?LIKED_PLAYLIST_NAME:'Liked Songs');
 }
-function cleanupLegacyPlaylists(){
-  try{
-    if(!plman || !plman.PlaylistCount) return;
-    for(var i=plman.PlaylistCount-1; i>=0; i--){
-      var name = plman.GetPlaylistName(i);
-      if(name==='__verdant_np__' || name==='__verdant_shuffle__'){
-        plman.RemovePlaylistSwitch(i);
-      }
-    }
-  }catch(e){}
-}
-cleanupLegacyPlaylists();
 function playlistOfName(nm){ for(var i=0;i<plman.PlaylistCount;i++) if(plman.GetPlaylistName(i)===nm) return i; return -1; }
 function handleArray(pi){ var it=getItems(pi), a=[]; if(it){ for(var i=0;i<it.Count;i++) a.push(it[i]); } return a; }
 function sameHandle(a,b){ return !!(a&&b&&a.Path===b.Path); }

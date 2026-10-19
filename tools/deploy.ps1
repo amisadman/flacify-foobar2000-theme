@@ -68,15 +68,9 @@ function Sync-Theme {
     if ($LASTEXITCODE -ge 8) { throw "robocopy failed with exit code $LASTEXITCODE" }
     $global:LASTEXITCODE = 0
 
-    # Ensure cache directories exist and migrate from verdant if needed
+    # Ensure cache directories exist
     New-Item -ItemType Directory -Force -Path (Join-Path $dest 'cache\artists') | Out-Null
     New-Item -ItemType Directory -Force -Path (Join-Path $dest 'cache\playlist_covers') | Out-Null
-    $oldCache = Join-Path $FoobarProfile 'verdant\cache'
-    $newCache = Join-Path $dest 'cache'
-    if ((Test-Path $oldCache) -and (-not (Test-Path (Join-Path $newCache 'artists\index.json')))) {
-        & robocopy $oldCache $newCache /E /NFL /NDL /NJH /NJS /NP
-        $global:LASTEXITCODE = 0
-    }
 
     $n = (Get-ChildItem -Recurse -File $src).Count
     Write-Host ("[{0}] deployed {1} files -> {2}" -f (Get-Date -Format 'HH:mm:ss'), $n, $dest)

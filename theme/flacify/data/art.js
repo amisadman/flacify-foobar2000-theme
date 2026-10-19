@@ -329,13 +329,7 @@ function maskedArt(h,seed,size,mask,tag){
 var extArtistImgCache={}, extArtistHeroCache={}, extArtistPending={}, artistMetaCache={};
 
 function getArtistCacheDir(){
-  var dir = fb.ProfilePath + 'flacify\\cache\\artists\\';
-  try{
-    if(utils.FileTest && !utils.FileTest(dir + 'index.json', 'e') && utils.FileTest(fb.ProfilePath + 'verdant\\cache\\artists\\index.json', 'e')){
-      return fb.ProfilePath + 'verdant\\cache\\artists\\';
-    }
-  }catch(e){}
-  return dir;
+  return fb.ProfilePath + 'flacify\\cache\\artists\\';
 }
 
 function ensureFlacifyCache(){
@@ -348,13 +342,6 @@ function ensureFlacifyCache(){
       if(!utils.FileTest(c, 'd')) utils.CreateFolder(c);
       if(!utils.FileTest(a, 'd')) utils.CreateFolder(a);
       if(!utils.FileTest(p, 'd')) utils.CreateFolder(p);
-    }
-    var oldA = fb.ProfilePath + 'verdant\\cache\\artists\\';
-    if(utils.FileTest && utils.FileTest(oldA + 'index.json', 'e') && !utils.FileTest(a + 'index.json', 'e')){
-      var sh = new ActiveXObject('WScript.Shell');
-      if(sh){
-        sh.Run('cmd.exe /c xcopy /E /Y /I "' + oldA.replace(/\\$/, '') + '" "' + a.replace(/\\$/, '') + '"', 0, false);
-      }
     }
   }catch(e){}
 }

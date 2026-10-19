@@ -190,14 +190,6 @@ Copy-Tree $P.Theme $themeDest $true
 New-Item -ItemType Directory -Force -Path (Join-Path $themeDest 'cache\artists') | Out-Null
 New-Item -ItemType Directory -Force -Path (Join-Path $themeDest 'cache\playlist_covers') | Out-Null
 
-# Migrate existing cache from verdant if present and flacify is empty
-$oldCache = Join-Path $fb.Profile 'verdant\cache'
-$newCache = Join-Path $themeDest 'cache'
-if ((Test-Path $oldCache) -and (-not (Test-Path (Join-Path $newCache 'artists\index.json')))) {
-    Note 'migrating existing artist and cover cache from verdant...'
-    Copy-Tree $oldCache $newCache $false
-    Ok 'cache migrated from verdant'
-}
 Ok ("theme -> {0}" -f $themeDest)
 
 # ---------------------------------------------------------------------------
