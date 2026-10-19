@@ -6,7 +6,7 @@
 
 *A powerful, high-fidelity foobar2000 theme that gives your local FLAC and lossless collection the sleek look, responsive feel, and rich metadata of modern Spotify desktop.*
 
-[![Release](https://img.shields.io/github/v/release/superziper/verdant-foobar2000-theme?color=1DB954&label=release)](https://github.com/superziper/verdant-foobar2000-theme/releases/latest)
+[![Release](https://img.shields.io/github/v/release/amisadman/flacify?color=1DB954&label=release)](https://github.com/amisadman/flacify/releases/latest)
 ![foobar2000](https://img.shields.io/badge/foobar2000-v2%20·%2064--bit-1DB954)
 ![Audio](https://img.shields.io/badge/Lossless-FLAC%20%7C%20Hi--Res-1DB954)
 ![Windows](https://img.shields.io/badge/Windows-10%20%7C%2011-1DB954)
@@ -102,7 +102,7 @@ Flacify is an extended evolution of the original **[Verdant](https://github.com/
 ## Quick Installation
 
 1. Install **foobar2000 v2 (64-bit)** as **portable** from the [official website](https://www.foobar2000.org/download).
-2. Download **`Verdant-v1.2.0.zip`** (or latest Flacify release zip) from the **[Releases](https://github.com/superziper/verdant-foobar2000-theme/releases)**.
+2. Download **`Flacify-v1.0.0.zip`** from the **[latest release](https://github.com/amisadman/flacify/releases/latest)**.
 3. Extract the **`profile`** folder from the zip into foobar2000's root folder (the directory containing `foobar2000.exe`).
 4. Start foobar2000. Under **Preferences → Media Library**, add your music folder (e.g. your SpotiFLAC download directory).
 
