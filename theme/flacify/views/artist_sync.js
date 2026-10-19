@@ -47,9 +47,6 @@ function triggerArtistSync(mode, singleArtist){
   if(syncProgress.running) return;
   var cacheDir=fb.ProfilePath+'flacify\\cache\\artists\\';
   var scriptPath=fb.ProfilePath+'flacify\\tools\\sync_artists.ps1';
-  if(utils.FileTest && !utils.FileTest(scriptPath,'e') && utils.FileTest(fb.ProfilePath+'verdant\\tools\\sync_artists.ps1','e')){
-    scriptPath=fb.ProfilePath+'verdant\\tools\\sync_artists.ps1';
-  }
   var listFile=cacheDir+'all_artists.json';
 
   try{
@@ -81,9 +78,6 @@ function triggerArtistSync(mode, singleArtist){
 function stopArtistSync(){
   var cacheDir=fb.ProfilePath+'flacify\\cache\\artists\\';
   var scriptPath=fb.ProfilePath+'flacify\\tools\\sync_artists.ps1';
-  if(utils.FileTest && !utils.FileTest(scriptPath,'e') && utils.FileTest(fb.ProfilePath+'verdant\\tools\\sync_artists.ps1','e')){
-    scriptPath=fb.ProfilePath+'verdant\\tools\\sync_artists.ps1';
-  }
   try{
     var sh=new ActiveXObject('WScript.Shell');
     var cmd='powershell.exe -WindowStyle Hidden -ExecutionPolicy Bypass -File "' + scriptPath + '" -Stop -CacheDir "' + cacheDir.replace(/\\$/, '') + '"';

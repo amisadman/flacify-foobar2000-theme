@@ -331,7 +331,7 @@ var extArtistImgCache={}, extArtistHeroCache={}, extArtistPending={}, artistMeta
 function getArtistCacheDir(){
   var dir = fb.ProfilePath + 'flacify\\cache\\artists\\';
   try{
-    if(utils.FileTest && !utils.FileTest(dir, 'd') && utils.FileTest(fb.ProfilePath + 'verdant\\cache\\artists\\', 'd')){
+    if(utils.FileTest && !utils.FileTest(dir + 'index.json', 'e') && utils.FileTest(fb.ProfilePath + 'verdant\\cache\\artists\\index.json', 'e')){
       return fb.ProfilePath + 'verdant\\cache\\artists\\';
     }
   }catch(e){}
