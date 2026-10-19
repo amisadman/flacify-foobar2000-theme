@@ -25,3 +25,6 @@ metadb.sqlite
 # scratch space
 scratch/
 tmp/
+implementation_plan.md
+task_list.md
+tasklist.md
