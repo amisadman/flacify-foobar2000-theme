@@ -105,7 +105,7 @@ function parseDb(valStr){
 function getDynamicRange(h){
   if(!h) return null;
   var p=h.Path;
-  if(drInfoCache.hasOwnProperty(p)) return drInfoCache[p];
+  if(drInfoCache.hasOwnProperty(p) && drInfoCache[p] && drInfoCache[p].hasTags) return drInfoCache[p];
 
   var drTagStr=TF.drTag.EvalWithMetadb(h);
   var drVal=parseInt(drTagStr,10);
@@ -127,7 +127,7 @@ function getDynamicRange(h){
   }
 
   if(isNaN(drVal) || drVal<=0){
-    var unk={
+    return {
       score:0,
       label:'DR --',
       rating:'unscanned',
@@ -140,8 +140,6 @@ function getDynamicRange(h){
       albumGain:albGainStr||'None',
       hasTags:false
     };
-    drInfoCache[p]=unk;
-    return unk;
   }
 
   drVal=Math.max(1,Math.min(30,drVal));
@@ -267,16 +265,33 @@ function drawDrModal(gr){
 /* ------------------------- Audio Output Device Quick-Switcher ------------------------- */
 function openAudioDeviceMenu(x,y){
   try{
-    var mm=fb.CreateMainMenuManager();
-    mm.Init('Playback/Device');
     var m=window.CreatePopupMenu();
-    mm.BuildMenu(m,1,300);
+    m.AppendMenuItem(0, 1, 'Audio Output Device (Preferences)...');
+    m.AppendMenuItem(0, 2, 'Parametric Equalizer Presets...');
+    m.AppendMenuItem(0, 3, 'TT Dynamic Range (DR) Inspector...');
+    m.AppendMenuSeparator();
+    m.AppendMenuItem(0, 4, 'Windows Sound Control Panel...');
+    m.AppendMenuSeparator();
+    m.AppendMenuItem(0, 5, 'foobar2000 Preferences...');
 
     var id=m.TrackPopupMenu(x,y);
-    if(id>0){
-      mm.ExecuteByID(id-1);
-      if(typeof repaintBar==='function') repaintBar();
+    if(id===1 || id===5){
+      try{
+        fb.ShowPreferences('{65D8B383-1463-48EC-AB9E-7C4D789B880A}');
+      }catch(e1){
+        try{ fb.RunMainMenuCommand('File/Preferences'); }catch(e2){}
+      }
+    }else if(id===2){
+      if(typeof openEqModal==='function') openEqModal();
+    }else if(id===3){
+      if(typeof openDrModal==='function') openDrModal(fb.GetNowPlaying());
+    }else if(id===4){
+      try{
+        var sh=new ActiveXObject('WScript.Shell');
+        sh.Run('control mmsys.cpl sounds');
+      }catch(e){}
     }
+    if(typeof repaintBar==='function') repaintBar();
   }catch(e){}
 }
 

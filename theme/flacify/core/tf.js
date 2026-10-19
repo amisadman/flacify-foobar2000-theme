@@ -10,11 +10,11 @@ var TF = {
   albkey:fb.TitleFormat('%album artist% - %album%'), artistName:fb.TitleFormat('%album artist%'),
   year:fb.TitleFormat('$year(%date%)'), lensec:fb.TitleFormat('%length_seconds%'),
   trackno:fb.TitleFormat('%tracknumber%'),
-  rg:fb.TitleFormat('$if(%replaygain_track_gain%,1,0)'),   // '1' once a loudness scan has tagged the file
-  rgTrackGain:fb.TitleFormat('[$if2(%replaygain_track_gain%,%__replaygain_track_gain%)]'),
-  rgTrackPeak:fb.TitleFormat('[$if2(%replaygain_track_peak%,%__replaygain_track_peak%)]'),
-  rgAlbumGain:fb.TitleFormat('[$if2(%replaygain_album_gain%,%__replaygain_album_gain%)]'),
-  rgAlbumPeak:fb.TitleFormat('[$if2(%replaygain_album_peak%,%__replaygain_album_peak%)]'),
+  rg:fb.TitleFormat('$if($if3(%replaygain_track_gain%,%__replaygain_track_gain%,$info(replaygain_track_gain)),1,0)'),   // '1' once a loudness scan has tagged the file
+  rgTrackGain:fb.TitleFormat('[$if3(%replaygain_track_gain%,%__replaygain_track_gain%,$info(replaygain_track_gain))]'),
+  rgTrackPeak:fb.TitleFormat('[$if3(%replaygain_track_peak%,%__replaygain_track_peak%,$info(replaygain_track_peak))]'),
+  rgAlbumGain:fb.TitleFormat('[$if3(%replaygain_album_gain%,%__replaygain_album_gain%,$info(replaygain_album_gain))]'),
+  rgAlbumPeak:fb.TitleFormat('[$if3(%replaygain_album_peak%,%__replaygain_album_peak%,$info(replaygain_album_peak))]'),
   drTag:fb.TitleFormat('[$if3($meta(dynamic range),$meta(dynamic_range),%dynamic_range%,%__dynamic_range%)]'),
   rawArtist:fb.TitleFormat('[$if3($meta_sep(artist, ; ),$meta_sep(performer, ; ),$meta_sep(album artist, ; ),%artist%,%performer%,%album artist%)]'),
   barcode:fb.TitleFormat('[$if3($meta(barcode),$meta(upc),$meta(ean),$meta(catalog),$meta(catalognumber),%barcode%,%upc%,%ean%)]'),

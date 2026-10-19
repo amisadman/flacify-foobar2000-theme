@@ -14,28 +14,28 @@ var MIX_DEFINITIONS = [
   {
     id: 1,
     title: 'Daily Mix 1',
-    category: 'Rock • Alternative • Metal',
+    category: 'Rock / Alternative / Metal',
     desc: 'High-energy guitar riffs, post-punk, and alternative anthems from your library.',
     genres: ['rock', 'metal', 'alternative', 'punk', 'grunge', 'indie rock', 'hard rock', 'classic rock', 'post-punk', 'heavy metal', 'emo', 'garage']
   },
   {
     id: 2,
     title: 'Daily Mix 2',
-    category: 'Pop • Electronic • R&B',
+    category: 'Pop / Electronic / R&B',
     desc: 'Club beats, synthwave hooks, modern pop, and smooth R&B grooves.',
     genres: ['pop', 'dance', 'electronic', 'synth', 'techno', 'house', 'edm', 'hip-hop', 'hip hop', 'rap', 'r&b', 'soul', 'disco', 'funk', 'electro']
   },
   {
     id: 3,
     title: 'Daily Mix 3',
-    category: 'Chill • Lo-Fi • Acoustic',
+    category: 'Chill / Lo-Fi / Acoustic',
     desc: 'Downtempo vibes, acoustic melodies, indie folk, and atmospheric ambient textures.',
     genres: ['chill', 'ambient', 'lo-fi', 'lofi', 'acoustic', 'indie folk', 'folk', 'downtempo', 'dream pop', 'shoegaze', 'trip-hop', 'meditation', 'piano']
   },
   {
     id: 4,
     title: 'Daily Mix 4',
-    category: 'Jazz • Classical • Soundtracks',
+    category: 'Jazz / Classical / Soundtracks',
     desc: 'Sophisticated improvisations, orchestral scores, timeless blues, and cinema soundtracks.',
     genres: ['jazz', 'classical', 'blues', 'soundtrack', 'score', 'orchestral', 'instrumental', 'fusion', 'cinematic', 'baroque', 'bop', 'latin']
   }
@@ -43,8 +43,13 @@ var MIX_DEFINITIONS = [
 
 function loadDailyMixesFromDisk(){
   try {
-    var raw = utils.ReadTextFile(DAILY_MIX_CACHE_PATH);
+    var raw = utils.ReadTextFile(DAILY_MIX_CACHE_PATH, 65001);
     if(raw){
+      if(raw.charCodeAt(0) === 0xFEFF) raw = raw.slice(1);
+      // Discard cache if it contains mojibake characters
+      if(raw.indexOf('\u00E2\u20AC') >= 0 || raw.indexOf('\u00F0\u0178') >= 0 || raw.indexOf('\u2022') >= 0){
+        return null;
+      }
       var data = JSON.parse(raw);
       // Valid if created within past 24 hours
       if(data && data.timestamp && (Date.now() - data.timestamp) < 86400000 && data.mixes && data.mixes.length === 4){
@@ -52,6 +57,9 @@ function loadDailyMixesFromDisk(){
         var validCount = 0;
         for(var mi = 0; mi < data.mixes.length; mi++){
           var m = data.mixes[mi];
+          if(m.category){
+            m.category = m.category.replace(/[\u2022\u00E2\u20AC\u0178]+/g, '/').replace(/\s+/g, ' ');
+          }
           m.handles = [];
           if(m.paths && m.paths.length){
             for(var pi = 0; pi < m.paths.length; pi++){
@@ -184,7 +192,7 @@ function playDailyMix(mixId, startPlayback){
       var m = mixes[i];
       if(!m.handles || !m.handles.length) return;
 
-      var plName = m.title + ' -- ' + m.category;
+      var plName = m.title + ' (' + m.category + ')';
       var pi = plman.FindOrCreatePlaylist(plName, true);
       try { plman.ClearPlaylist(pi); } catch(e){}
 
@@ -229,7 +237,7 @@ function playHiResVault(startPlayback){
 
   if(!hl.Count) return;
 
-  var pi = plman.FindOrCreatePlaylist('💎 24-bit Hi-Res Vault', true);
+  var pi = plman.FindOrCreatePlaylist('24-bit Hi-Res Vault', true);
   try { plman.ClearPlaylist(pi); } catch(e){}
   plman.InsertPlaylistItems(pi, 0, hl, false);
   plman.ActivePlaylist = pi;
@@ -259,7 +267,7 @@ function playForgottenGems(startPlayback){
     for(var j = 0; j < Math.min(40, lib.Count); j++) hl.Add(lib[j]);
   }
 
-  var pi = plman.FindOrCreatePlaylist('🕒 Forgotten Gems', true);
+  var pi = plman.FindOrCreatePlaylist('Forgotten Gems', true);
   try { plman.ClearPlaylist(pi); } catch(e){}
   plman.InsertPlaylistItems(pi, 0, hl, false);
   plman.ActivePlaylist = pi;
@@ -295,7 +303,7 @@ function playHeavyRotation(startPlayback){
     }
   }
 
-  var pi = plman.FindOrCreatePlaylist('🔥 Heavy Rotation', true);
+  var pi = plman.FindOrCreatePlaylist('Heavy Rotation', true);
   try { plman.ClearPlaylist(pi); } catch(e){}
   plman.InsertPlaylistItems(pi, 0, hl, false);
   plman.ActivePlaylist = pi;
@@ -307,3 +315,29 @@ function playHeavyRotation(startPlayback){
   }
   repaintAll();
 }
+
+/* ------------------------- Auto-Clean Mojibake Playlists ------------------------- */
+function cleanupMojibakePlaylists(){
+  try {
+    var count = plman.PlaylistCount;
+    for(var i = 0; i < count; i++){
+      var name = plman.GetPlaylistName(i);
+      if(!name) continue;
+      var hasNonAscii = false;
+      for(var c = 0; c < name.length; c++){
+        if(name.charCodeAt(c) > 127){ hasNonAscii = true; break; }
+      }
+      if(hasNonAscii){
+        var clean = name
+          .replace(/[\u00E2\u20AC\u00A2\u2022]+/g, ' / ')
+          .replace(/[\u0080-\uFFFF]/g, '')
+          .replace(/\s+/g, ' ')
+          .replace(/^\s+|\s+$/g, '');
+        if(clean && clean !== name){
+          plman.RenamePlaylist(i, clean);
+        }
+      }
+    }
+  } catch(e){}
+}
+cleanupMojibakePlaylists();

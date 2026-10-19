@@ -13,13 +13,13 @@ function applyCaption(){ if(!UIWizard) return; if(capW===W && capEnd===MENU_END)
 function openThemeMenu(x,y){
   var m=window.CreatePopupMenu();
   var isAdaptive = (typeof currentAccentKey!=='undefined' && currentAccentKey==='adaptive');
-  m.AppendMenuItem(0, 100, (isAdaptive?'✓ ':'   ') + 'Adaptive Album Glow');
+  m.AppendMenuItem(isAdaptive ? 8 : 0, 100, 'Adaptive Album Glow');
   m.AppendMenuSeparator();
-  m.AppendMenuItem(0, 101, (currentAccentKey==='spotify_green'?'✓ ':'   ') + 'Spotify Green');
-  m.AppendMenuItem(0, 102, (currentAccentKey==='midnight_purple'?'✓ ':'   ') + 'Midnight Purple');
-  m.AppendMenuItem(0, 103, (currentAccentKey==='sunset_amber'?'✓ ':'   ') + 'Sunset Amber');
-  m.AppendMenuItem(0, 104, (currentAccentKey==='cyberpunk_cyan'?'✓ ':'   ') + 'Cyberpunk Cyan');
-  m.AppendMenuItem(0, 105, (currentAccentKey==='monochrome_slate'?'✓ ':'   ') + 'Monochrome Slate');
+  m.AppendMenuItem(currentAccentKey==='spotify_green' ? 8 : 0, 101, 'Spotify Green');
+  m.AppendMenuItem(currentAccentKey==='midnight_purple' ? 8 : 0, 102, 'Midnight Purple');
+  m.AppendMenuItem(currentAccentKey==='sunset_amber' ? 8 : 0, 103, 'Sunset Amber');
+  m.AppendMenuItem(currentAccentKey==='cyberpunk_cyan' ? 8 : 0, 104, 'Cyberpunk Cyan');
+  m.AppendMenuItem(currentAccentKey==='monochrome_slate' ? 8 : 0, 105, 'Monochrome Slate');
 
   var id=m.TrackPopupMenu(x,y);
   if(id===100) setAccentTheme('adaptive');

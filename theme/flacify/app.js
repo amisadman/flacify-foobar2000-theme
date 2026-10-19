@@ -1384,7 +1384,7 @@ function on_volume_change(){
 // ReplayGain can also be switched from foobar's own Playback menu -- keep the pill honest
 function on_replaygain_mode_changed(){ repaintMain(); }
 // rgStat included: a ReplayGain scan lands as a tag write, so this is how the pill learns it finished
-function on_metadb_changed(handles,fromhook){ if(fromhook) return; invalidateItems(); albKeyCache={}; hueCache={}; artistCandCache={}; coverPickCache={}; songsIdx=null; songsRows=null; songsTracks=null; rgStat=null; updateNP(); repaintAll(); }
+function on_metadb_changed(handles,fromhook){ if(fromhook) return; invalidateItems(); albKeyCache={}; hueCache={}; artistCandCache={}; coverPickCache={}; songsIdx=null; songsRows=null; songsTracks=null; rgStat=null; drInfoCache={}; updateNP(); repaintAll(); }
 /* A switch changes which playlist is ACTIVE, not what any playlist contains -- and every cache
    invalidateItems() drops is keyed by playlist index, so none of them went stale here. Dropping
    them meant each switch re-derived covers and re-ran the art gates against an artCache that had

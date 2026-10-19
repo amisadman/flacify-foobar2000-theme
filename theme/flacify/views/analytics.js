@@ -121,17 +121,22 @@ function exportWrappedCard(){
     // Footer
     var footY = H - 140;
     gr.DrawLine(startX, footY, W - startX, footY, 1, RGB(40, 40, 45));
-    tL(gr, 'FLACify for foobar2000 • Pure Bit-Perfect Audio', fLabel, RGB(120, 120, 130), startX, footY + 30, 600, 30);
+    tL(gr, 'FLACify for foobar2000 - Pure Bit-Perfect Audio', fLabel, RGB(120, 120, 130), startX, footY + 30, 600, 30);
     tR(gr, 'TT Dynamic Range: DR' + summary.avgDr, fLabel, RGB(16, 185, 129), startX, footY + 30, W - startX * 2, 30);
 
     bmp.ReleaseGraphics(gr);
 
-    // Save image to Pictures
-    var shell = new ActiveXObject('WScript.Shell');
-    var picsDir = shell.SpecialFolders('MyPictures') || (fb.ProfilePath + 'flacify');
+    // Save image to Pictures via SaveAs (official GdiBitmap API)
+    var picsDir = '';
+    try {
+      var shell = new ActiveXObject('WScript.Shell');
+      picsDir = shell.SpecialFolders('MyPictures');
+    } catch(e){}
+    if(!picsDir) picsDir = fb.ProfilePath + 'flacify';
+
     var ts = Date.now();
     var outPath = picsDir + '\\FLACify_Wrapped_' + ts + '.png';
-    bmp.WriteFiles(outPath);
+    bmp.SaveAs(outPath, 'image/png');
 
     showAnalyticsToast('Wrapped Story card exported to Pictures!');
   } catch(e){
@@ -175,9 +180,8 @@ function drawAnalytics(gr, r){
   // Layout Calculations
   var statTileH = 80;
   var heatmapH = 180;
-  var podiumH = 260;
-  var donutH = 240;
-  var contentH = statTileH + heatmapH + podiumH + donutH + 120;
+  var podiumH = 250;
+  var contentH = statTileH + heatmapH + podiumH + 120;
   var maxPx = Math.max(0, contentH - viewH);
   ANALYTICS_MAX_SCROLL = maxPx;
   ANALYTICS_SCROLL = clampPx(ANALYTICS_SCROLL, maxPx);
@@ -265,7 +269,7 @@ function drawAnalytics(gr, r){
   }
   cy += heatmapH + 20;
 
-  // ---- 3) Top Artists Podium & Lossless Fidelity Donut Chart (Side by Side) ----
+  // ---- 3) Top Artists Podium & Lossless Fidelity Spectrum (Side by Side) ----
   var halfW = Math.floor((w - 24) / 2);
 
   // Left Column: Top 3 Artists Podium
@@ -279,9 +283,9 @@ function drawAnalytics(gr, r){
 
     // Center (#1 Gold), Left (#2 Silver), Right (#3 Bronze)
     var podSlots = [
-      { rank: 2, art: arts3[1], h: 80, col: RGB(160, 160, 175), label: '🥈 2nd', colIdx: 0 },
-      { rank: 1, art: arts3[0], h: 120, col: RGB(245, 158, 11), label: '🥇 1st', colIdx: 1 },
-      { rank: 3, art: arts3[2], h: 60, col: RGB(180, 83, 9), label: '🥉 3rd', colIdx: 2 }
+      { rank: 2, art: arts3[1], h: 74, col: RGB(160, 160, 175), label: '#2 Silver', colIdx: 0 },
+      { rank: 1, art: arts3[0], h: 110, col: RGB(245, 158, 11), label: '#1 Gold', colIdx: 1 },
+      { rank: 3, art: arts3[2], h: 54, col: RGB(180, 83, 9), label: '#3 Bronze', colIdx: 2 }
     ];
 
     for(var psi = 0; psi < podSlots.length; psi++){
@@ -293,10 +297,10 @@ function drawAnalytics(gr, r){
       var slotHov = hv(sx, sy - 50, sx + podStepW, basePodiumY);
       gr.FillRoundRect(sx, sy, podStepW, slot.h, 6, 6, slotHov ? COL.rowHover : COL.elev);
       gr.FillSolidRect(sx, sy, podStepW, 4, slot.col);
-      tC(gr, slot.label, FONT.sect2, slot.col, sx, sy + 10, podStepW, 24);
+      tC(gr, slot.label, FONT.tab, slot.col, sx, sy + 8, podStepW, 20);
 
       if(slot.art){
-        tC(gr, slot.art.plays + ' plays', FONT.eyebrow, COL.text2, sx, sy + 38, podStepW, 16);
+        tC(gr, slot.art.plays + ' plays', FONT.eyebrow, COL.text2, sx, sy + 32, podStepW, 16);
         // Artist portrait circle above podium
         var aCirS = 46, aCirX = sx + Math.floor((podStepW - aCirS) / 2), aCirY = sy - aCirS - 10;
         var ah = slot.art.handle || (typeof artistCover === 'function' ? artistCover(slot.art.name) : null);
@@ -310,7 +314,7 @@ function drawAnalytics(gr, r){
     }
   }
 
-  // Right Column: Lossless Fidelity Donut Chart
+  // Right Column: Lossless Fidelity Spectrum
   if(cy + podiumH > gy && cy < cropY){
     var pieX = x0 + halfW + 24, pieY = cy;
     tL(gr, 'Lossless Fidelity Spectrum', FONT.sect2, COL.text, pieX, pieY, halfW, 26);
@@ -318,58 +322,43 @@ function drawAnalytics(gr, r){
     var dCardY = pieY + 36, dCardH = podiumH - 40;
     gr.FillRoundRect(pieX, dCardY, halfW, dCardH, 8, 8, COL.elev);
 
-    // Donut Geometry
-    var donutRadius = 60, donutThick = 18;
-    var dcX = pieX + 80, dcY = dCardY + Math.floor(dCardH / 2);
-
-    // Arc Angles
     var fid = summary.fidelity;
-    var hiresAngle = (fid.hiresPct / 100) * 360;
-    var cdAngle = (fid.cdPct / 100) * 360;
-    var lossyAngle = Math.max(0, 360 - hiresAngle - cdAngle);
-
-    // Vector Donut Ring Rendering
-    try {
-      var penHires = gdi.CreatePen(RGB(139, 92, 246), donutThick);
-      var penCd = gdi.CreatePen(RGB(16, 185, 129), donutThick);
-      var penLossy = gdi.CreatePen(RGB(100, 116, 139), donutThick);
-
-      var curAngle = -90;
-      if(hiresAngle > 0){
-        gr.DrawArc(dcX - donutRadius, dcY - donutRadius, donutRadius * 2, donutRadius * 2, curAngle, hiresAngle, penHires);
-        curAngle += hiresAngle;
-      }
-      if(cdAngle > 0){
-        gr.DrawArc(dcX - donutRadius, dcY - donutRadius, donutRadius * 2, donutRadius * 2, curAngle, cdAngle, penCd);
-        curAngle += cdAngle;
-      }
-      if(lossyAngle > 0){
-        gr.DrawArc(dcX - donutRadius, dcY - donutRadius, donutRadius * 2, donutRadius * 2, curAngle, lossyAngle, penLossy);
-      }
-    } catch(e){}
-
-    // Center Percentage
     var pureLossless = fid.hiresPct + fid.cdPct;
-    tC(gr, pureLossless + '%', FONT.sect, COL.text, dcX - 40, dcY - 18, 80, 24);
-    tC(gr, 'LOSSLESS', FONT.eyebrow, COL.green, dcX - 40, dcY + 6, 80, 16);
 
-    // Legend Breakdown
-    var legX = dcX + donutRadius + 30, legY0 = dCardY + 28;
+    // Header Stat
+    tL(gr, pureLossless + '% Lossless Stream Purity', FONT.sect2, COL.green, pieX + 20, dCardY + 16, halfW - 40, 24);
+    tL(gr, 'Studio Master Hi-Res + CD Quality Lossless', FONT.plSub, COL.text2, pieX + 20, dCardY + 40, halfW - 40, 18);
 
-    // Segment 1: Hi-Res
-    gr.FillRoundRect(legX, legY0 + 4, 12, 12, 2, 2, RGB(139, 92, 246));
-    tL(gr, 'Studio Master Hi-Res', FONT.card, COL.text, legX + 20, legY0, halfW - 200, 20);
-    tL(gr, fid.hiresCount + ' tracks (' + fid.hiresPct + '%) • >= 24-bit / DSD', FONT.plSub, COL.text2, legX + 20, legY0 + 20, halfW - 200, 16);
+    // Spectrum Stacked Bar
+    var barX = pieX + 20, barY = dCardY + 68, barW = halfW - 40, barH = 22;
+    gr.FillRoundRect(barX, barY, barW, barH, 4, 4, RGB(35, 35, 40));
 
-    // Segment 2: CD Lossless
-    gr.FillRoundRect(legX, legY0 + 52, 12, 12, 2, 2, RGB(16, 185, 129));
-    tL(gr, 'CD Quality Lossless', FONT.card, COL.text, legX + 20, legY0 + 48, halfW - 200, 20);
-    tL(gr, fid.cdCount + ' tracks (' + fid.cdPct + '%) • 16-bit FLAC/WAV', FONT.plSub, COL.text2, legX + 20, legY0 + 68, halfW - 200, 16);
+    var hiresW = Math.round(barW * (fid.hiresPct / 100));
+    var cdW = Math.round(barW * (fid.cdPct / 100));
+    if(hiresW > 0){
+      gr.FillRoundRect(barX, barY, Math.min(barW, hiresW + 4), barH, 4, 4, RGB(139, 92, 246));
+    }
+    if(cdW > 0){
+      gr.FillSolidRect(barX + hiresW, barY, cdW, barH, RGB(16, 185, 129));
+    }
 
-    // Segment 3: Lossy
-    gr.FillRoundRect(legX, legY0 + 100, 12, 12, 2, 2, RGB(100, 116, 139));
-    tL(gr, 'Compressed Lossy', FONT.card, COL.text, legX + 20, legY0 + 96, halfW - 200, 20);
-    tL(gr, fid.lossyCount + ' tracks (' + fid.lossyPct + '%) • MP3/AAC/Vorbis', FONT.plSub, COL.text2, legX + 20, legY0 + 116, halfW - 200, 16);
+    // Legend List
+    var legY0 = barY + barH + 16;
+
+    // Item 1: Studio Master Hi-Res
+    gr.FillRoundRect(barX, legY0 + 4, 12, 12, 2, 2, RGB(139, 92, 246));
+    tL(gr, 'Studio Master Hi-Res', FONT.card, COL.text, barX + 20, legY0, halfW - 60, 20);
+    tL(gr, fid.hiresCount + ' tracks (' + fid.hiresPct + '%) - >= 24-bit / DSD', FONT.plSub, COL.text2, barX + 20, legY0 + 20, halfW - 60, 16);
+
+    // Item 2: CD Lossless
+    gr.FillRoundRect(barX, legY0 + 46, 12, 12, 2, 2, RGB(16, 185, 129));
+    tL(gr, 'CD Quality Lossless', FONT.card, COL.text, barX + 20, legY0 + 42, halfW - 60, 20);
+    tL(gr, fid.cdCount + ' tracks (' + fid.cdPct + '%) - 16-bit FLAC/WAV', FONT.plSub, COL.text2, barX + 20, legY0 + 62, halfW - 60, 16);
+
+    // Item 3: Lossy
+    gr.FillRoundRect(barX, legY0 + 88, 12, 12, 2, 2, RGB(100, 116, 139));
+    tL(gr, 'Compressed Lossy', FONT.card, COL.text, barX + 20, legY0 + 84, halfW - 60, 20);
+    tL(gr, fid.lossyCount + ' tracks (' + fid.lossyPct + '%) - MP3/AAC/Vorbis', FONT.plSub, COL.text2, barX + 20, legY0 + 104, halfW - 60, 16);
   }
   cy += podiumH + 30;
 
