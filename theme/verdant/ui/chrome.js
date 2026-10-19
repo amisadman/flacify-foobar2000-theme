@@ -143,8 +143,15 @@ function drawOverlays(gr){
   }
   if(ctxMenu){
     var ih=42, pad=6, i, it, iw=190;
-    // width follows the longest label (16px left inset + 24px breathing room on the right)
-    for(i=0;i<ctxMenu.items.length;i++) iw=Math.max(iw,Math.round(gr.CalcTextWidth(ctxMenu.items[i].label,FONT.pl))+40);
+    var hasIcons=false;
+    for(i=0;i<ctxMenu.items.length;i++){
+      if(ctxMenu.items[i].icon){ hasIcons=true; break; }
+    }
+    // width follows the longest label (accounting for icon offset if present)
+    for(i=0;i<ctxMenu.items.length;i++){
+      var labelW=Math.round(gr.CalcTextWidth(ctxMenu.items[i].label,FONT.pl));
+      iw=Math.max(iw,labelW+(hasIcons?64:40));
+    }
     iw=Math.min(iw,Math.max(120,W-20));
     var h=ctxMenu.items.length*ih+pad*2;
     var mnx=Math.max(10,Math.min(ctxMenu.x,W-iw-10)), mny=Math.max(10,Math.min(ctxMenu.y,H-h-10));
@@ -152,9 +159,19 @@ function drawOverlays(gr){
     gr.FillRoundRect(mnx,mny,iw,h,8,8,RGB(43,43,43));
     for(i=0;i<ctxMenu.items.length;i++){
       var iy=mny+pad+i*ih; it=ctxMenu.items[i];
-      if(hv(mnx,iy,mnx+iw,iy+ih)) gr.FillRoundRect(mnx+4,iy,iw-8,ih,5,5,RGBA(255,255,255,20));
-      var itemCol=it.danger?RGB(240,96,96):(it.inPl?COL.green:COL.text);
-      tL(gr,it.label,FONT.pl,itemCol,mnx+16,iy,iw-24,ih);
+      var isHov=hv(mnx,iy,mnx+iw,iy+ih);
+      if(isHov) gr.FillRoundRect(mnx+4,iy,iw-8,ih,5,5,RGBA(255,255,255,20));
+      if(hasIcons){
+        if(it.icon){
+          var icoCol=it.checked ? COL.green : (it.isNew ? (isHov?COL.text:COL.text2) : (isHov?COL.text:COL.text3));
+          drawIcon(gr,it.icon,icoCol,mnx+14,Math.round(iy+(ih-16)/2),16,16,16);
+        }
+        var itemCol=it.danger?RGB(240,96,96):((it.checked||it.inPl)?COL.green:COL.text);
+        tL(gr,it.label,FONT.pl,itemCol,mnx+38,iy,iw-48,ih);
+      } else {
+        var itemCol=it.danger?RGB(240,96,96):((it.checked||it.inPl)?COL.green:COL.text);
+        tL(gr,it.label,FONT.pl,itemCol,mnx+16,iy,iw-24,ih);
+      }
       CTX_HB.push({x0:mnx,y0:iy,x1:mnx+iw,y1:iy+ih,act:it.act,plIdx:it.plIdx,handle:it.handle,inPl:it.inPl});
     }
   }

@@ -71,13 +71,17 @@ function removePlaylistCover(plName){
 function openAddToPlaylistMenu(h, x, y){
   if(!h) return;
   var items=[
-    {label:'[+] New playlist', act:'add_to_new_pl', handle:h}
+    {label:'New playlist', act:'add_to_new_pl', handle:h, icon:'add', isNew:true}
   ];
   // Liked Songs
+  var liked=isLiked(h);
   items.push({
-    label:(isLiked(h)?'✔ ':'+ ')+'Liked Songs',
+    label:'Liked Songs',
     act:'toggle_like_item',
-    handle:h
+    handle:h,
+    icon:liked?'check':'add',
+    checked:liked,
+    inPl:liked
   });
   // User playlists
   var pls=visiblePlaylists();
@@ -86,11 +90,13 @@ function openAddToPlaylistMenu(h, x, y){
     var nm=plName(pi);
     var inPl=isTrackInPlaylist(h, pi);
     items.push({
-      label:(inPl?'✔ ':'+ ')+nm,
+      label:nm,
       act:'toggle_pl_item',
       plIdx:pi,
       handle:h,
-      inPl:inPl
+      inPl:inPl,
+      icon:inPl?'check':'add',
+      checked:inPl
     });
   }
   ctxMenu={kind:'add_to_pl', handle:h, x:x, y:y, items:items};
