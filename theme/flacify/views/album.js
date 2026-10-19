@@ -34,8 +34,14 @@ function drawAlbum(gr, r){
   var ax=x0, ay=r.y+24-scroll;
 
   if(ay+artSz>r.y && ay<cropY){
-    // Ambient drop shadow behind cover art
-    gr.FillRoundRect(ax+4, ay+6, artSz, artSz, 10, 10, RGBA(0,0,0,150));
+    // Subtle color aura behind 250px artwork
+    var pal=(typeof getAlbumPalette==='function')?getAlbumPalette(cover,alb.name):null;
+    var auraCol=pal?pal.aura:RGBA(30,215,96,60);
+    if(typeof drawArtworkAura==='function'){
+      drawArtworkAura(gr, ax, ay, artSz, 8, auraCol);
+    } else {
+      gr.FillRoundRect(ax+4, ay+6, artSz, artSz, 10, 10, RGBA(0,0,0,150));
+    }
     drawRounded(gr, ax, ay, artSz, 8, cover, alb.name);
   }
 

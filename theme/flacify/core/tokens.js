@@ -19,6 +19,41 @@ var COL = {
 var M = { pad:8, gap:8, navW:230, queueW:400, barH:96, navTopH:84, rowH:56, radius:10, cpad:24, headH:280, artSz:200 };   // navW/queueW: sidebar + queue widths
 var PALETTE=[RGB(83,62,140),RGB(30,120,110),RGB(150,64,92),RGB(43,92,160),RGB(120,92,44),RGB(58,120,64),RGB(140,80,120),RGB(52,100,150),RGB(96,72,52),RGB(70,70,96)];
 
+var ACCENT_THEMES = {
+  spotify_green: { id:'spotify_green', name:'Spotify Green', primary:RGB(30,215,96), alt:RGB(29,185,84) },
+  midnight_purple: { id:'midnight_purple', name:'Midnight Purple', primary:RGB(139,92,246), alt:RGB(124,58,237) },
+  sunset_amber: { id:'sunset_amber', name:'Sunset Amber', primary:RGB(245,158,11), alt:RGB(217,119,6) },
+  cyberpunk_cyan: { id:'cyberpunk_cyan', name:'Cyberpunk Cyan', primary:RGB(6,182,212), alt:RGB(8,145,178) },
+  monochrome_slate: { id:'monochrome_slate', name:'Monochrome Slate', primary:RGB(148,163,184), alt:RGB(100,116,139) },
+  adaptive: { id:'adaptive', name:'Adaptive Album Glow', primary:null, alt:null }
+};
+var currentAccentKey = (typeof ACCENT_THEME!=='undefined') ? ACCENT_THEME : 'adaptive';
+
+function applyAccentTheme(overrideColor){
+  var t = ACCENT_THEMES[currentAccentKey] || ACCENT_THEMES.adaptive;
+  if(t.primary){
+    COL.green = t.primary;
+    COL.greenC = t.alt;
+  } else if(overrideColor){
+    COL.green = overrideColor;
+    COL.greenC = (typeof blend==='function') ? blend(overrideColor, COL.black, 0.15) : overrideColor;
+  } else {
+    COL.green = RGB(30, 215, 96);
+    COL.greenC = RGB(29, 185, 84);
+  }
+}
+
+function setAccentTheme(key){
+  if(ACCENT_THEMES.hasOwnProperty(key)){
+    currentAccentKey = key;
+    try{ window.SetProperty('Theme: Accent colorway (spotify_green | midnight_purple | sunset_amber | cyberpunk_cyan | monochrome_slate | adaptive)', key); }catch(e){}
+    applyAccentTheme();
+    if(typeof updateNP==='function') updateNP();
+    if(typeof repaintAll==='function') repaintAll();
+  }
+}
+applyAccentTheme();
+
 /* ------------------------- fonts (create once) -------------------------
    Every font is built here at load time from UISCALE, which core/props.js has already resolved
    from the panel property (or the display DPI). That is why props.js loads first, and why a

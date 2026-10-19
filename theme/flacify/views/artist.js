@@ -95,8 +95,14 @@ function drawArtist(gr, r){
   var ax=x0, ay=r.y+24-scroll;
 
   if(ay+artSz>r.y && ay<cropY){
-    // Ambient drop shadow behind artist portrait card
-    gr.FillRoundRect(ax+4, ay+6, artSz, artSz, 10, 10, RGBA(0,0,0,160));
+    // Ambient color aura behind artist portrait card
+    var pal=(typeof getAlbumPalette==='function')?getAlbumPalette(firstHandle,viewArtist):null;
+    var auraCol=pal?pal.aura:RGBA(30,215,96,60);
+    if(typeof drawArtworkAura==='function'){
+      drawArtworkAura(gr, ax, ay, artSz, 8, auraCol);
+    } else {
+      gr.FillRoundRect(ax+4, ay+6, artSz, artSz, 10, 10, RGBA(0,0,0,160));
+    }
     drawArtistPhoto(gr, ax, ay, artSz, 8, firstHandle, viewArtist);
     strokeRound(gr, ax, ay, artSz, artSz, 8, 1, RGBA(255,255,255,24));
 

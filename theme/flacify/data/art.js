@@ -95,6 +95,10 @@ function pumpArt(){
 function artDone(key,img){
   capPut(artCache,artOrder,ART_CAP,key,img||null);
   delete artPending[key];
+  if(typeof paletteCache!=='undefined' && paletteCache.hasOwnProperty(key)) delete paletteCache[key];
+  if(typeof NP!=='undefined' && NP && albKey(NP)===key){
+    if(typeof refreshNowPlayingGlow==='function') refreshNowPlayingGlow(false);
+  }
   artInFlight--; pumpArt();
 }
 function startArt(h,key){
@@ -204,17 +208,79 @@ function drawCover(gr,x,y,sz,rad,h,seed,key){
   else if(rad>0){ gr.FillRoundRect(x,y,sz,sz,rad,rad,coverCol(seed)); }
   else { gr.FillSolidRect(x,y,sz,sz,coverCol(seed)); }
 }
-/* dominant colour of an album's art, for header gradients (cached; falls back to placeholder) */
-var hueCache={};
+/* ------------------------- GDI+ Album Palette & Dynamic Hue ------------------------- */
+var hueCache={}, paletteCache={};
+
+function getAlbumPalette(h,seed){
+  var k = h ? albKey(h) : (seed || '__default__');
+  if(paletteCache.hasOwnProperty(k)) return paletteCache[k];
+
+  var defCol = coverCol(seed || k);
+  if(!h){
+    var palDef = {
+      primary: defCol,
+      accent: vibrantAccentColor(defCol),
+      glow: clampPaletteColor(defCol, 0.14, 0.32, 0.35),
+      aura: clampPaletteColor(defCol, 0.18, 0.38, 0.45)
+    };
+    paletteCache[k] = palDef;
+    return palDef;
+  }
+
+  var img = getArt(h);
+  if(!artLoaded(k)){
+    return {
+      primary: defCol,
+      accent: vibrantAccentColor(defCol),
+      glow: clampPaletteColor(defCol, 0.14, 0.32, 0.35),
+      aura: clampPaletteColor(defCol, 0.18, 0.38, 0.45)
+    };
+  }
+
+  var pri = defCol;
+  var sec = pri;
+  if(img){
+    try {
+      var sch = img.GetColourScheme(2);
+      if(sch && sch.length > 0){
+        pri = sch[0];
+        sec = (sch.length > 1) ? sch[1] : pri;
+      }
+    } catch(e){}
+  }
+
+  var pal = {
+    primary: pri,
+    accent: vibrantAccentColor(sec),
+    glow: clampPaletteColor(pri, 0.14, 0.32, 0.35),
+    aura: clampPaletteColor(sec, 0.18, 0.38, 0.45)
+  };
+  paletteCache[k] = pal;
+  return pal;
+}
+
 function artHue(h,seed){
-  if(!h) return coverCol(seed);
-  var k=albKey(h);
-  if(hueCache.hasOwnProperty(k)) return hueCache[k];
-  var img=getArt(h);
-  if(!artLoaded(k)) return coverCol(seed);   // still loading -> fallback, don't cache (recompute when it arrives)
-  var col=coverCol(seed);
-  if(img){ try{ var s=img.GetColourScheme(1); if(s && s.length) col=s[0]; }catch(e){} }
-  hueCache[k]=col; return col;
+  return getAlbumPalette(h,seed).glow;
+}
+
+function refreshNowPlayingGlow(immediate){
+  if(typeof NP!=='undefined' && NP){
+    var pal = getAlbumPalette(NP);
+    if(typeof currentAccentKey!=='undefined' && currentAccentKey==='adaptive'){
+      applyAccentTheme(pal.accent);
+      if(typeof updateAmbientGlow==='function') updateAmbientGlow(pal.glow, immediate);
+    } else {
+      var t = (typeof ACCENT_THEMES!=='undefined' && ACCENT_THEMES[currentAccentKey]) ? ACCENT_THEMES[currentAccentKey] : null;
+      var pri = t ? t.primary : RGB(30,215,96);
+      var targetGlow = clampPaletteColor(pri, 0.12, 0.28, 0.35);
+      applyAccentTheme();
+      if(typeof updateAmbientGlow==='function') updateAmbientGlow(targetGlow, immediate);
+    }
+  } else {
+    var baseGlow = RGB(18, 18, 18);
+    applyAccentTheme();
+    if(typeof updateAmbientGlow==='function') updateAmbientGlow(baseGlow, immediate);
+  }
 }
 /* masked art: circular (artists) / rounded (large covers). Masks + results are cached;
    ApplyMask mutates, so it runs on a resized COPY, never the shared original. */

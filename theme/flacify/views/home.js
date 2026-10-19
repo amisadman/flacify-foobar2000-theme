@@ -9,6 +9,10 @@ function drawHome(gr,r){
   cardW=Math.floor((w-gap*(cols-1))/cols);
   var cardH=cardW+56;
 
+  // Ambient Hero Gradient Glow (subtle ambient tint from currently playing or base)
+  var homeGlow = (typeof getSmoothAmbientRGB==='function') ? getSmoothAmbientRGB() : COL.base;
+  gr.FillGradRect(r.x, r.y, r.w, Math.min(340, Math.round(r.h * 0.5)), 90, blend(homeGlow, COL.base, 0.40), COL.base, 1.0);
+
   // ---- 1) Playlists Shelf (Top Pinned) ----
   var shelfTitleY=r.y+16, shelfY=shelfTitleY+38;
   var pls=visiblePlaylists();

@@ -108,3 +108,72 @@ function openSleepTimerMenu(x, y){
   else if(id === 5) startSleepTimer(0, 'track');
   else if(id === 99) stopSleepTimer();
 }
+
+/* ------------------------- 60 FPS Delta-Time Ambient Glow Engine ------------------------- */
+var ambientGlow = {
+  currR: 18, currG: 18, currB: 18,
+  targetR: 18, targetG: 18, targetB: 18,
+  animTimer: null
+};
+
+function updateAmbientGlow(targetCol, immediate){
+  var r = (targetCol >> 16) & 255;
+  var g = (targetCol >> 8) & 255;
+  var b = targetCol & 255;
+  ambientGlow.targetR = r;
+  ambientGlow.targetG = g;
+  ambientGlow.targetB = b;
+
+  if(immediate){
+    ambientGlow.currR = r;
+    ambientGlow.currG = g;
+    ambientGlow.currB = b;
+    if(ambientGlow.animTimer){
+      window.ClearInterval(ambientGlow.animTimer);
+      ambientGlow.animTimer = null;
+    }
+    return;
+  }
+
+  if(!ambientGlow.animTimer){
+    ambientGlow.animTimer = window.SetInterval(ambientGlowTick, 16); // 60 FPS
+  }
+}
+
+function ambientGlowTick(){
+  var dr = ambientGlow.targetR - ambientGlow.currR;
+  var dg = ambientGlow.targetG - ambientGlow.currG;
+  var db = ambientGlow.targetB - ambientGlow.currB;
+
+  var step = 0.12;
+  ambientGlow.currR += dr * step;
+  ambientGlow.currG += dg * step;
+  ambientGlow.currB += db * step;
+
+  if(typeof repaintBar === 'function') repaintBar();
+  if(typeof repaintMain === 'function') repaintMain();
+
+  // Stop timer at convergence threshold to guarantee 0% idle CPU
+  if(Math.abs(dr) < 0.8 && Math.abs(dg) < 0.8 && Math.abs(db) < 0.8){
+    ambientGlow.currR = ambientGlow.targetR;
+    ambientGlow.currG = ambientGlow.targetG;
+    ambientGlow.currB = ambientGlow.targetB;
+    window.ClearInterval(ambientGlow.animTimer);
+    ambientGlow.animTimer = null;
+  }
+}
+
+function getSmoothAmbientGlow(alpha){
+  var a = (alpha !== undefined) ? alpha : 75;
+  var r = Math.round(ambientGlow.currR);
+  var g = Math.round(ambientGlow.currG);
+  var b = Math.round(ambientGlow.currB);
+  return RGBA(r, g, b, a);
+}
+
+function getSmoothAmbientRGB(){
+  var r = Math.round(ambientGlow.currR);
+  var g = Math.round(ambientGlow.currG);
+  var b = Math.round(ambientGlow.currB);
+  return RGB(r, g, b);
+}

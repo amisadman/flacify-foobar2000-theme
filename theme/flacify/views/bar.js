@@ -55,11 +55,19 @@ function drawBar(gr){
   HB_CTRL=[];
   var by=R.barY;
   gr.FillSolidRect(0,by,W,M.barH,COL.black);
+
+  // Dynamic Ambient Top-Edge Glow
+  var glowCol = (typeof getSmoothAmbientGlow === 'function') ? getSmoothAmbientGlow(65) : RGBA(30,215,96,40);
+  gr.FillGradRect(0, by, W, 4, 90, glowCol, RGBA(0,0,0,0), 1.0);
+
   var playing=fb.IsPlaying&&!fb.IsPaused;
   var cxC=Math.round(W/2);
 
   // left: cover + title/artist + heart + lossless badge
   var cs=64, cx=16, cy=by+(M.barH-cs)/2;
+  if(NP && typeof drawArtworkAura === 'function'){
+    drawArtworkAura(gr, cx, cy, cs, 5, glowCol);
+  }
   drawCover(gr,cx,cy,cs,5,NP,'np');
   if(NP) HB_CTRL.push({x0:cx,y0:cy,x1:cx+cs,y1:cy+cs,act:'details'});
 

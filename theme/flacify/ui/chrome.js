@@ -6,10 +6,34 @@
 var TBH = Math.round(36*UISCALE), CAPBW = Math.round(46*UISCALE);
 var HB_NAV_BACK=null, HB_NAV_FWD=null, HB_BACK_BTN=null;
 var UIWizard=null; try{ UIWizard=new ActiveXObject('UIWizard'); }catch(e){ UIWizard=null; }
-var MENUS=[['File','file'],['Library','library'],['Help','help']];
+var MENUS=[['File','file'],['Library','library'],['Theme','theme'],['Help','help']];
 var MENU_END=0, capW=-1, capEnd=-1;
 function applyCaption(){ if(!UIWizard) return; if(capW===W && capEnd===MENU_END) return; capW=W; capEnd=MENU_END; try{ UIWizard.SetCaptionAreaSize(MENU_END,0,Math.max(0,W-CAPBW*3-MENU_END),TBH); }catch(e){} }
-function openMenu(root,x,y){ try{ var mm=fb.CreateMainMenuManager(); mm.Init(root); var m=window.CreatePopupMenu(); mm.BuildMenu(m,1,600); var id=m.TrackPopupMenu(x,y); if(id>0) mm.ExecuteByID(id-1); }catch(e){} }
+
+function openThemeMenu(x,y){
+  var m=window.CreatePopupMenu();
+  var isAdaptive = (typeof currentAccentKey!=='undefined' && currentAccentKey==='adaptive');
+  m.AppendMenuItem(0, 100, (isAdaptive?'✓ ':'   ') + 'Adaptive Album Glow');
+  m.AppendMenuSeparator();
+  m.AppendMenuItem(0, 101, (currentAccentKey==='spotify_green'?'✓ ':'   ') + 'Spotify Green');
+  m.AppendMenuItem(0, 102, (currentAccentKey==='midnight_purple'?'✓ ':'   ') + 'Midnight Purple');
+  m.AppendMenuItem(0, 103, (currentAccentKey==='sunset_amber'?'✓ ':'   ') + 'Sunset Amber');
+  m.AppendMenuItem(0, 104, (currentAccentKey==='cyberpunk_cyan'?'✓ ':'   ') + 'Cyberpunk Cyan');
+  m.AppendMenuItem(0, 105, (currentAccentKey==='monochrome_slate'?'✓ ':'   ') + 'Monochrome Slate');
+
+  var id=m.TrackPopupMenu(x,y);
+  if(id===100) setAccentTheme('adaptive');
+  else if(id===101) setAccentTheme('spotify_green');
+  else if(id===102) setAccentTheme('midnight_purple');
+  else if(id===103) setAccentTheme('sunset_amber');
+  else if(id===104) setAccentTheme('cyberpunk_cyan');
+  else if(id===105) setAccentTheme('monochrome_slate');
+}
+
+function openMenu(root,x,y){
+  if(root==='theme'){ openThemeMenu(x,y); return; }
+  try{ var mm=fb.CreateMainMenuManager(); mm.Init(root); var m=window.CreatePopupMenu(); mm.BuildMenu(m,1,600); var id=m.TrackPopupMenu(x,y); if(id>0) mm.ExecuteByID(id-1); }catch(e){}
+}
 
 // small hover "..." button; records a HB_DOTS target that opens the menu just below it
 function drawDots(gr,cx,cy,pl){

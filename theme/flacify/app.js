@@ -196,6 +196,7 @@ function updateNP(){
   NP=m;
   npTitleStr=m?TF.npTitle.EvalWithMetadb(m):'';
   npArtistStr=m?TF.npArtist.EvalWithMetadb(m):'';
+  if(typeof refreshNowPlayingGlow==='function') refreshNowPlayingGlow(false);
 }
 function repaintBar(){ if(fsMode){ repaintAll(); return; } markDirty(); dirtyBar=true; window.RepaintRect(0,R.barY,W,M.barH); }
 

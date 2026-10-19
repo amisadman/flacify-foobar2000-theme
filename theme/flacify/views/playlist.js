@@ -16,6 +16,9 @@ function drawPlaylist(gr,r){
   var headHue=isLikedPl?RGB(75,45,145):artHue(plChoice(p.i).single,p.name);
   gr.FillGradRect(r.x,r.y,r.w,M.headH,90,blend(headHue,COL.base,0.42),COL.base,1.0);
   var ax=r.x+M.cpad, ay=r.y+44, art=M.artSz;
+  var pal=(typeof getAlbumPalette==='function')?getAlbumPalette(isLikedPl?null:plChoice(p.i).single,p.name):null;
+  var auraCol=pal?pal.aura:RGBA(30,215,96,60);
+  if(typeof drawArtworkAura==='function') drawArtworkAura(gr,ax,ay,art,8,auraCol);
   if(isLikedPl) drawLikedCover(gr,ax,ay,art,8);
   else {
     drawPlCover(gr,ax,ay,art,8,p.i,p.name);

@@ -25,6 +25,7 @@ function propStr(name,dflt){
    at runtime -- the picker in fullscreen calls window.SetProperty -- so the choice survives a
    restart. An unknown value simply falls through to the bars (see drawVizBody). */
 var vizStyle = propStr('Visualizer: style (bars | radial | wave)', 'bars');
+var ACCENT_THEME = propStr('Theme: Accent colorway (spotify_green | midnight_purple | sunset_amber | cyberpunk_cyan | monochrome_slate | adaptive)', 'adaptive');
 
 /* 0 = auto: follow the display, where 96 dpi is 100% scaling. Auto is right on most machines;
    set a number to override -- 1.0 is compact, 1.25 suits a 1440p 21", higher for a 4K panel.

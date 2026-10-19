@@ -25,3 +25,70 @@ function fmtDur(s){
   if(m>0) return m+' min';
   return s+' sec';
 }
+
+/* ------------------------- color & ambient aura helpers ------------------------- */
+function rgbToHsl(r, g, b){
+  r /= 255; g /= 255; b /= 255;
+  var max = Math.max(r, g, b), min = Math.min(r, g, b);
+  var h = 0, s = 0, l = (max + min) / 2;
+  if(max !== min){
+    var d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch(max){
+      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+      case g: h = (b - r) / d + 2; break;
+      case b: h = (r - g) / d + 4; break;
+    }
+    h /= 6;
+  }
+  return [h, s, l];
+}
+
+function hslToRgb(h, s, l){
+  var r, g, b;
+  if(s === 0){
+    r = g = b = l;
+  } else {
+    function hue2rgb(p, q, t){
+      if(t < 0) t += 1;
+      if(t > 1) t -= 1;
+      if(t < 1/6) return p + (q - p) * 6 * t;
+      if(t < 1/2) return q;
+      if(t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+      return p;
+    }
+    var q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+    var p = 2 * l - q;
+    r = hue2rgb(p, q, h + 1/3);
+    g = hue2rgb(p, q, h);
+    b = hue2rgb(p, q, h - 1/3);
+  }
+  return RGB(Math.round(r * 255), Math.round(g * 255), Math.round(b * 255));
+}
+
+function clampPaletteColor(c, minL, maxL, minS){
+  minL = (minL !== undefined) ? minL : 0.14;
+  maxL = (maxL !== undefined) ? maxL : 0.32;
+  minS = (minS !== undefined) ? minS : 0.35;
+  var r = (c >> 16) & 255, g = (c >> 8) & 255, b = c & 255;
+  var hsl = rgbToHsl(r, g, b);
+  var h = hsl[0], s = Math.max(minS, hsl[1]), l = Math.max(minL, Math.min(maxL, hsl[2]));
+  return hslToRgb(h, s, l);
+}
+
+function vibrantAccentColor(c){
+  var r = (c >> 16) & 255, g = (c >> 8) & 255, b = c & 255;
+  var hsl = rgbToHsl(r, g, b);
+  var h = hsl[0], s = Math.max(0.65, hsl[1]), l = Math.max(0.42, Math.min(0.55, hsl[2]));
+  return hslToRgb(h, s, l);
+}
+
+function drawArtworkAura(gr, x, y, sz, rad, col){
+  if(!col) col = RGBA(30, 215, 96, 60);
+  var r = (col >> 16) & 255, g = (col >> 8) & 255, b = col & 255;
+  var outPad = Math.max(6, Math.round(sz * 0.05));
+  gr.FillRoundRect(x - outPad, y - outPad + 2, sz + outPad * 2, sz + outPad * 2, rad + 8, rad + 8, RGBA(r, g, b, 50));
+  var inPad = Math.max(2, Math.round(sz * 0.02));
+  gr.FillRoundRect(x - inPad, y - inPad + 1, sz + inPad * 2, sz + inPad * 2, rad + 4, rad + 4, RGBA(r, g, b, 85));
+  gr.FillRoundRect(x + 2, y + 4, sz, sz, rad, rad, RGBA(0, 0, 0, 160));
+}
