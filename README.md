@@ -7,7 +7,7 @@
 *A high-fidelity, standalone music player interface that brings the sleek aesthetic, fluid responsiveness, and rich metadata of modern Spotify desktop to your personal, offline lossless FLAC and Hi-Res collection.*
 
 [![Release](https://img.shields.io/github/v/release/amisadman/flacify-foobar2000-theme?color=1DB954&label=release)](https://github.com/amisadman/flacify-foobar2000-theme/releases/latest)
-![Version](https://img.shields.io/badge/version-v1.2.0-1DB954)
+![Version](https://img.shields.io/badge/version-v1.3.0-1DB954)
 ![foobar2000](https://img.shields.io/badge/foobar2000-v2%20·%2064--bit-1DB954)
 ![Audio](https://img.shields.io/badge/Lossless-FLAC%20%7C%20ALAC%20%7C%20Hi--Res-1DB954)
 ![Windows](https://img.shields.io/badge/Windows-10%20%7C%2011-1DB954)
