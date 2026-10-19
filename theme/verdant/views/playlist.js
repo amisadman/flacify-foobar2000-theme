@@ -12,9 +12,12 @@ function drawPlaylist(gr,r){
     if(metaOk || skelVisible('meta'+p.i)) drawViewSkeleton(gr,r);
     return;
   }
-  gr.FillGradRect(r.x,r.y,r.w,M.headH,90,blend(artHue(plChoice(p.i).single,p.name),COL.base,0.42),COL.base,1.0);
+  var isLikedPl=(p.name===(typeof LIKED_PLAYLIST_NAME!=='undefined'?LIKED_PLAYLIST_NAME:'Liked Songs'));
+  var headHue=isLikedPl?RGB(75,45,145):artHue(plChoice(p.i).single,p.name);
+  gr.FillGradRect(r.x,r.y,r.w,M.headH,90,blend(headHue,COL.base,0.42),COL.base,1.0);
   var ax=r.x+M.cpad, ay=r.y+44, art=M.artSz;
-  drawPlCover(gr,ax,ay,art,8,p.i,p.name);
+  if(isLikedPl) drawLikedCover(gr,ax,ay,art,8);
+  else drawPlCover(gr,ax,ay,art,8,p.i,p.name);
   // sort pill + asc/desc button, right-aligned like the All Songs group pill; header text
   // stops short of this column so the two can never collide on a narrow panel
   var rx0=r.x+r.w-M.cpad, sortDirW=38, sortPillW=200, sortGap=8, sortTotalW=sortPillW+sortGap+sortDirW;
@@ -46,10 +49,11 @@ function drawPlaylist(gr,r){
   // track list
   var lx=r.x+M.cpad, rx=r.x+r.w-M.cpad;
   var listTop=r.y+M.headH+8;
-  var numW=30, durW=64, cgap=16;
-  var albumW=Math.round((rx-lx-numW-durW-cgap*3)*0.34);
-  var titleX=lx+numW+cgap, titleW=(rx-lx-numW-durW-albumW-cgap*3);
+  var numW=30, durW=54, heartW=28, cgap=16;
+  var albumW=Math.round((rx-lx-numW-durW-heartW-cgap*4)*0.34);
+  var titleX=lx+numW+cgap, titleW=(rx-lx-numW-durW-heartW-albumW-cgap*4);
   var albumX=titleX+titleW+cgap;
+  var heartX=albumX+albumW+cgap;
   var rowsTop=listTop+34, rh=M.rowH, cropY=r.y+r.h, viewH=cropY-rowsTop;
   var contentH=p.count*rh, maxPx=Math.max(0,contentH-viewH);   // firstRow is a PIXEL offset
   PL_MAXPX=maxPx;
@@ -76,8 +80,13 @@ function drawPlaylist(gr,r){
     tL(gr,meta.title[j],FONT.rowTitle,titleCol,ttx,ry+8,ttw,20);
     tL(gr,meta.artist[j],FONT.rowArtist,COL.text2,ttx,ry+30,ttw,16);
     tL(gr,alb,FONT.rowCell,COL.text2,albumX,ry,albumW,rh);
+    var lk=isLiked(h);
+    if(isHover || lk){
+      var hCol=lk?COL.green:(hv(heartX-4,ry+(rh-18)/2-2,heartX+22,ry+(rh-18)/2+20)?COL.text:COL.text2);
+      drawIcon(gr,lk?'heartFilled':'heart',hCol,heartX,ry+(rh-18)/2,18,18,15);
+    }
     tR(gr,meta.len[j],FONT.rowCell,isPlaying?COL.green:COL.white,rx-durW,ry,durW,rh);
-    HB_TR.push({x0:lx-8,y0:ry,x1:rx+8,y1:ry+rh,pl:p.i,item:j,pgx0:lx,pgx1:lx+numW});
+    HB_TR.push({x0:lx-8,y0:ry,x1:rx+8,y1:ry+rh,pl:p.i,item:j,pgx0:lx,pgx1:lx+numW,hx0:heartX-6,hx1:heartX+24});
   }
   // crop the partial rows top & bottom, then draw the sticky column header on top
   gr.FillSolidRect(r.x,rowsTop-rh,r.w,rh,COL.base);

@@ -23,10 +23,16 @@ function drawHome(gr,r){
   var artsReady=listReady;
   if(artsReady && !warmed['home']){ warmed['home']=1; startWarmHome(arts,pls); }
 
-  // Geometry for scrollable body (Recently Added + Artist Grid)
+  // Geometry for scrollable body (Recently Played + Recently Added + Artist Grid)
   var shelfBot=shelfY+scardH+(pls.length>cols?22:14);
   var gy=shelfBot+6, cropY=r.y+r.h, viewH=cropY-gy;
   var rowStep=cardH+8;
+
+  // Recently played tracks from Listening History
+  var recPlays=(typeof getRecentlyPlayedDistinct==='function')?getRecentlyPlayedDistinct(cols):[];
+  var pcardW=Math.floor((w-gap*(cols-1))/cols);
+  var pcardH=pcardW+64;
+  var playSecH=recPlays.length?(36+pcardH+20):0;
 
   // Recently added 5 songs
   var recSongs=getRecentTracks(5);
@@ -36,12 +42,56 @@ function drawHome(gr,r){
   var recSecH=recSongs.length?(36+rcardH+18):0;
 
   var totalRows=Math.max(1,Math.ceil(arts.length/cols));
-  var contentH=recSecH + totalRows*rowStep + 40;
+  var contentH=playSecH + recSecH + totalRows*rowStep + 40;
   var maxPx=Math.max(0,contentH-viewH);
   HOME_MAXROW=maxPx;
   homeScroll=clampPx(homeScroll,maxPx); homeScrollT=clampPx(homeScrollT,maxPx);
 
   var cy=gy-homeScroll;
+
+  // ---- Render Recently Played (History) Section ----
+  if(recPlays.length){
+    var pTitleY=cy;
+    if(pTitleY+28>gy && pTitleY<cropY){
+      tL(gr,'Recently Played',FONT.sect2,COL.text,x0,pTitleY,w-120,28);
+    }
+    var pCardsY=pTitleY+34;
+    for(var pi=0; pi<recPlays.length && pi<cols; pi++){
+      var px=x0+pi*(pcardW+gap), py=pCardsY;
+      if(py>=cropY) break;
+      if(py+pcardH<=gy) continue;
+
+      var it=recPlays[pi];
+      var pHov=hv(px,Math.max(py,gy),px+pcardW,Math.min(py+pcardH,cropY));
+
+      if(pHov) gr.FillRoundRect(px-6,py-6,pcardW+12,pcardH+12,8,8,COL.rowHover);
+
+      drawCover(gr,px,py,pcardW,6,null,it.album||it.title);
+
+      // Play button on hover
+      if(pHov){
+        var pb=40, pbx=px+pcardW-pb-8, pby=py+pcardW-pb-8;
+        gr.FillEllipse(pbx,pby,pb,pb,COL.green);
+        drawIcon(gr,'play',COL.black,pbx,pby,pb,pb,18);
+      }
+
+      // Title & Artist
+      var pty=py+pcardW+8;
+      tL(gr,it.title,FONT.card,pHov?COL.green:COL.text,px,pty,pcardW,20);
+      tL(gr,it.artist,FONT.plSub,COL.text2,px,pty+20,pcardW,16);
+
+      // Relative time tag
+      var pTagH=18, pTagW=Math.min(pcardW,84), pTagY=pty+38;
+      gr.FillRoundRect(px,pTagY,pTagW,pTagH,4,4,RGBA(255,255,255,14));
+      tC(gr,fmtRelativeTime(it.time),FONT.eyebrow,COL.text2,px,pTagY,pTagW,pTagH);
+
+      var vpy0=Math.max(py,gy), vpy1=Math.min(py+pcardH,cropY);
+      if(vpy1>vpy0){
+        HB_CARD.push({x0:px-6,y0:vpy0,x1:px+pcardW+6,y1:vpy1,kind:'recent_play',item:it,px:px,py:py,pcardW:pcardW,pcardH:pcardH});
+      }
+    }
+    cy+=playSecH;
+  }
 
   // ---- Render Recently Added Section ----
   if(recSongs.length){

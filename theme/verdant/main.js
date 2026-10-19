@@ -51,6 +51,8 @@ include('data/lyrics.js');
 include('data/replaygain.js');
 include('data/dedupe.js');
 include('data/playlist_edit.js');
+include('data/liked.js');
+include('data/history.js');
 
 include('ui/skeleton.js');
 include('ui/chrome.js');
@@ -66,6 +68,7 @@ include('views/album.js');
 include('views/albums.js');
 include('views/songs.js');
 include('views/song_details.js');
+include('views/history.js');
 include('views/search.js');
 include('views/queue.js');
 include('views/bar.js');

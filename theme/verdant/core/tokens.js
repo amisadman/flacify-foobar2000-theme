@@ -38,13 +38,15 @@ var FONT = {
   searchTxt:gf('Segoe UI Semibold',16,0),
   lyric:gf('Segoe UI',18,1), fsLyric:gf('Segoe UI',30,1),
   fsSrc:gf('Segoe UI Semibold',13,0),
-  fsSrcName:gf('Segoe UI',13,1)   // bold: the playlist name, vs. the plain-weight fixed caption
+  fsSrcName:gf('Segoe UI',13,1),   // bold: the playlist name, vs. the plain-weight fixed caption
+  badge:gf('Segoe UI',9,1)         // bold: lossless & hi-res audio stream quality badge
 };
 function chr(c){ return String.fromCharCode(c); }
 // MDL2 fallbacks for drawIcon when gdi.LoadSVG is unavailable (keys mirror ICONS), plus caption buttons
 var GLYPH = {
   play:chr(0xE768), pause:chr(0xE769), prev:chr(0xE892), next:chr(0xE893),
   arrowLeft:chr(0xE72B), arrowRight:chr(0xE72A),
+  heart:chr(0xEB51), heartFilled:chr(0xEB52),
   shuffle:chr(0xE8B1), repeat:chr(0xE8EE), repeat1:chr(0xE8ED), volume:chr(0xE767),
   search:chr(0xE721), home:chr(0xE80F), add:chr(0xE710), more:chr(0xE712), clock:chr(0xE823),
   artist:chr(0xE77B), album:chr(0xE93C),
@@ -81,6 +83,8 @@ var ICONS={
  next:"<path d='M15.8 6H18v12h-2.2zM6 18l9-6-9-6z'/>",
  arrowLeft:"<path d='M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z'/>",
  arrowRight:"<path d='M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z'/>",
+ heart:"<path d='M16.5 3c-1.74 0-3.41.81-4.5 2.09C10.91 3.81 9.24 3 7.5 3 4.42 3 2 5.42 2 8.5c0 3.78 3.4 6.86 8.55 11.54L12 21.35l1.45-1.32C18.6 15.36 22 12.28 22 8.5 22 5.42 19.58 3 16.5 3zm-4.4 15.55l-.1.1-.1-.1C7.14 14.24 4 11.39 4 8.5 4 6.5 5.5 5 7.5 5c1.54 0 3.04.99 3.57 2.36h1.87C13.46 5.99 14.96 5 16.5 5c2 0 3.5 1.5 3.5 3.5 0 2.89-3.14 5.74-7.9 10.05z'/>",
+ heartFilled:"<path d='M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z'/>",
  shuffle:"<path d='M10.59 9.17 5.41 4 4 5.41l5.17 5.17zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4zm.33 9.41-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04z'/>",
  repeat:"<path d='M7 7h10v3l4-4-4-4v3H5v6h2zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2z'/>",
  repeat1:"<path d='M13 15V9h-1l-2 1v1h1.5v4zm4-8v3l4-4-4-4v3H5v6h2V7zm0 10H7v-3l-4 4 4 4v-3h12v-6h-2z'/>",

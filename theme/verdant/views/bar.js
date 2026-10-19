@@ -13,17 +13,102 @@ function drawTrackBar(gr,x,y,w,th,trackCol,pos){
   if(pos>0) gr.FillSolidRect(x,y,Math.max(1,Math.round(w*pos)),th,COL.text);
   return {x0:x,y0:y-10,x1:x+w,y1:y+10+th,x:x,w:w};
 }
+function getAudioBadge(h){
+  if(!h) return null;
+  var codec=(TF.codec.EvalWithMetadb(h)||'').toUpperCase();
+  var bits=parseInt(TF.bitdepth.EvalWithMetadb(h),10)||0;
+  var rate=parseInt(TF.samplerate.EvalWithMetadb(h),10)||0;
+  var isLossless=(codec==='FLAC'||codec==='ALAC'||codec==='WAV'||codec==='AIFF'||codec==='APE'||codec==='WAVPACK'||codec.indexOf('DSD')>=0);
+  var isHiRes=(bits>=24||rate>=88200||codec.indexOf('DSD')>=0);
+
+  if(!codec && !bits && !rate) return null;
+
+  var rateStr='';
+  if(rate>=1000){
+    var khz=rate/1000;
+    rateStr=(rate%1000?khz.toFixed(1):Math.round(khz))+' kHz';
+  } else if(rate>0){
+    rateStr=rate+' Hz';
+  }
+
+  var label='';
+  if(isHiRes){
+    label='HI-RES LOSSLESS';
+    if(bits && rateStr) label+=' '+bits+'B/'+rateStr;
+    else if(bits) label+=' '+bits+'-BIT';
+    else if(rateStr) label+=' '+rateStr;
+    return {text:label,isHiRes:true,isLossless:true};
+  } else if(isLossless){
+    label='LOSSLESS';
+    if(bits && bits!==16) label+=' '+bits+'-BIT';
+    if(rateStr && rateStr!=='44.1 kHz') label+=' '+rateStr;
+    return {text:label,isHiRes:false,isLossless:true};
+  } else {
+    var br=TF.bitrate.EvalWithMetadb(h);
+    label=codec||'LOSSY';
+    if(br) label+=' '+br+' kbps';
+    return {text:label,isHiRes:false,isLossless:false};
+  }
+}
+
 function drawBar(gr){
   HB_CTRL=[];
   var by=R.barY;
   gr.FillSolidRect(0,by,W,M.barH,COL.black);
   var playing=fb.IsPlaying&&!fb.IsPaused;
-  // left: cover + title/artist
+  var cxC=Math.round(W/2);
+
+  // left: cover + title/artist + heart + lossless badge
   var cs=64, cx=16, cy=by+(M.barH-cs)/2;
   drawCover(gr,cx,cy,cs,5,NP,'np');
+  if(NP) HB_CTRL.push({x0:cx,y0:cy,x1:cx+cs,y1:cy+cs,act:'details'});
+
   var tx=cx+cs+14;
-  tL(gr,npTitleStr,FONT.npTitle,COL.text,tx,by+26,260,20);
-  tL(gr,npArtistStr,FONT.npArtist,COL.text2,tx,by+50,260,18);
+  var maxLeftW=Math.max(180, Math.min(340, cxC-130-tx));
+
+  if(NP){
+    // 1. Title line with Heart button
+    var maxTitleW=Math.max(60, maxLeftW-36);
+    var tw=Math.min(maxTitleW, Math.max(40, Math.round(gr.CalcTextWidth(npTitleStr, FONT.npTitle))));
+    tL(gr, npTitleStr, FONT.npTitle, COL.text, tx, by+24, tw, 22);
+
+    var hx=tx+tw+10, hy=by+23, hs=22;
+    var liked=isLiked(NP);
+    var hHot=hv(hx-4, hy-2, hx+hs+4, hy+hs+2);
+    var hCol=liked?COL.green:(hHot?COL.text:COL.text2);
+    drawIcon(gr, liked?'heartFilled':'heart', hCol, hx, hy, hs, hs, 18);
+    HB_CTRL.push({x0:hx-6, y0:hy-4, x1:hx+hs+6, y1:hy+hs+4, act:'like'});
+
+    // 2. Artist line with Quality Badge
+    var badge=getAudioBadge(NP);
+    var bw=0, bh=18;
+    if(badge){
+      bw=Math.min(170, Math.round(gr.CalcTextWidth(badge.text, FONT.badge))+14);
+    }
+    var maxArtW=maxLeftW-(badge?bw+10:0);
+    var aw=Math.min(maxArtW, Math.max(30, Math.round(gr.CalcTextWidth(npArtistStr, FONT.npArtist))));
+    tL(gr, npArtistStr, FONT.npArtist, COL.text2, tx, by+50, aw, 18);
+
+    if(badge){
+      var bx=tx+aw+10, byBadge=by+49;
+      var bHot=hv(bx, byBadge, bx+bw, byBadge+bh);
+      var bBg=badge.isHiRes?(bHot?RGBA(30,215,96,48):RGBA(30,215,96,22)):
+              (badge.isLossless?(bHot?RGBA(255,255,255,30):RGBA(255,255,255,14)):
+              (bHot?RGBA(255,255,255,20):RGBA(255,255,255,8)));
+      var bBorder=badge.isHiRes?(bHot?RGBA(30,215,96,200):RGBA(30,215,96,110)):
+                  (badge.isLossless?(bHot?RGBA(255,255,255,150):RGBA(255,255,255,60)):
+                  (bHot?RGBA(255,255,255,100):RGBA(255,255,255,40)));
+      var bCol=badge.isHiRes?COL.green:(badge.isLossless?(bHot?COL.white:COL.text):COL.text2);
+
+      gr.FillRoundRect(bx, byBadge, bw, bh, 3, 3, bBg);
+      gr.DrawRoundRect(bx, byBadge, bw, bh, 3, 3, 1, bBorder);
+      gr.GdiDrawText(badge.text, FONT.badge, bCol, bx, byBadge, bw, bh, DT_C);
+      HB_CTRL.push({x0:bx, y0:byBadge, x1:bx+bw, y1:byBadge+bh, act:'details'});
+    }
+  } else {
+    tL(gr, 'Flacify', FONT.npTitle, COL.text2, tx, by+26, 260, 20);
+    tL(gr, 'Ready to play lossless music', FONT.npArtist, COL.text3, tx, by+50, 260, 18);
+  }
   // center: transport row + seekbar
   var cxC=Math.round(W/2);
   var pcy=by+34, pb=hv(cxC-27,by+7,cxC+27,by+61)?52:48, pbx=cxC-pb/2, pby=pcy-pb/2;

@@ -60,6 +60,7 @@ function scrollTick(){
   var d10=(typeof songDetScrollT!=='undefined'?songDetScrollT-songDetScroll:0);
   var d11=(typeof artistScrollT!=='undefined'?artistScrollT-artistScroll:0);
   var d12=(typeof artistSyncScrollT!=='undefined'?artistSyncScrollT-artistSyncScroll:0);
+  var d13=(typeof historyScrollT!=='undefined'?historyScrollT-historyScroll:0);
   if(Math.abs(d1)>=0.5){ firstRow+=d1*0.25; mm=true; } else firstRow=firstRowT;
   if(Math.abs(d3)>=0.5){ homeScroll+=d3*0.25; mm=true; } else homeScroll=homeScrollT;
   if(Math.abs(d4)>=0.5){ songsScroll+=d4*0.25; mm=true; } else songsScroll=songsScrollT;
@@ -71,11 +72,12 @@ function scrollTick(){
   if(Math.abs(d10)>=0.5){ songDetScroll+=d10*0.25; repaintAll(); } else if(typeof songDetScrollT!=='undefined') songDetScroll=songDetScrollT;
   if(Math.abs(d11)>=0.5){ artistScroll+=d11*0.25; mm=true; } else if(typeof artistScrollT!=='undefined') artistScroll=artistScrollT;
   if(Math.abs(d12)>=0.5){ artistSyncScroll+=d12*0.25; mm=true; } else if(typeof artistSyncScrollT!=='undefined') artistSyncScroll=artistSyncScrollT;
+  if(Math.abs(d13)>=0.5){ historyScroll+=d13*0.25; mm=true; } else if(typeof historyScrollT!=='undefined') historyScroll=historyScrollT;
   if(Math.abs(d2)>=0.5){ navScroll+=d2*0.25; nm=true; } else navScroll=navScrollT;
   if(mm) repaintMain();
   if(nm) repaintNav();
   // one more frame after the scroll settles, so shimSettle can restart the sweep it suppressed
-  if(!mm && !nm && Math.abs(d10)<0.5 && Math.abs(d11)<0.5 && Math.abs(d12)<0.5){ stopScrollAnim(); if(shimCount>0) repaintMain(); }
+  if(!mm && !nm && Math.abs(d10)<0.5 && Math.abs(d11)<0.5 && Math.abs(d12)<0.5 && Math.abs(d13)<0.5){ stopScrollAnim(); if(shimCount>0) repaintMain(); }
 }
 function startScrollAnim(){ if(!scrollTimer) scrollTimer=window.SetInterval(scrollTick,16); }
 function stopScrollAnim(){ if(scrollTimer){ window.ClearInterval(scrollTimer); scrollTimer=null; } }
@@ -140,6 +142,8 @@ function applyNavEntry(entry){
   } else if(view==='artist_sync'){
     artistSyncScroll=artistSyncScrollT=0;
     startSyncProgressPoll();
+  } else if(view==='history'){
+    historyScroll=historyScrollT=0;
   } else if(view==='home'){
     homeScroll=homeScrollT=0;
   }
@@ -267,6 +271,7 @@ function drawMain(gr){
   if(view==='album'){ drawAlbum(gr,r); return; }
   if(view==='artists'){ drawArtists(gr,r); return; }
   if(view==='artist_sync'){ drawArtistSync(gr,r); return; }
+  if(view==='history'){ drawHistory(gr,r); return; }
   drawPlaylist(gr,r);
 }
 
@@ -360,6 +365,8 @@ function doCtrl(act){
   else if(act==='shuffle') toggleShuffle();
   else if(act==='repeat') cycleRepeat();
   else if(act==='fullscreen'){ enterFullscreen(); return; }
+  else if(act==='like'){ if(NP) toggleLike(NP); return; }
+  else if(act==='details'){ if(NP){ openSongDetails(NP); } return; }
   repaintAll();
 }
 function on_mouse_lbtn_up(x,y){
@@ -631,6 +638,15 @@ function on_mouse_lbtn_up(x,y){
   if((t=hit(HB_CTRL,x,y))){
     doCtrl(t.act); return;
   }
+  if(HB_LIKED && inRect(x,y,HB_LIKED)){
+    var lpl=getLikedPlaylistIndex(true);
+    if(lpl>=0){ plman.ActivePlaylist=lpl; firstRow=firstRowT=0; pushNav('playlist',{pl:lpl}); view='playlist'; repaintAll(); }
+    return;
+  }
+  if(HB_HISTORY && inRect(x,y,HB_HISTORY)){
+    if(view!=='history'){ pushNav('history'); view='history'; historyScroll=historyScrollT=0; }
+    repaintAll(); return;
+  }
   if(HB_HOME && inRect(x,y,HB_HOME)){ if(view!=='home'){ pushNav('home'); view='home'; } repaintAll(); return; }
   if(HB_SEARCH && inRect(x,y,HB_SEARCH)){ if(view!=='search'){ pushNav('search'); view='search'; } repaintAll(); return; }
   if(HB_ALLSONGS && inRect(x,y,HB_ALLSONGS)){ if(view!=='songs'){ pushNav('songs'); view='songs'; songsScroll=songsScrollT=0; } repaintAll(); return; }
@@ -670,6 +686,13 @@ function on_mouse_lbtn_up(x,y){
       }
     }
   }
+  // History view controls
+  if(view==='history'){
+    if(HB_HISTORY_CLEAR && inRect(x,y,HB_HISTORY_CLEAR)){
+      clearHistory(); repaintAll(); return;
+    }
+  }
+
   if(HB_ADDPL && inRect(x,y,HB_ADDPL)){ var np=createNewPlaylist(); plman.ActivePlaylist=np; revealPlaylist(np); firstRow=firstRowT=0; pushNav('playlist',{pl:np}); view='playlist'; repaintAll(); return; }
   if(HB_PLADD_FILES && inRect(x,y,HB_PLADD_FILES)){ addFilesToPl(plman.ActivePlaylist); return; }
   if(HB_PLADD_FOLDER && inRect(x,y,HB_PLADD_FOLDER)){ addFolderToPl(plman.ActivePlaylist); return; }
@@ -680,6 +703,12 @@ function on_mouse_lbtn_up(x,y){
     else if(t.kind==='recent_song'){
       loadAlbum(t.track.album, t.track.artist); albumScroll=albumScrollT=0; pushNav('album',{album:t.track.album,artist:t.track.artist}); view='album';
     }
+    else if(t.kind==='recent_play'){
+      if(t.item){
+        if(t.item.album){ loadAlbum(t.item.album, t.item.artist); albumScroll=albumScrollT=0; pushNav('album',{album:t.item.album,artist:t.item.artist}); view='album'; }
+        else if(t.item.artist){ loadArtist(t.item.artist); artistScroll=artistScrollT=0; pushNav('artist',{artist:t.item.artist}); view='artist'; }
+      }
+    }
     repaintAll(); return;
   }
   if((t=hit(HB_PL,x,y))){ plman.ActivePlaylist=t.i; firstRow=firstRowT=0; pushNav('playlist',{pl:t.i}); view='playlist'; repaintAll(); return; }
@@ -688,14 +717,46 @@ function on_mouse_lbtn_up(x,y){
      replaces the track number on the hovered row: that is a button, and a button takes one click.
      Clicking the row body opens Song Details! */
   if((t=hit(HB_TR,x,y))){
-    if(t.pgx1!==undefined && x>=t.pgx0 && x<t.pgx1) playRow(t);
+    if(t.hx0!==undefined && x>=t.hx0 && x<=t.hx1){
+      // clicked heart!
+      var hh=null;
+      if(t.albumRow && t.handles) hh=t.handles[t.idx];
+      else if(t.songs && songsTracks && songsTracks[t.ti]) hh=songsTracks[t.ti].h;
+      else if(t.srch && searchTrks && searchTrks[t.idx]) hh=searchTrks[t.idx].h;
+      else if(t.lib && artistAlbums[t.block] && artistAlbums[t.block].tracks[t.idx]) hh=artistAlbums[t.block].tracks[t.idx].handle;
+      else if(t.pl!==undefined && t.item!==undefined){ var it=getItems(t.pl); if(it) hh=it[t.item]; }
+      else if(t.historyRow && t.path){
+        try {
+          var hl=fb.GetLibraryItems();
+          for(var hi=0; hi<hl.Count; hi++){ if(hl[hi].Path===t.path){ hh=hl[hi]; break; } }
+        } catch(e){}
+      }
+      if(hh) toggleLike(hh);
+      return;
+    }
+    if(t.pgx1!==undefined && x>=t.pgx0 && x<t.pgx1){
+      if(t.historyRow && t.path){
+        try {
+          var hl2=fb.GetLibraryItems();
+          for(var hi2=0; hi2<hl2.Count; hi2++){ if(hl2[hi2].Path===t.path){ playHandleList([hl2[hi2]],0); break; } }
+        } catch(e){}
+        return;
+      }
+      playRow(t);
+    }
     else {
       var h=null;
       if(t.albumRow && t.handles) h=t.handles[t.idx];
       else if(t.songs && songsTracks && songsTracks[t.ti]) h=songsTracks[t.ti].h;
       else if(t.srch && searchTrks && searchTrks[t.idx]) h=searchTrks[t.idx].h;
       else if(t.lib && artistAlbums[t.block] && artistAlbums[t.block].tracks[t.idx]) h=artistAlbums[t.block].tracks[t.idx].handle;
-      else if(t.pl!==undefined && t.item!==undefined){ var it=getItems(t.pl); if(it) h=it[t.item]; }
+      else if(t.pl!==undefined && t.item!==undefined){ var it2=getItems(t.pl); if(it2) h=it2[t.item]; }
+      else if(t.historyRow && t.path){
+        try {
+          var hl3=fb.GetLibraryItems();
+          for(var hi3=0; hi3<hl3.Count; hi3++){ if(hl3[hi3].Path===t.path){ h=hl3[hi3]; break; } }
+        } catch(e){}
+      }
       if(h) openSongDetails(h);
     }
     return;
@@ -793,6 +854,9 @@ function hoverSig(x,y){
       if(inRect(x,y,HB_ARTIST_APPEARS[api])) return 'artapp'+api;
     }
   }
+  if(HB_LIKED && inRect(x,y,HB_LIKED)) return 'likednav';
+  if(HB_HISTORY && inRect(x,y,HB_HISTORY)) return 'histnav';
+  if(HB_HISTORY_CLEAR && inRect(x,y,HB_HISTORY_CLEAR)) return 'histclear';
   if(HB_ARTIST_SYNC && inRect(x,y,HB_ARTIST_SYNC)) return 'artsync';
   if(HB_ARTISTS_SYNC_BTN && inRect(x,y,HB_ARTISTS_SYNC_BTN)) return 'artsyncbtn';
   if(HB_SYNC_FETCH_MISSING && inRect(x,y,HB_SYNC_FETCH_MISSING)) return 'syncmiss';
@@ -849,6 +913,7 @@ function scrollSection(x,y){
     if(view==='artists') return 'artgr';
     if(view==='artist') return 'art';
     if(view==='artist_sync') return 'artsync';
+    if(view==='history') return 'hist';
   }
   return '';
 }
@@ -911,6 +976,7 @@ function on_mouse_wheel(step){
   else if(view==='albums'){ albumsScrollT=clampPx(albumsScrollT-step*Math.round(WHEEL_PX*1.7),ALBUMS_MAXPX); startScrollAnim(); return; }
   else if(view==='artists'){ artistsScrollT=clampPx(artistsScrollT-step*Math.round(WHEEL_PX*1.7),ARTISTS_MAXPX); startScrollAnim(); return; }
   else if(view==='artist_sync'){ artistSyncScrollT=clampPx(artistSyncScrollT-step*WHEEL_PX,ARTIST_SYNC_MAXPX); startScrollAnim(); return; }
+  else if(view==='history'){ historyScrollT=clampPx(historyScrollT-step*WHEEL_PX,HISTORY_MAXPX); startScrollAnim(); return; }
   else if(view==='album'){ albumScrollT=clampPx(albumScrollT-step*WHEEL_PX,ALBUM_MAXPX); startScrollAnim(); return; }
   firstRowT=clampPx(firstRowT-step*WHEEL_PX,PL_MAXPX); startScrollAnim();
 }
@@ -977,6 +1043,7 @@ function on_library_items_changed(){ libChanged(); }
 /* ------------------------- playback callbacks ------------------------- */
 function on_playback_new_track(){
   updateNP();
+  if(typeof historyOnNewTrack==='function') historyOnNewTrack(NP);
   // shuffle + loop-all: on wrapping from the last shuffled track back to the first, reshuffle the rest
   if(pbShuffle){
     var loc=playingLoc();
@@ -995,6 +1062,7 @@ function on_playback_stop(){ npChanged(); }
 function on_playback_pause(){ npChanged(); }
 function on_playback_time(){
   repaintBar();
+  if(typeof historyOnTime==='function' && NP) historyOnTime(fb.PlaybackTime, NP);
   var lyricsShown=(rightTab==='lyrics')||(fsMode&&fsView==='lyrics');
   if(lyricsShown && lyrics && lyrics!=='none' && lyrics.synced){ var c=currentLyricLine(); if(c!==lyCur){ lyCur=c; startLyAnim(); } }
 }
@@ -1013,14 +1081,16 @@ function on_metadb_changed(handles,fromhook){ if(fromhook) return; invalidateIte
    caches that genuinely depend on playlist CONTENT are still cleared by the callbacks that mean
    content changed (items added/removed/reordered, playlists changed). */
 function on_playlist_switch(){ firstRow=firstRowT=0; repaintAll(); }
-function on_playlists_changed(){ invalidateItems(); repaintAll(); }
-function on_playlist_items_added(pl){ invalidateItems(); if(dupWatch && dupWatch.pl===pl) scheduleDupScan(); repaintAll(); }
-function on_playlist_items_removed(){ invalidateItems(); repaintAll(); }
+function on_playlists_changed(){ invalidateItems(); loadLiked(); repaintAll(); }
+function on_playlist_items_added(pl){ invalidateItems(); loadLiked(); if(dupWatch && dupWatch.pl===pl) scheduleDupScan(); repaintAll(); }
+function on_playlist_items_removed(){ invalidateItems(); loadLiked(); repaintAll(); }
 function on_playlist_items_reordered(){ invalidateItems(); repaintAll(); }
 function on_item_focus_change(){ repaintAll(); }
 
 layout();
 updateNP();
+loadLiked();
+if(typeof loadHistory==='function') loadHistory();
 syncOrderFromFb(); applyPlaybackOrder();   // normalize native order (we manage shuffle ourselves)
 capVolume();       // pull a remembered volume back under the slider's ceiling
 startMemWatch();   // caches grow into the component's spare memory and back off as it fills

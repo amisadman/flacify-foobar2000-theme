@@ -29,7 +29,7 @@ var ROUTE='__verdant_np__'; // hidden playlist used to play library tracks (arti
 /* ---- shuffle engine: plays from a hidden shuffled copy so "next up" is the real order.
    Reshuffles whenever shuffle is toggled on, or a playlist starts while shuffle is on. */
 var SHUF='__verdant_shuffle__', shufSrcName='', lastShufIdx=-1;   // shufSrcName = the real source playlist
-function isHiddenPl(nm){ return nm===ROUTE || nm===SHUF; }
+function isHiddenPl(nm){ return nm===ROUTE || nm===SHUF || nm===(typeof LIKED_PLAYLIST_NAME!=='undefined'?LIKED_PLAYLIST_NAME:'Liked Songs'); }
 function playlistOfName(nm){ for(var i=0;i<plman.PlaylistCount;i++) if(plman.GetPlaylistName(i)===nm) return i; return -1; }
 function handleArray(pi){ var it=getItems(pi), a=[]; if(it){ for(var i=0;i<it.Count;i++) a.push(it[i]); } return a; }
 function sameHandle(a,b){ return !!(a&&b&&a.Path===b.Path); }
