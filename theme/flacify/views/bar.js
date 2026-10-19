@@ -92,18 +92,27 @@ function drawBar(gr){
     drawIcon(gr, 'add', pHot?COL.text:COL.text2, px, py, ps, ps, 18);
     HB_CTRL.push({x0:px-6, y0:py-4, x1:px+ps+6, y1:py+ps+4, act:'add_to_pl'});
 
-    // 2. Artist line with Quality Badge
+    // 2. Artist line with Quality Badge & Dynamic Range (DR) Badge
     var badge=getAudioBadge(NP);
     var bw=0, bh=18;
     if(badge){
-      bw=Math.min(170, Math.round(gr.CalcTextWidth(badge.text, FONT.badge))+14);
+      bw=Math.min(160, Math.round(gr.CalcTextWidth(badge.text, FONT.badge))+14);
     }
-    var maxArtW=maxLeftW-(badge?bw+10:0);
-    var aw=Math.min(maxArtW, Math.max(30, Math.round(gr.CalcTextWidth(npArtistStr, FONT.npArtist))));
+
+    var drInfo=(typeof getDynamicRange==='function')?getDynamicRange(NP):null;
+    var drW=0;
+    if(drInfo){
+      drW=Math.round(gr.CalcTextWidth(drInfo.label, FONT.badge))+12;
+    }
+
+    var totalBadgeW=(badge?bw+8:0)+(drInfo?drW+8:0);
+    var maxArtW=Math.max(30, maxLeftW-totalBadgeW);
+    var aw=Math.min(maxArtW, Math.round(gr.CalcTextWidth(npArtistStr, FONT.npArtist)));
     tL(gr, npArtistStr, FONT.npArtist, COL.text2, tx, by+50, aw, 18);
 
+    var curBx=tx+aw+10;
     if(badge){
-      var bx=tx+aw+10, byBadge=by+49;
+      var bx=curBx, byBadge=by+49;
       var bHot=hv(bx, byBadge, bx+bw, byBadge+bh);
       var bBg=badge.isHiRes?(bHot?RGBA(30,215,96,48):RGBA(30,215,96,22)):
               (badge.isLossless?(bHot?RGBA(255,255,255,30):RGBA(255,255,255,14)):
@@ -117,6 +126,20 @@ function drawBar(gr){
       gr.DrawRoundRect(bx, byBadge, bw, bh, 3, 3, 1, bBorder);
       gr.GdiDrawText(badge.text, FONT.badge, bCol, bx, byBadge, bw, bh, DT_C);
       HB_CTRL.push({x0:bx, y0:byBadge, x1:bx+bw, y1:byBadge+bh, act:'details'});
+      curBx+=bw+6;
+    }
+
+    if(drInfo){
+      var drX=curBx, drY=by+49;
+      var drHot=hv(drX, drY, drX+drW, drY+bh);
+      var cr=(drInfo.col>>16)&255, cg=(drInfo.col>>8)&255, cb=drInfo.col&255;
+      var drBg=drHot?RGBA(cr,cg,cb,55):drInfo.bg;
+      var drBorder=drHot?RGBA(cr,cg,cb,220):drInfo.border;
+
+      gr.FillRoundRect(drX, drY, drW, bh, 3, 3, drBg);
+      gr.DrawRoundRect(drX, drY, drW, bh, 3, 3, 1, drBorder);
+      gr.GdiDrawText(drInfo.label, FONT.badge, drInfo.col, drX, drY, drW, bh, DT_C);
+      HB_CTRL.push({x0:drX, y0:drY, x1:drX+drW, y1:drY+bh, act:'dr_modal'});
     }
   } else {
     tL(gr, 'FLACify', FONT.npTitle, COL.text2, tx, by+26, 260, 20);
@@ -166,4 +189,16 @@ function drawBar(gr){
     drawIcon(gr, 'timer', stHov ? COL.text : COL.text2, stX, stY, 26, 26, 20);
   }
   HB_CTRL.push({x0:stX-4, y0:gearC-16, x1:stX+stW+4, y1:gearC+16, act:'sleep_timer'});
+
+  // 1-Click Audio Output Device Switcher (headphones / DAC)
+  var devX=stX-32, devY=gearC-13, devW=26, devH=26;
+  var devHov=hv(devX-4, gearC-16, devX+devW+4, gearC+16);
+  drawIcon(gr,'headphones',devHov?COL.text:COL.text2,devX,devY,devW,devH,20);
+  HB_CTRL.push({x0:devX-4, y0:gearC-16, x1:devX+devW+4, y1:gearC+16, act:'device_picker'});
+
+  // Parametric EQ Curve Preset Quick-Toggle
+  var eqX=devX-30, eqY=gearC-13, eqW=26, eqH=26;
+  var eqHov=hv(eqX-4, gearC-16, eqX+eqW+4, gearC+16);
+  drawIcon(gr,'equalizer',eqHov?COL.text:COL.text2,eqX,eqY,eqW,eqH,18);
+  HB_CTRL.push({x0:eqX-4, y0:gearC-16, x1:eqX+eqW+4, y1:gearC+16, act:'eq_modal'});
 }

@@ -227,7 +227,7 @@ function on_paint(gr){
   // A partial paint skips drawOverlays, so a modal's dim backdrop would not be reapplied over the
   // region it redraws (the bar's 1 Hz repaint would flash back to full brightness). While an
   // overlay owns the screen, every paint takes the full path.
-  var modal=renameEdit||ctxMenu||confirmDel||dupPrompt||rgPrompt||songDetails||(typeof artistStudioModal!=='undefined'&&artistStudioModal);
+  var modal=renameEdit||ctxMenu||confirmDel||dupPrompt||rgPrompt||songDetails||(typeof artistStudioModal!=='undefined'&&artistStudioModal)||(typeof drModal!=='undefined'&&drModal)||(typeof eqModal!=='undefined'&&eqModal);
   if(dirtyAll || !anyPartial || modal || stale){ // full paint, or an OS/stale paint we can't scope
     clearDirty();
     HB_DOTS=[];
@@ -299,7 +299,7 @@ function on_mouse_lbtn_down(x,y){
   if(SB && inRect(x,y,SB)){ drag='scroll'; setScroll(y); return; }
 }
 function on_mouse_rbtn_up(x,y){
-  if(ctxMenu||confirmDel||renameEdit||dupPrompt||rgPrompt||songDetails||(typeof artistStudioModal!=='undefined'&&artistStudioModal)) return true;   // a modal is open: swallow
+  if(ctxMenu||confirmDel||renameEdit||dupPrompt||rgPrompt||songDetails||(typeof artistStudioModal!=='undefined'&&artistStudioModal)||(typeof drModal!=='undefined'&&drModal)||(typeof eqModal!=='undefined'&&eqModal)) return true;   // a modal is open: swallow
   var i;
   for(i=0;i<HB_TR.length;i++){
     if(inRect(x,y,HB_TR[i])){
@@ -388,6 +388,9 @@ function doCtrl(act){
   else if(act==='mute'){ toggleMute(); return; }
   else if(act==='like'){ if(NP) toggleLike(NP); return; }
   else if(act==='details'){ if(NP){ openSongDetails(NP); } return; }
+  else if(act==='dr_modal'){ if(NP){ openDrModal(NP); } return; }
+  else if(act==='device_picker'){ openAudioDeviceMenu(Math.max(16, Math.min(mx-100, W-320)), Math.max(16, my-160)); return; }
+  else if(act==='eq_modal'){ openEqModal(); return; }
   else if(act==='add_to_pl'){ if(NP){ openAddToPlaylistMenu(NP, Math.max(16, Math.min(mx-80, W-260)), Math.min(my-140, H-260)); } return; }
   else if(act==='sleep_timer'){ openSleepTimerMenu(Math.max(16, Math.min(mx-70, W-220)), Math.max(16, my-190)); return; }
   repaintAll();
@@ -449,6 +452,32 @@ function on_mouse_lbtn_up(x,y){
       }
       if(inRect(x,y,SONG_DET_HB.close) || !inRect(x,y,SONG_DET_HB.panel)) closeSongDetails();
     } else closeSongDetails();
+    return;
+  }
+  if(typeof drModal!=='undefined' && drModal){
+    if(DR_MODAL_HB){
+      if(DR_MODAL_HB.scan && inRect(x,y,DR_MODAL_HB.scan)){
+        var mh=drModal.handle;
+        closeDrModal();
+        if(mh) rgRunScan([mh]);
+        return;
+      }
+      if(DR_MODAL_HB.close && inRect(x,y,DR_MODAL_HB.close)){ closeDrModal(); return; }
+    }
+    closeDrModal();
+    return;
+  }
+  if(typeof eqModal!=='undefined' && eqModal){
+    if(EQ_MODAL_HB){
+      if(EQ_MODAL_HB.presets && EQ_MODAL_HB.presets.length){
+        for(var epi=0; epi<EQ_MODAL_HB.presets.length; epi++){
+          var ep=EQ_MODAL_HB.presets[epi];
+          if(inRect(x,y,ep)){ selectEqPreset(ep.id); return; }
+        }
+      }
+      if(EQ_MODAL_HB.close && inRect(x,y,EQ_MODAL_HB.close)){ closeEqModal(); return; }
+    }
+    closeEqModal();
     return;
   }
   if(dupPrompt){

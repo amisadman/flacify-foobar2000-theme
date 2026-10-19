@@ -117,6 +117,7 @@ function openSongDetails(h){
     catalog:catalog,
     lyrics:lyricLines,
     lyricsExpanded:false,
+    drInfo:(typeof getDynamicRange==='function')?getDynamicRange(h):null,
     primaryArtist:(typeof splitArtists==='function'&&splitArtists(artist).length)?splitArtists(artist)[0]:(artist||'Unknown Artist'),
     splitArtists:(typeof splitArtists==='function')?splitArtists(artist):[]
   };
@@ -239,6 +240,7 @@ function drawSongDetails(gr){
     var chStr=(d.channels==='2'||!d.channels)?'Stereo':(d.channels+' ch');
 
     var specText='Quality:  '+d.codec+' '+CH_DOT+' '+bdStr+' / '+srStr+' '+CH_DOT+' '+brStr+' ('+chStr+')';
+    if(d.drInfo && d.drInfo.score>0) specText+=' '+CH_DOT+' '+d.drInfo.label;
     tC(gr,specText,FONT.pl,COL.green,tx,ty,tw,specH);
   }
 
@@ -267,6 +269,8 @@ function drawSongDetails(gr){
   }
 
   drawMetaRow('ISRC',d.isrc,'Barcode',d.barcode || (d.isrc?('(ISRC) '+d.isrc):''));
+  drawMetaRow('Dynamic Range',d.drInfo?(d.drInfo.label+' ('+d.drInfo.ratingLabel+')'):'Unscanned','Track Peak',d.drInfo?d.drInfo.trackPeak:'None');
+  drawMetaRow('Track Gain',d.drInfo?d.drInfo.trackGain:'None','Album Gain',d.drInfo?d.drInfo.albumGain:'None');
   drawMetaRow('Genre',d.genre,'Producer',d.producer);
   drawMetaRow('Composer',d.composer,'Lyricist',d.lyricist);
   drawMetaRow('Label',d.label,'Release Type',d.releasetype);

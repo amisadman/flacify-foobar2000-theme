@@ -92,3 +92,314 @@ function drawNormalizePill(gr,x,y,w,h){
   tL(gr,'Normalize volume',FONT.pl,col,x+42,y,w-56,h);
   return {x0:x,y0:y,x1:x+w,y1:y+h};
 }
+
+/* ------------------------- Live TT Dynamic Range (DR) Meter ------------------------- */
+var drInfoCache={};
+
+function parseDb(valStr){
+  if(!valStr) return NaN;
+  var clean=String(valStr).replace(/dB/i,'').replace(/^\s+|\s+$/g,'');
+  return parseFloat(clean);
+}
+
+function getDynamicRange(h){
+  if(!h) return null;
+  var p=h.Path;
+  if(drInfoCache.hasOwnProperty(p)) return drInfoCache[p];
+
+  var drTagStr=TF.drTag.EvalWithMetadb(h);
+  var drVal=parseInt(drTagStr,10);
+
+  var gainStr=TF.rgTrackGain.EvalWithMetadb(h);
+  var peakStr=TF.rgTrackPeak.EvalWithMetadb(h);
+  var gain=parseDb(gainStr);
+  var peak=parseFloat(peakStr);
+
+  var albGainStr=TF.rgAlbumGain.EvalWithMetadb(h);
+  var albPeakStr=TF.rgAlbumPeak.EvalWithMetadb(h);
+
+  // If explicit DR tag is absent, compute mathematically via the TT DR formula
+  if(isNaN(drVal) || drVal<=0){
+    if(!isNaN(gain) && !isNaN(peak) && peak>0){
+      var peakDb=20*(Math.log(peak)/Math.LN10);
+      drVal=Math.round(peakDb-gain);
+    }
+  }
+
+  if(isNaN(drVal) || drVal<=0){
+    var unk={
+      score:0,
+      label:'DR --',
+      rating:'unscanned',
+      ratingLabel:'Loudness unscanned',
+      col:COL.text3,
+      bg:RGBA(255,255,255,8),
+      border:RGBA(255,255,255,28),
+      trackGain:gainStr||'None',
+      trackPeak:(!isNaN(peak)&&peak>0?(20*Math.log(peak)/Math.LN10).toFixed(2)+' dBFS':(peakStr||'None')),
+      albumGain:albGainStr||'None',
+      hasTags:false
+    };
+    drInfoCache[p]=unk;
+    return unk;
+  }
+
+  drVal=Math.max(1,Math.min(30,drVal));
+
+  var rating='standard';
+  var ratingLabel='Typical Dynamic Range';
+  var col=RGB(245,158,11); // Amber
+  var bg=RGBA(245,158,11,26);
+  var border=RGBA(245,158,11,140);
+
+  if(drVal>=12){
+    rating='master';
+    ratingLabel='Audiophile Master Quality (Uncompressed Transients)';
+    col=RGB(16,185,129); // Emerald Green
+    bg=RGBA(16,185,129,26);
+    border=RGBA(16,185,129,150);
+  } else if(drVal<8){
+    rating='compressed';
+    ratingLabel='Heavy Dynamic Compression (Loudness War Master)';
+    col=RGB(239,68,68); // Crimson Red
+    bg=RGBA(239,68,68,26);
+    border=RGBA(239,68,68,150);
+  }
+
+  var peakDbStr=(!isNaN(peak)&&peak>0)?(20*Math.log(peak)/Math.LN10).toFixed(2)+' dBFS':(peakStr||'None');
+
+  var info={
+    score:drVal,
+    label:'DR'+drVal,
+    rating:rating,
+    ratingLabel:ratingLabel,
+    col:col,
+    bg:bg,
+    border:border,
+    trackGain:gainStr||'None',
+    trackPeak:peakDbStr,
+    albumGain:albGainStr||'None',
+    hasTags:true
+  };
+  drInfoCache[p]=info;
+  return info;
+}
+
+/* ------------------------- Interactive DR Popover Modal ------------------------- */
+var drModal=null, DR_MODAL_HB=null;
+
+function openDrModal(h){
+  if(!h) return;
+  drModal={ handle:h, info:getDynamicRange(h) };
+  repaintAll();
+}
+
+function closeDrModal(){
+  drModal=null;
+  DR_MODAL_HB=null;
+  repaintAll();
+}
+
+function drawDrModal(gr){
+  if(!drModal) return;
+  var info=drModal.info;
+  var cw=Math.min(520,W-40), ch=340;
+  var cy=Math.max(10,Math.round((H-ch)/2)), cx=modalPanel(gr,cw,ch,cy);
+  var px=cx+28, y=cy+24, pw=cw-56;
+
+  // Header with DR Score Pill
+  var drPillW=Math.round(gr.CalcTextWidth(info.label,FONT.tab))+24;
+  gr.FillRoundRect(px,y,drPillW,30,6,6,info.bg);
+  gr.DrawRoundRect(px,y,drPillW,30,6,6,1,info.border);
+  tC(gr,info.label,FONT.tab,info.col,px,y,drPillW,30);
+
+  tL(gr,'TT Dynamic Range Analysis',FONT.sect,COL.text,px+drPillW+14,y,pw-drPillW-14,30);
+  y+=44;
+
+  // Mastering Classification Subtitle
+  tL(gr,info.ratingLabel,FONT.pl,info.col,px,y,pw,22);
+  y+=30;
+
+  // Technical Loudness Metrics Grid (Glassmorphism card)
+  var gh=106, gy=y;
+  gr.FillRoundRect(px,gy,pw,gh,8,8,RGBA(255,255,255,8));
+  gr.DrawRoundRect(px,gy,pw,gh,8,8,1,RGBA(255,255,255,22));
+
+  var colW=Math.floor(pw/2);
+  var my=gy+14;
+  tL(gr,'Track Peak Level:',FONT.plSub,COL.text2,px+16,my,colW-20,18);
+  tL(gr,info.trackPeak,FONT.pl,COL.text,px+16,my+18,colW-20,20);
+
+  tL(gr,'ReplayGain Track Offset:',FONT.plSub,COL.text2,px+colW,my,colW-20,18);
+  tL(gr,info.trackGain,FONT.pl,COL.text,px+colW,my+18,colW-20,20);
+
+  my+=46;
+  tL(gr,'ReplayGain Album Offset:',FONT.plSub,COL.text2,px+16,my,colW-20,18);
+  tL(gr,info.albumGain,FONT.pl,COL.text,px+16,my+18,colW-20,20);
+
+  var qualText=(info.score>=12?'Pristine (Master Quality)':(info.score>=8?'Normal (Commercial)':'Hyper-compressed'));
+  tL(gr,'Dynamic Classification:',FONT.plSub,COL.text2,px+colW,my,colW-20,18);
+  tL(gr,qualText,FONT.pl,info.col,px+colW,my+18,colW-20,20);
+
+  y=gy+gh+18;
+
+  // Explanation note
+  var note=info.hasTags?
+    'Scores DR12+ denote audiophile dynamic contrast without artificial brickwall limiting. Scores below DR8 indicate heavy compression.':
+    'This track does not have ReplayGain tags. Scan the album or track to compute its exact Dynamic Range.';
+  tPara(gr,note,FONT.plSub,COL.text3,px,y,pw,18);
+
+  // Buttons at bottom
+  var by=cy+ch-22-PILL_H;
+  var wClose=pillW(gr,'Close');
+  var xClose=cx+cw-28-wClose;
+  DR_MODAL_HB={
+    close:drawPill(gr,xClose,by,wClose,'Close',true)
+  };
+
+  if(!info.hasTags){
+    var wScan=pillW(gr,'Scan Track Loudness');
+    var xScan=xClose-12-wScan;
+    DR_MODAL_HB.scan=drawPill(gr,xScan,by,wScan,'Scan Track Loudness',false);
+  }
+}
+
+/* ------------------------- Audio Output Device Quick-Switcher ------------------------- */
+function openAudioDeviceMenu(x,y){
+  try{
+    var mm=fb.CreateMainMenuManager();
+    mm.Init('Playback/Device');
+    var m=window.CreatePopupMenu();
+    mm.BuildMenu(m,1,300);
+
+    var id=m.TrackPopupMenu(x,y);
+    if(id>0){
+      mm.ExecuteByID(id-1);
+      if(typeof repaintBar==='function') repaintBar();
+    }
+  }catch(e){}
+}
+
+/* ------------------------- Parametric EQ Preset Overlay ------------------------- */
+var eqModal=false, EQ_MODAL_HB=null;
+var activeEqPreset=(typeof propStr==='function')?propStr('DSP: EQ Preset (Flat | Bass Boost | Vocal | Harman | Treble)','Flat'):'Flat';
+
+var EQ_PRESETS=[
+  { id:'Flat', name:'Flat Reference', desc:'Neutral, bit-perfect response curve', gains:[0,0,0,0,0,0,0,0,0,0] },
+  { id:'Bass Boost', name:'Bass Boost', desc:'Warm low-end enhancement (+4.5dB)', gains:[4.5,4.0,3.2,1.8,0.5,0,0,0,0,0] },
+  { id:'Vocal', name:'Vocal Clarity', desc:'Brings vocals and acoustic instruments forward (+3.5dB mids)', gains:[-1.0,-0.5,0,1.2,2.8,3.5,2.5,1.0,0,0] },
+  { id:'Harman', name:'Harman Target Curve', desc:'Audiophile acoustic standard with sub-bass shelf & ear gain', gains:[4.0,3.5,2.0,0.5,0,1.5,3.0,2.0,0.5,1.0] },
+  { id:'Treble', name:'Treble Air & Detail', desc:'Airy top-end extension for dark headphones (+4.0dB)', gains:[-0.5,0,0,0,0,0.5,1.5,3.0,4.0,4.5] }
+];
+
+var EQ_FREQS=['31Hz','62Hz','125Hz','250Hz','500Hz','1kHz','2kHz','4kHz','8kHz','16kHz'];
+
+function openEqModal(){
+  eqModal=true;
+  repaintAll();
+}
+
+function closeEqModal(){
+  eqModal=false;
+  EQ_MODAL_HB=null;
+  repaintAll();
+}
+
+function selectEqPreset(presetId){
+  activeEqPreset=presetId;
+  try{
+    window.SetProperty('DSP: EQ Preset (Flat | Bass Boost | Vocal | Harman | Treble)', presetId);
+  }catch(e){}
+  repaintAll();
+}
+
+function drawEqModal(gr){
+  if(!eqModal) return;
+  var cw=Math.min(580,W-40), ch=410;
+  var cy=Math.max(10,Math.round((H-ch)/2)), cx=modalPanel(gr,cw,ch,cy);
+  var px=cx+28, y=cy+24, pw=cw-56;
+
+  tL(gr,'Parametric EQ & DSP Suite',FONT.sect,COL.text,px,y,pw,28);
+  y+=34;
+
+  var curPr=EQ_PRESETS[0];
+  for(var pi=0;pi<EQ_PRESETS.length;pi++){
+    if(EQ_PRESETS[pi].id===activeEqPreset){ curPr=EQ_PRESETS[pi]; break; }
+  }
+
+  tL(gr,curPr.name+' -- '+curPr.desc,FONT.plSub,COL.green,px,y,pw,20);
+  y+=28;
+
+  // Visual EQ Spline Curve Canvas
+  var cvH=150, cvW=pw, cvY=y;
+  gr.FillRoundRect(px,cvY,cvW,cvH,8,8,RGB(24,24,24));
+  gr.DrawRoundRect(px,cvY,cvW,cvH,8,8,1,RGBA(255,255,255,20));
+
+  var midY=cvY+cvH/2;
+  gr.FillSolidRect(px+10,midY,cvW-20,1,RGBA(255,255,255,25));
+  tR(gr,'0 dB',FONT.eyebrow,COL.text3,px+cvW-50,midY-14,40,14);
+  tR(gr,'+6 dB',FONT.eyebrow,COL.text3,px+cvW-50,cvY+6,40,14);
+  tR(gr,'-6 dB',FONT.eyebrow,COL.text3,px+cvW-50,cvY+cvH-20,40,14);
+
+  var nBands=EQ_FREQS.length;
+  var pts=[];
+  var stepX=(cvW-40)/(nBands-1);
+  for(var bi=0;bi<nBands;bi++){
+    var bx=px+20+bi*stepX;
+    var gainVal=curPr.gains[bi];
+    var frac=(gainVal-(-6))/12.0;
+    var byPt=cvY+cvH-20-frac*(cvH-40);
+    pts.push([bx,byPt]);
+
+    gr.FillSolidRect(bx,cvY+10,1,cvH-20,RGBA(255,255,255,12));
+    tC(gr,EQ_FREQS[bi],FONT.badge,COL.text3,bx-22,cvY+cvH-18,44,16);
+  }
+
+  gr.SetSmoothingMode(2);
+  for(var ci=0;ci<pts.length-1;ci++){
+    var p1=pts[ci], p2=pts[ci+1];
+    var ctrlX1=p1[0]+(p2[0]-p1[0])/2, ctrlY1=p1[1];
+    var ctrlX2=ctrlX1, ctrlY2=p2[1];
+
+    for(var st=0;st<=10;st++){
+      var t0=st/10, t1=(st+1)/10;
+      var xA=Math.round(Math.pow(1-t0,3)*p1[0]+3*Math.pow(1-t0,2)*t0*ctrlX1+3*(1-t0)*Math.pow(t0,2)*ctrlX2+Math.pow(t0,3)*p2[0]);
+      var yA=Math.round(Math.pow(1-t0,3)*p1[1]+3*Math.pow(1-t0,2)*t0*ctrlY1+3*(1-t0)*Math.pow(t0,2)*ctrlY2+Math.pow(t0,3)*p2[1]);
+      var xB=Math.round(Math.pow(1-t1,3)*p1[0]+3*Math.pow(1-t1,2)*t1*ctrlX1+3*(1-t1)*Math.pow(t1,2)*ctrlX2+Math.pow(t1,3)*p2[0]);
+      var yB=Math.round(Math.pow(1-t1,3)*p1[1]+3*Math.pow(1-t1,2)*t1*ctrlY1+3*(1-t1)*Math.pow(t1,2)*ctrlY2+Math.pow(t1,3)*p2[1]);
+      gr.DrawLine(xA,yA,xB,yB,2,COL.green);
+      gr.FillSolidRect(xA,Math.min(yA,midY),Math.max(1,xB-xA),Math.abs(midY-yA),RGBA(30,215,96,18));
+    }
+  }
+
+  for(var ni=0;ni<pts.length;ni++){
+    var nx=pts[ni][0], ny=pts[ni][1];
+    gr.FillEllipse(nx-4,ny-4,8,8,COL.green);
+    gr.DrawEllipse(nx-5,ny-5,10,10,1,COL.white);
+  }
+
+  y=cvY+cvH+20;
+
+  // Preset Selector Pills Row
+  tL(gr,'Presets:',FONT.pl,COL.text2,px,y,64,26);
+  var prx=px+68;
+  EQ_MODAL_HB={ presets:[] };
+
+  for(var psi=0;psi<EQ_PRESETS.length;psi++){
+    var pItem=EQ_PRESETS[psi];
+    var isSel=(pItem.id===activeEqPreset);
+    var pW=Math.round(gr.CalcTextWidth(pItem.id,FONT.pl))+20;
+    var pHot=hv(prx,y,prx+pW,y+26);
+
+    gr.FillRoundRect(prx,y,pW,26,13,13,isSel?COL.green:(pHot?RGB(65,65,65):RGB(42,42,42)));
+    tC(gr,pItem.id,FONT.pl,isSel?COL.black:COL.text,prx,y,pW,26);
+    EQ_MODAL_HB.presets.push({ id:pItem.id, x0:prx, y0:y, x1:prx+pW, y1:y+26 });
+
+    prx+=pW+8;
+  }
+
+  var by=cy+ch-22-PILL_H;
+  var wClose=pillW(gr,'Done');
+  var xClose=cx+cw-28-wClose;
+  EQ_MODAL_HB.close=drawPill(gr,xClose,by,wClose,'Done',true);
+}

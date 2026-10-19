@@ -11,6 +11,11 @@ var TF = {
   year:fb.TitleFormat('$year(%date%)'), lensec:fb.TitleFormat('%length_seconds%'),
   trackno:fb.TitleFormat('%tracknumber%'),
   rg:fb.TitleFormat('$if(%replaygain_track_gain%,1,0)'),   // '1' once a loudness scan has tagged the file
+  rgTrackGain:fb.TitleFormat('[$if2(%replaygain_track_gain%,%__replaygain_track_gain%)]'),
+  rgTrackPeak:fb.TitleFormat('[$if2(%replaygain_track_peak%,%__replaygain_track_peak%)]'),
+  rgAlbumGain:fb.TitleFormat('[$if2(%replaygain_album_gain%,%__replaygain_album_gain%)]'),
+  rgAlbumPeak:fb.TitleFormat('[$if2(%replaygain_album_peak%,%__replaygain_album_peak%)]'),
+  drTag:fb.TitleFormat('[$if3($meta(dynamic range),$meta(dynamic_range),%dynamic_range%,%__dynamic_range%)]'),
   rawArtist:fb.TitleFormat('[$if3($meta_sep(artist, ; ),$meta_sep(performer, ; ),$meta_sep(album artist, ; ),%artist%,%performer%,%album artist%)]'),
   barcode:fb.TitleFormat('[$if3($meta(barcode),$meta(upc),$meta(ean),$meta(catalog),$meta(catalognumber),%barcode%,%upc%,%ean%)]'),
   copyright:fb.TitleFormat('[$if3($meta(copyright),$meta(c),%copyright%,%c%)]'),
