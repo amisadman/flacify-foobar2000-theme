@@ -61,6 +61,7 @@ function scrollTick(){
   var d11=(typeof artistScrollT!=='undefined'?artistScrollT-artistScroll:0);
   var d12=(typeof artistSyncScrollT!=='undefined'?artistSyncScrollT-artistSyncScroll:0);
   var d13=(typeof historyScrollT!=='undefined'?historyScrollT-historyScroll:0);
+  var d14=(typeof ANALYTICS_SCROLL_T!=='undefined'?ANALYTICS_SCROLL_T-ANALYTICS_SCROLL:0);
   if(Math.abs(d1)>=0.5){ firstRow+=d1*0.25; mm=true; } else firstRow=firstRowT;
   if(Math.abs(d3)>=0.5){ homeScroll+=d3*0.25; mm=true; } else homeScroll=homeScrollT;
   if(Math.abs(d4)>=0.5){ songsScroll+=d4*0.25; mm=true; } else songsScroll=songsScrollT;
@@ -73,11 +74,12 @@ function scrollTick(){
   if(Math.abs(d11)>=0.5){ artistScroll+=d11*0.25; mm=true; } else if(typeof artistScrollT!=='undefined') artistScroll=artistScrollT;
   if(Math.abs(d12)>=0.5){ artistSyncScroll+=d12*0.25; mm=true; } else if(typeof artistSyncScrollT!=='undefined') artistSyncScroll=artistSyncScrollT;
   if(Math.abs(d13)>=0.5){ historyScroll+=d13*0.25; mm=true; } else if(typeof historyScrollT!=='undefined') historyScroll=historyScrollT;
+  if(Math.abs(d14)>=0.5){ ANALYTICS_SCROLL+=d14*0.25; mm=true; } else if(typeof ANALYTICS_SCROLL_T!=='undefined') ANALYTICS_SCROLL=ANALYTICS_SCROLL_T;
   if(Math.abs(d2)>=0.5){ navScroll+=d2*0.25; nm=true; } else navScroll=navScrollT;
   if(mm) repaintMain();
   if(nm) repaintNav();
   // one more frame after the scroll settles, so shimSettle can restart the sweep it suppressed
-  if(!mm && !nm && Math.abs(d10)<0.5 && Math.abs(d11)<0.5 && Math.abs(d12)<0.5 && Math.abs(d13)<0.5){ stopScrollAnim(); if(shimCount>0) repaintMain(); }
+  if(!mm && !nm && Math.abs(d10)<0.5 && Math.abs(d11)<0.5 && Math.abs(d12)<0.5 && Math.abs(d13)<0.5 && Math.abs(d14)<0.5){ stopScrollAnim(); if(shimCount>0) repaintMain(); }
 }
 function startScrollAnim(){ if(!scrollTimer) scrollTimer=window.SetInterval(scrollTick,16); }
 function stopScrollAnim(){ if(scrollTimer){ window.ClearInterval(scrollTimer); scrollTimer=null; } }
@@ -144,6 +146,8 @@ function applyNavEntry(entry){
     startSyncProgressPoll();
   } else if(view==='history'){
     historyScroll=historyScrollT=0;
+  } else if(view==='analytics'){
+    ANALYTICS_SCROLL=ANALYTICS_SCROLL_T=0;
   } else if(view==='home'){
     homeScroll=homeScrollT=0;
   }
@@ -259,6 +263,7 @@ function drawMain(gr){
   HB_ARTIST_PHOTO=null; HB_ARTIST_EDIT_BTN=null; HB_ARTIST_EDIT_BIO_BTN=null; HB_FILTER_BTN=null; HB_INLINE_FILTER=null;
   HB_ARTISTS_SYNC_BTN=null;
   HB_SYNC_FETCH_MISSING=null; HB_SYNC_FETCH_ALL=null; HB_SYNC_STOP=null; HB_SYNC_OPEN_DIR=null; HB_SYNC_ROWS=[];
+  HB_ANALYTICS_EXPORT=null; HB_PODIUM=[];
   if(view!=='songs'){ HB_SG=null; SG_HB=[]; HB_RGNORM=null; }
   if(view!=='playlist'){ HB_PLSORT=null; HB_PLSORTDIR=null; PL_SORT_HB=[]; }
   applyKeyMode();
@@ -273,6 +278,7 @@ function drawMain(gr){
   if(view==='artists'){ drawArtists(gr,r); return; }
   if(view==='artist_sync'){ drawArtistSync(gr,r); return; }
   if(view==='history'){ drawHistory(gr,r); return; }
+  if(view==='analytics'){ drawAnalytics(gr,r); return; }
   drawPlaylist(gr,r);
 }
 
@@ -828,6 +834,25 @@ function on_mouse_lbtn_up(x,y){
     if(view!=='artist_sync'){ pushNav('artist_sync'); view='artist_sync'; artistSyncScroll=artistSyncScrollT=0; startSyncProgressPoll(); }
     repaintAll(); return;
   }
+  if(HB_ANALYTICS && inRect(x,y,HB_ANALYTICS)){
+    if(view!=='analytics'){ pushNav('analytics'); view='analytics'; ANALYTICS_SCROLL=ANALYTICS_SCROLL_T=0; }
+    repaintAll(); return;
+  }
+
+  // Analytics view controls
+  if(view==='analytics'){
+    if(HB_ANALYTICS_EXPORT && inRect(x,y,HB_ANALYTICS_EXPORT)){
+      exportWrappedCard(); return;
+    }
+    if(HB_PODIUM && HB_PODIUM.length){
+      for(var pdi=0; pdi<HB_PODIUM.length; pdi++){
+        if(inRect(x,y,HB_PODIUM[pdi])){
+          loadArtist(HB_PODIUM[pdi].artist); artistScroll=artistScrollT=0; pushNav('artist',{artist:HB_PODIUM[pdi].artist}); view='artist';
+          repaintAll(); return;
+        }
+      }
+    }
+  }
 
   // Artists grid view controls
   if(view==='artists'){
@@ -892,6 +917,22 @@ function on_mouse_lbtn_up(x,y){
         if(t.item.album){ loadAlbum(t.item.album, t.item.artist); albumScroll=albumScrollT=0; pushNav('album',{album:t.item.album,artist:t.item.artist}); view='album'; }
         else if(t.item.artist){ loadArtist(t.item.artist); artistScroll=artistScrollT=0; pushNav('artist',{artist:t.item.artist}); view='artist'; }
       }
+    }
+    else if(t.kind==='daily_mix'){
+      var isPlayBtn = (t.pbx!==undefined && x>=t.pbx && x<t.pbx+t.pb && y>=t.pby && y<t.pby+t.pb);
+      playDailyMix(t.id, isPlayBtn); repaintAll(); return;
+    }
+    else if(t.kind==='smart_vault'){
+      var isPlayBtn = (t.pbx!==undefined && x>=t.pbx && x<t.pbx+t.pb && y>=t.pby && y<t.pby+t.pb);
+      playHiResVault(isPlayBtn); repaintAll(); return;
+    }
+    else if(t.kind==='smart_forgotten'){
+      var isPlayBtn = (t.pbx!==undefined && x>=t.pbx && x<t.pbx+t.pb && y>=t.pby && y<t.pby+t.pb);
+      playForgottenGems(isPlayBtn); repaintAll(); return;
+    }
+    else if(t.kind==='smart_rotation'){
+      var isPlayBtn = (t.pbx!==undefined && x>=t.pbx && x<t.pbx+t.pb && y>=t.pby && y<t.pby+t.pb);
+      playHeavyRotation(isPlayBtn); repaintAll(); return;
     }
     repaintAll(); return;
   }
@@ -1242,6 +1283,7 @@ function on_mouse_wheel(step){
   else if(view==='artists'){ artistsScrollT=clampPx(artistsScrollT-step*Math.round(WHEEL_PX*1.7),ARTISTS_MAXPX); startScrollAnim(); return; }
   else if(view==='artist_sync'){ artistSyncScrollT=clampPx(artistSyncScrollT-step*WHEEL_PX,ARTIST_SYNC_MAXPX); startScrollAnim(); return; }
   else if(view==='history'){ historyScrollT=clampPx(historyScrollT-step*WHEEL_PX,HISTORY_MAXPX); startScrollAnim(); return; }
+  else if(view==='analytics'){ ANALYTICS_SCROLL_T=clampPx(ANALYTICS_SCROLL_T-step*Math.round(WHEEL_PX*1.7),ANALYTICS_MAX_SCROLL); startScrollAnim(); return; }
   else if(view==='album'){ albumScrollT=clampPx(albumScrollT-step*WHEEL_PX,ALBUM_MAXPX); startScrollAnim(); return; }
   firstRowT=clampPx(firstRowT-step*WHEEL_PX,PL_MAXPX); startScrollAnim();
 }

@@ -2,7 +2,7 @@
    Part of FLACify, the lossless Spotify-style experience for foobar2000. Loaded by main.js;
    every module shares one global scope, so load order is set there. */
 
-var HB_ALBUMS=null, HB_ARTISTS=null, HB_ARTIST_SYNC=null, HB_LIKED=null, HB_HISTORY=null;
+var HB_ALBUMS=null, HB_ARTISTS=null, HB_ARTIST_SYNC=null, HB_LIKED=null, HB_HISTORY=null, HB_ANALYTICS=null;
 // one sidebar row: cover + name + subtitle. pi<0 draws the library mosaic instead of a playlist cover.
 function drawNavRow(gr,y,h,on,hov,pi,name,sub){
   if(on||hov) gr.FillRoundRect(R.navLib.x+8,y,R.navLib.w-16,h-4,6,6,on?COL.rowActive:COL.rowHover);
@@ -23,6 +23,9 @@ function drawNavRow(gr,y,h,on,hov,pi,name,sub){
   } else if(pi===-6){
     gr.FillRoundRect(cx,cy,cs,cs,4,4,RGBA(255,255,255,16));
     drawIcon(gr,'clock',on?COL.green:COL.text2,cx,cy,cs,cs,18);
+  } else if(pi===-7){
+    gr.FillRoundRect(cx,cy,cs,cs,4,4,RGBA(255,255,255,16));
+    drawIcon(gr,'chart',on?COL.green:COL.text2,cx,cy,cs,cs,18);
   } else {
     gr.FillEllipse(cx,cy,cs,cs,RGBA(255,255,255,16));
     drawIcon(gr,'home',on?COL.green:COL.text2,cx,cy,cs,cs,18);
@@ -56,14 +59,15 @@ function drawNav(gr){
   tL(gr,'Your Library',FONT.lib,COL.text2,R.navLib.x+18,R.navLib.y+14,R.navLib.w-56,26);
   var active=plman.ActivePlaylist, pls=visiblePlaylists();
   var footH=72, footTop=R.navLib.y+R.navLib.h-footH;   // pinned "add playlist" footer, always visible
-  var pinY0=R.navLib.y+44, pinH=42;                    // pinned "Liked Songs" row
+  var pinY0=R.navLib.y+44, pinH=38;                    // pinned "Liked Songs" row
   var pinY1=pinY0+pinH+2;                              // pinned "All Songs" row
   var pinY2=pinY1+pinH+2;                              // pinned "Albums" row
   var pinY3=pinY2+pinH+2;                              // pinned "Artists" row
   var pinY4=pinY3+pinH+2;                              // pinned "History" row
   var pinY5=pinY4+pinH+2;                              // pinned "Artist Sync" row
+  var pinY6=pinY5+pinH+2;                              // pinned "Analytics" row
   // scrollable playlist list (continuous pixel scroll), cropped just above the footer
-  var listTop=pinY5+pinH+8, rh=54, cropY=footTop-6, viewH=cropY-listTop;
+  var listTop=pinY6+pinH+8, rh=54, cropY=footTop-6, viewH=cropY-listTop;
   var contentH=pls.length*rh, maxPx=Math.max(0,contentH-viewH);
   NAV_MAX=maxPx;
   navScroll=clampPx(navScroll,maxPx); navScrollT=clampPx(navScrollT,maxPx);
@@ -114,6 +118,9 @@ function drawNav(gr){
 
   drawNavRow(gr,pinY5,pinH,view==='artist_sync',hv(R.navLib.x,pinY5,R.navLib.x+R.navLib.w,pinY5+pinH),-4,'Artist Sync','Cloud media manager');
   HB_ARTIST_SYNC={x0:R.navLib.x,y0:pinY5,x1:R.navLib.x+R.navLib.w,y1:pinY5+pinH};
+
+  drawNavRow(gr,pinY6,pinH,view==='analytics',hv(R.navLib.x,pinY6,R.navLib.x+R.navLib.w,pinY6+pinH),-7,'Analytics','Wrapped & telemetry');
+  HB_ANALYTICS={x0:R.navLib.x,y0:pinY6,x1:R.navLib.x+R.navLib.w,y1:pinY6+pinH};
 
   gr.DrawLine(R.navLib.x+16,listTop-6,R.navLib.x+R.navLib.w-16,listTop-6,1,COL.line);
   drawScrollbarN(gr,R.navLib.x+R.navLib.w-9,listTop,viewH,navScroll,maxPx,viewH,contentH,hv(R.navLib.x,R.navLib.y,R.navLib.x+R.navLib.w,R.navLib.y+R.navLib.h)||drag==='scrolln');

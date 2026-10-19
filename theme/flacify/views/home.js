@@ -32,6 +32,19 @@ function drawHome(gr,r){
   var gy=shelfBot+6, cropY=r.y+r.h, viewH=cropY-gy;
   var rowStep=cardH+8;
 
+  // Daily Mixes & Smart Playlists (Offline Clustering Engine)
+  var dMixes = (typeof getDailyMixes === 'function') ? getDailyMixes() : [];
+  var mcols = Math.min(4, Math.max(2, cols));
+  var mcardW = Math.floor((w - gap * (mcols - 1)) / mcols);
+  var mcardH = mcardW + 64;
+  var mixSecH = dMixes.length ? (36 + mcardH + 20) : 0;
+
+  // Audiophile Smart Playlists
+  var scols = Math.min(3, Math.max(2, cols));
+  var scardW2 = Math.floor((w - gap * (scols - 1)) / scols);
+  var scardH2 = 78;
+  var smartSecH = 36 + scardH2 + 20;
+
   // Recently played tracks from Listening History
   var recPlays=(typeof getRecentlyPlayedDistinct==='function')?getRecentlyPlayedDistinct(cols):[];
   var pcardW=Math.floor((w-gap*(cols-1))/cols);
@@ -46,12 +59,113 @@ function drawHome(gr,r){
   var recSecH=recSongs.length?(36+rcardH+18):0;
 
   var totalRows=Math.max(1,Math.ceil(arts.length/cols));
-  var contentH=playSecH + recSecH + totalRows*rowStep + 40;
+  var contentH=mixSecH + smartSecH + playSecH + recSecH + totalRows*rowStep + 40;
   var maxPx=Math.max(0,contentH-viewH);
   HOME_MAXROW=maxPx;
   homeScroll=clampPx(homeScroll,maxPx); homeScrollT=clampPx(homeScrollT,maxPx);
 
   var cy=gy-homeScroll;
+
+  // ---- Render Made For You -- Daily Mixes Section ----
+  if(dMixes.length){
+    var mTitleY = cy;
+    if(mTitleY + 28 > gy && mTitleY < cropY){
+      tL(gr, 'Made For You -- Daily Mixes', FONT.sect2, COL.text, x0, mTitleY, w - 120, 28);
+    }
+    var mCardsY = mTitleY + 34;
+    var mixAccents = [RGB(225, 29, 72), RGB(6, 182, 212), RGB(16, 185, 129), RGB(245, 158, 11)];
+
+    for(var mi = 0; mi < dMixes.length && mi < mcols; mi++){
+      var mx = x0 + mi * (mcardW + gap), my = mCardsY;
+      if(my >= cropY) break;
+      if(my + mcardH <= gy) continue;
+
+      var mix = dMixes[mi];
+      var mHov = hv(mx - 6, Math.max(my - 6, gy), mx + mcardW + 6, Math.min(my + mcardH + 6, cropY));
+      if(mHov) gr.FillRoundRect(mx - 6, my - 6, mcardW + 12, mcardH + 12, 8, 8, COL.rowHover);
+
+      // Artwork: 2x2 Mosaic or Single cover
+      if(mix.cands && mix.cands.length >= 4 && typeof mosaicImg === 'function'){
+        var miBmp = mosaicImg(mix.cands, 'mix' + mix.id, mcardW, 6);
+        if(miBmp) gr.DrawImage(miBmp, mx, my, mcardW, mcardW, 0, 0, miBmp.Width, miBmp.Height, 0, 255);
+        else drawRounded(gr, mx, my, mcardW, 6, mix.single, mix.title);
+      } else {
+        drawRounded(gr, mx, my, mcardW, 6, mix.single, mix.title);
+      }
+
+      // Bottom gradient on art
+      gr.FillGradRect(mx, my + mcardW - 32, mcardW, 32, 90, RGBA(0, 0, 0, 0), RGBA(0, 0, 0, 200));
+
+      // Pill tag
+      var mixCol = mixAccents[mi % mixAccents.length];
+      gr.FillRoundRect(mx + 8, my + mcardW - 24, 78, 18, 4, 4, RGBA(0, 0, 0, 170));
+      gr.FillSolidRect(mx + 8, my + mcardW - 24, 3, 18, mixCol);
+      tL(gr, 'DAILY MIX', FONT.eyebrow, COL.text, mx + 16, my + mcardW - 24, 68, 18);
+
+      // Play button on hover
+      var mpb = 40, mpbx = mx + mcardW - mpb - 8, mpby = my + mcardW - mpb - 8;
+      if(mHov){
+        gr.FillEllipse(mpbx, mpby, mpb, mpb, COL.green);
+        drawIcon(gr, 'play', COL.black, mpbx, mpby, mpb, mpb, 18);
+      }
+
+      // Title & Category
+      var mty = my + mcardW + 8;
+      tL(gr, mix.title, FONT.card, mHov ? COL.green : COL.text, mx, mty, mcardW, 20);
+      tL(gr, mix.category, FONT.plSub, COL.text2, mx, mty + 20, mcardW, 16);
+
+      var vmy0 = Math.max(my - 6, gy), vmy1 = Math.min(my + mcardH + 6, cropY);
+      if(vmy1 > vmy0){
+        HB_CARD.push({ x0: mx - 6, y0: vmy0, x1: mx + mcardW + 6, y1: vmy1, kind: 'daily_mix', id: mix.id, pbx: mpbx, pby: mpby, pb: mpb });
+      }
+    }
+    cy += mixSecH;
+  }
+
+  // ---- Render Audiophile Smart Vaults Section ----
+  var smTitleY = cy;
+  if(smTitleY + 28 > gy && smTitleY < cropY){
+    tL(gr, 'Audiophile Vaults & Smart Collections', FONT.sect2, COL.text, x0, smTitleY, w - 120, 28);
+  }
+  var smCardsY = smTitleY + 34;
+  var smartDefs = [
+    { kind: 'smart_vault', title: '24-bit Hi-Res Vault', sub: 'Studio Master Quality (>= 24-bit / DSD)', icon: 'sparkle', col: RGB(16, 185, 129) },
+    { kind: 'smart_forgotten', title: 'Forgotten Gems', sub: 'High-affinity tracks from your library', icon: 'clock', col: RGB(6, 182, 212) },
+    { kind: 'smart_rotation', title: 'Heavy Rotation', sub: 'Your most-played favorites on repeat', icon: 'equalizer', col: RGB(245, 158, 11) }
+  ];
+
+  for(var si = 0; si < scols && si < smartDefs.length; si++){
+    var sx = x0 + si * (scardW2 + gap), sy = smCardsY;
+    if(sy >= cropY) break;
+    if(sy + scardH2 <= gy) continue;
+
+    var sd = smartDefs[si];
+    var sHov = hv(sx - 4, Math.max(sy - 4, gy), sx + scardW2 + 4, Math.min(sy + scardH2 + 4, cropY));
+    gr.FillRoundRect(sx, sy, scardW2, scardH2, 8, 8, sHov ? COL.rowHover : COL.elev);
+
+    // Left Icon Badge Box
+    var ibs = 48, ibx = sx + 14, iby = sy + Math.floor((scardH2 - ibs) / 2);
+    gr.FillRoundRect(ibx, iby, ibs, ibs, 6, 6, RGBA(255, 255, 255, 14));
+    drawIcon(gr, sd.icon, sd.col, ibx, iby, ibs, ibs, 24);
+
+    // Text details
+    var stx = ibx + ibs + 12, stw = scardW2 - (stx - sx) - 48;
+    tL(gr, sd.title, FONT.card, sHov ? COL.green : COL.text, stx, sy + 18, stw, 20);
+    tL(gr, sd.sub, FONT.plSub, COL.text2, stx, sy + 40, stw, 16);
+
+    // Play button on right
+    var spb = 34, spbx = sx + scardW2 - spb - 12, spby = sy + Math.floor((scardH2 - spb) / 2);
+    if(sHov){
+      gr.FillEllipse(spbx, spby, spb, spb, COL.green);
+      drawIcon(gr, 'play', COL.black, spbx, spby, spb, spb, 16);
+    }
+
+    var vsy0 = Math.max(sy - 4, gy), vsy1 = Math.min(sy + scardH2 + 4, cropY);
+    if(vsy1 > vsy0){
+      HB_CARD.push({ x0: sx - 4, y0: vsy0, x1: sx + scardW2 + 4, y1: vsy1, kind: sd.kind, pbx: spbx, pby: spby, pb: spb });
+    }
+  }
+  cy += smartSecH;
 
   // ---- Render Recently Played (History) Section ----
   if(recPlays.length){

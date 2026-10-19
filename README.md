@@ -7,7 +7,7 @@
 *A high-fidelity, standalone music player interface that brings the sleek aesthetic, fluid responsiveness, and rich metadata of modern Spotify desktop to your personal, offline lossless FLAC and Hi-Res collection.*
 
 [![Release](https://img.shields.io/github/v/release/amisadman/flacify-foobar2000-theme?color=1DB954&label=release)](https://github.com/amisadman/flacify-foobar2000-theme/releases/latest)
-![Version](https://img.shields.io/badge/version-v1.4.0-1DB954)
+![Version](https://img.shields.io/badge/version-v1.5.0-1DB954)
 ![foobar2000](https://img.shields.io/badge/foobar2000-v2%20·%2064--bit-1DB954)
 ![Audio](https://img.shields.io/badge/Lossless-FLAC%20%7C%20ALAC%20%7C%20Hi--Res-1DB954)
 ![Windows](https://img.shields.io/badge/Windows-10%20%7C%2011-1DB954)
@@ -45,7 +45,28 @@ If you build your local high-resolution lossless music library using **[SpotiFLA
 ### 💎 Audiophile Lossless Engine
 * **Bit-Perfect Playback**: Native high-performance decoding for FLAC, ALAC, WAV, AIFF, and DSD with zero resampling artifacts.
 * **Live Lossless & Hi-Res Badge**: Live stream quality badge on the playback bar (Lossless, Hi-Res Audio, 24-bit/96kHz, etc.) that instantly opens full technical credits on click.
+* **Live TT Dynamic Range (DR) Meter**: Real-time official TT Dynamic Range score computation ($DR = \text{round}(20\log_{10}(\text{Peak}) - \text{Gain})$) with color-coded badges (`DR12+` Audiophile Green, `DR8-11` Amber, `DR<8` Crimson) and interactive loudness metadata popover.
+* **1-Click Audio Output Switcher**: Instant switching between connected audio endpoints (Default, Realtek Speakers, External USB DAC, WASAPI Exclusive, ASIO Drivers) directly from the player bar without interrupting playback.
+* **Parametric EQ Preset Visualizer**: 10-band GDI+ spline curve visualizer ($31\text{Hz}$ to $16\text{kHz}$) with quick toggles for Flat, Bass Boost, Vocal Clarity, Harman Target Curve, and Treble Air presets.
 * **Comprehensive Song Details Modal**: In-depth audio specs (codec, sample rate, bit depth, bitrate, MD5 checksum), catalog tags, ISRC, copyright information, embedded lyrics, and an interactive native vector **EAN-13 & Code-128 barcode**.
+
+### 🎨 Dynamic Ambient Color Glow & Accent Themes
+* **GDI+ Palette Extractor**: Dynamically extracts dominant accent colors from currently playing album art (`img.GetColourScheme(2)`) with HSL lightness clamping ($0.14 \le L \le 0.32$).
+* **60 FPS Cubic Eased Transitions**: Smooth 450ms color cross-fading on track transitions with automatic timer idling (0% CPU when stable).
+* **Ambient UI Tints**: Subtle glow on the top hero banner, player bar edge, and soft layered aura halo behind the 250px artwork.
+* **Theme Accent Selector**: Switch FLACify between **Spotify Green**, **Midnight Purple**, **Sunset Amber**, **Cyberpunk Cyan**, **Monochrome Slate**, or **Adaptive Album Art** directly from the title bar menu.
+
+### 🎲 Offline Algorithmic "Daily Mixes" & Smart Playlists
+* **Offline JScript Clustering Engine**: Vectorizes tracks by genre tags, artist associations, and temporal metadata to cluster your local library into 4 cohesive Daily Mixes (*Rock/Alt*, *Pop/Electronic*, *Chill/Acoustic*, *Jazz/Classical*) with 24-hour cache TTL (`cache/daily_mixes.json`).
+* **Auto-Generated 2×2 Mosaic Covers**: High-cohesion cover composites generated from distinctive albums within each cluster.
+* **Lossless Smart Vaults**: Instant automated playlists for *💎 24-bit Hi-Res Vault* ($\ge 24$-bit / $\ge 88.2\text{kHz}$ / DSD), *🕒 Forgotten Gems*, and *🔥 Heavy Rotation*.
+
+### 📊 FLACify "Wrapped" & Personal Listening Analytics
+* **Year-Round Telemetry Dashboard**: Dedicated Analytics page with 100% offline playback metrics.
+* **GitHub-Style 52-Week Listening Heatmap**: 52 columns $\times$ 7 rows activity calendar with interactive daily tooltips and listening intensity gradations.
+* **Top Artists & Albums Podium**: Visual Olympic-style podium (#1 Gold, #2 Silver, #3 Bronze) with instant artist page navigation.
+* **Audiophile Fidelity Spectrum Donut Chart**: Vector arc chart illustrating listening purity (Studio Master Hi-Res vs CD Lossless FLAC vs Compressed Lossy).
+* **1-Click 1080×1920 Story Card Exporter**: High-resolution Instagram/Discord story card exported directly to `%USERPROFILE%\Pictures\` with toast notification.
 
 ### 🎵 Modern Spotify-Style Desktop Experience
 * **Desktop Navigation Stack**: Real browser-style navigation history with enlarged 28px circular arrow buttons (`←` / `→`) in the custom titlebar.
