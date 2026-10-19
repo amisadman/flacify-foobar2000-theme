@@ -1,35 +1,78 @@
 <div align="center">
 
-# Verdant
+# Flacify
 
-### A modern Spotify-style theme for foobar2000
+### The modern, Spotify-style experience for your local lossless music library
 
-*A foobar2000 skin that turns the world's most configurable audio player into something
-that looks like a modern streaming app.*
+*A powerful, high-fidelity foobar2000 theme that gives your local FLAC and lossless collection the sleek look, responsive feel, and rich metadata of modern Spotify desktop.*
 
 [![Release](https://img.shields.io/github/v/release/superziper/verdant-foobar2000-theme?color=1DB954&label=release)](https://github.com/superziper/verdant-foobar2000-theme/releases/latest)
-[![Downloads](https://img.shields.io/github/downloads/superziper/verdant-foobar2000-theme/total?color=1DB954)](https://github.com/superziper/verdant-foobar2000-theme/releases)
 ![foobar2000](https://img.shields.io/badge/foobar2000-v2%20·%2064--bit-1DB954)
+![Audio](https://img.shields.io/badge/Lossless-FLAC%20%7C%20Hi--Res-1DB954)
 ![Windows](https://img.shields.io/badge/Windows-10%20%7C%2011-1DB954)
+[![Fork of Verdant](https://img.shields.io/badge/extended%20from-Verdant-1DB954)](https://github.com/superziper/verdant-foobar2000-theme)
 
 **Four-step install. No components to hunt down. No fonts to install.**
 
-<img src="docs/images/home.png" alt="Verdant home view: playlist shelf, artist grid and queue" width="900">
+<img src="docs/images/home.png" alt="Flacify home view: playlist shelf, artist grid and queue" width="900">
 
 </div>
 
 ---
 
-**Verdant** is a modern **foobar2000 theme** — a complete visual skin that restyles your **local**
-music library and playlists into a clean, dark, Spotify-inspired interface.
+## What is Flacify?
 
-Everything on screen is custom-drawn in a [JSplitter](https://hydrogenaud.io/) panel running under
-[Columns UI](https://github.com/reupen/columns_ui) — sidebar, home, playlist and All Songs views,
-search, queue and lyrics pane, player bar, fullscreen mode, even the window title bar. No stock
-foobar2000 widgets are involved, which is why it looks nothing like default foobar2000.
+**Flacify** is a modern, dark-mode foobar2000 theme built specifically for music collectors who love **local high-quality lossless audio** (FLAC, ALAC, WAV, Hi-Res) but desire the fluid, aesthetic user experience of Spotify.
 
-It does **not** connect to Spotify's service and plays nothing you don't already own — it's a
-look, not a client.
+Everything on screen is custom-drawn in a [JSplitter](https://hydrogenaud.io/) panel running under [Columns UI](https://github.com/reupen/columns_ui) — custom sidebar, home shelf, dedicated albums and artists grids, comprehensive artist profile views, song details modal with vector barcode rendering, synced lyrics, player bar, and custom frameless titlebar with navigation history.
+
+> **Note**: Flacify plays **only your local files** that you own on disk. It is completely offline-first, private, and subscription-free.
+
+---
+
+## The Perfect Companion for SpotiFLAC
+
+If you curate your local high-fidelity library using **[SpotiFLAC](https://github.com/afkarxyz/SpotiFLAC)**, **Flacify is built for you**.
+
+- **Curate with SpotiFLAC**: Download your favorite tracks and playlists in true 16-bit / 24-bit lossless FLAC.
+- **Listen with Flacify**: Load your folder into foobar2000 and enjoy an identical Spotify-inspired desktop interface with zero streaming compression, zero internet dependencies, and bit-perfect playback.
+
+Special thanks and credit to **[afkarxyz/SpotiFLAC](https://github.com/afkarxyz/SpotiFLAC)** for empowering music lovers to build pristine, offline lossless collections.
+
+---
+
+## Extended Features (What's New in Flacify)
+
+Flacify is an extended evolution of the original **[Verdant](https://github.com/superziper/verdant-foobar2000-theme)** theme by [superziper](https://github.com/superziper). Flacify adds dozens of new capabilities designed specifically for local lossless library collectors:
+
+| Feature | Base Verdant | Flacify (Extended) |
+|---|---|---|
+| **Dedicated Albums View** | ❌ No dedicated album grid | ✅ Full cover grid with release years, track counts & sorting |
+| **Dedicated Artists View** | ❌ Home-only slice | ✅ Dedicated Artists grid with circular avatars & track totals |
+| **Artist Profiles** | ⚠️ Basic view | ✅ Redesigned profile with genuine Spotify monthly listeners, verified bio, popular tracks & discography shelves |
+| **Artist Cloud Sync** | ❌ None | ✅ Built-in offline-first sync manager powered by Spotify Web Scraper GraphQL (zero API key needed) |
+| **Lossless Song Details** | ❌ Basic properties | ✅ Modal with audio codec, bit depth, sample rate, bitrate, MD5 & native vector EAN-13/Code-128 barcode |
+| **Navigation History** | ⚠️ Prev/next track skips | ✅ Real browser-style Back/Forward history stack with enlarged 28px circular arrow buttons |
+| **Multi-Artist Parsing** | ⚠️ Single artist string | ✅ Splits collaborating artists into individual clickable links & tags |
+| **Image Proportion Engine** | ⚠️ Can stretch non-square art | ✅ Aspect-Fill square cropping using GDI+ HighQualityBicubic interpolation |
+| **Bio Sanitizer** | ⚠️ Raw HTML & emoji boxes | ✅ Decodes HTML entities, strips raw tags, removes unrenderable emojis, repairs UTF-8 mojibake |
+| **Lyrics Experience** | ⚠️ Cluttered subtitle | ✅ Clean vertical centering, embedded Vorbis/ID3 tag parsing + external `.lrc`/`.txt` support |
+
+---
+
+## Core Features
+
+- **Home View** — Horizontal shelf of your playlists with 2×2 cover mosaics, Recently Added shelf, and artist highlights.
+- **Dedicated Albums Grid** — Browse your albums with rich 1:1 covers, artist subtitles, release years, and track counts.
+- **Dedicated Artists Grid** — Discover your collection by artist with high-res circular portraits and direct navigation.
+- **Rich Artist Profiles** — Featuring official artist photography, verified monthly listeners, formatted biographies, top 5 popular tracks table with play count bars, and categorized discography (Albums, Singles & EPs).
+- **Artist Cloud Sync** — Offline-first background synchronization using Spotify GraphQL and Deezer HD APIs. Once cached, metadata is permanently preserved locally with zero re-syncs.
+- **Comprehensive Song Details Modal** — Press the details button on any track to view full lossless audio specs (FLAC/ALAC, sample rate, bit depth, bitrate, codec MD5), copyright info, ISRC, catalog number, collapsible synced lyrics, and a native vector EAN-13 / Code-128 barcode.
+- **Desktop Navigation** — Browser-style navigation history stack with dedicated 28px left (`←`) and right (`→`) arrow buttons in the custom titlebar.
+- **Lyrics & Queue Pane** — Toggle between upcoming queue items and real-time rolling synced lyrics (`.lrc` or embedded tags).
+- **All Songs Virtual List** — Virtualized table capable of rendering tens of thousands of tracks with zero stutter, with instant ReplayGain loudness normalization.
+- **Fullscreen Chill Mode** — Big now-playing cover art, rolling lyrics, or 4 distinct styles of real PCM FFT audio visualizers.
+- **Smart Duplicate Detection** — Drag-and-drop tracks into playlists with automatic duplicate warning prompts.
 
 ---
 
@@ -37,227 +80,64 @@ look, not a client.
 
 <table>
 <tr>
-<td width="50%"><img src="docs/images/playlist.png" alt="Playlist view"><br><sub><b>Playlist</b></sub></td>
-<td width="50%"><img src="docs/images/all-songs.png" alt="All Songs view"><br><sub><b>All Songs</b></sub></td>
+<td width="50%"><img src="docs/images/playlist.png" alt="Playlist view"><br><sub><b>Playlist View with Dynamic Gradient</b></sub></td>
+<td width="50%"><img src="docs/images/all-songs.png" alt="All Songs view"><br><sub><b>All Songs Virtualized List</b></sub></td>
 </tr>
 <tr>
-<td><img src="docs/images/search.png" alt="Search"><br><sub><b>Search</b></sub></td>
-<td><img src="docs/images/artist.png" alt="Artist page"><br><sub><b>Artist</b></sub></td>
+<td><img src="docs/images/search.png" alt="Search"><br><sub><b>Instant Search Across Library</b></sub></td>
+<td><img src="docs/images/artist.png" alt="Artist page"><br><sub><b>Rich Artist Profile & Discography</b></sub></td>
 </tr>
 <tr>
-<td><img src="docs/images/fullscreen.png" alt="Fullscreen now playing"><br><sub><b>Fullscreen</b></sub></td>
-<td><img src="docs/images/fullscreen-lyrics.png" alt="Fullscreen synced lyrics"><br><sub><b>Lyrics</b></sub></td>
+<td><img src="docs/images/fullscreen.png" alt="Fullscreen now playing"><br><sub><b>Fullscreen Now Playing</b></sub></td>
+<td><img src="docs/images/fullscreen-lyrics.png" alt="Fullscreen synced lyrics"><br><sub><b>Fullscreen Synced Lyrics</b></sub></td>
 </tr>
 <tr>
-<td><img src="docs/images/fullscreen-visualizer.png" alt="Fullscreen visualizer"><br><sub><b>Visualizer</b></sub></td>
-<td><img src="docs/images/playlist-empty-rename.png" alt="Empty playlist and rename dialog"><br><sub><b>Editing</b></sub></td>
+<td><img src="docs/images/fullscreen-visualizer.png" alt="Fullscreen visualizer"><br><sub><b>Real-Time FFT Visualizer</b></sub></td>
+<td><img src="docs/images/playlist-empty-rename.png" alt="Empty playlist and rename dialog"><br><sub><b>Playlist Management</b></sub></td>
 </tr>
 </table>
 
 ---
 
-## Features
+## Quick Installation
 
-- **Home** — a horizontal shelf of your playlists with 2×2 cover mosaics, above a grid of every
-  artist in your library.
-- **Playlist view** — gradient header tinted from the cover art, sortable by title / artist / album,
-  inline rename, delete, and drag-and-drop import **with duplicate detection**.
-- **All Songs** — your entire library in one virtualised list, optionally grouped by artist, album,
-  or both. Handles thousands of tracks without stuttering.
-- **Search** — instant, across artists and tracks, as you type.
-- **Queue / Lyrics pane** — what's actually playing next (real playback queue *and* "next from"),
-  or synced `.lrc` / plain `.txt` lyrics that roll with the track. Click any queue row to jump to it.
-- **Fullscreen mode** — big now-playing art, rolling lyrics, or an FFT audio visualizer fed from
-  real PCM. Four visualizer styles.
-- **Normalize volume** — one button that levels your whole library so you stop reaching for the
-  volume knob between albums. [How it works ↓](#normalize-volume)
-- **Shuffle that tells the truth** — shuffle plays from a hidden shuffled copy of the playlist, so
-  the "next up" list is the *actual* upcoming order, not a guess.
-- **Custom title bar** — frameless window with real File / Library / Help menus and window controls.
+1. Install **foobar2000 v2 (64-bit)** as **portable** from the [official website](https://www.foobar2000.org/download).
+2. Download **`Verdant-v1.2.0.zip`** (or latest Flacify release zip) from the **[Releases](https://github.com/superziper/verdant-foobar2000-theme/releases)**.
+3. Extract the **`profile`** folder from the zip into foobar2000's root folder (the directory containing `foobar2000.exe`).
+4. Start foobar2000. Under **Preferences → Media Library**, add your music folder (e.g. your SpotiFLAC download directory).
+
+> Columns UI, JSplitter, and UI Wizard are bundled — nothing to install separately. And **no fonts to download**: Flacify uses native Windows Segoe UI and Segoe MDL2 Assets.
+
+### Using with an existing foobar2000 setup?
+Close foobar2000, double-click **`install.bat`**, and start foobar2000. The installer backs up your existing configuration in `<profile>\verdant-backup\<date>\`.
 
 ---
 
-## Install
+## Syncing Artist Photos & Monthly Listeners
 
-1. Install foobar2000 as **portable** from the [official website](https://www.foobar2000.org/download).
-2. Download **`Verdant-vX.Y.Z.zip`** from the
-   **[latest release](https://github.com/superziper/verdant-foobar2000-theme/releases/latest)**.
-3. Extract the **`profile`** folder from the zip into foobar2000's **root folder** (the one containing
-   `foobar2000.exe`).
-4. Start foobar2000 and enjoy.
+Flacify comes with a built-in offline artist sync utility:
 
-That's it. Columns UI, JSplitter and UI Wizard are bundled — nothing to install separately. And
-**no fonts to install**: Verdant uses Segoe UI and Segoe MDL2 Assets, both of which ship with
-Windows 10 and 11.
-
-> For a **standard (non-portable)** install, extract the *contents* of `profile` into
-> `%APPDATA%\foobar2000-v2` instead, then start foobar2000.
-
-### Already have a foobar2000 you've set up?
-
-**Don't extract over it** — `profile` carries a layout and core settings that would replace your own.
-Close foobar2000, double-click **`install.bat`**, start foobar2000.
-
-The installer checks before it writes. It adds only the components you're missing, and if you already
-use Columns UI it replaces **only the panel layout** — your colours, fonts, playlist columns and
-filters survive, because it uses Columns UI's own layout import rather than overwriting its config.
-It backs up whatever it touches and writes an `uninstall.ps1` beside the backup in
-`<profile>\verdant-backup\<date>\`.
-
-<details>
-<summary>Prefer to import the layout yourself?</summary>
-
-`extras\verdant-layout.fcl` is the layout on its own. Copy `profile\verdant\` into your profile, then
-Preferences → Display → Columns UI → **Import**, ticking **Main Layout** and **Toolbar Layout**.
-</details>
-
-### Uninstall
-
-Run `uninstall.ps1` from `<profile>\verdant-backup\<date>\`, then delete `<profile>\verdant\`.
+1. In the sidebar, click the **Cloud** icon or navigate to the Artist Cloud Sync view.
+2. Click **Fetch Missing** (or run `tools/sync_artists.ps1` in PowerShell).
+3. Flacify connects to the anonymous Spotify Web Scraper GraphQL pipeline, downloads official high-resolution avatars, verified monthly listener counts, and bio descriptions, crops them into 1:1 squares, and caches them to disk.
+4. Once cached, Flacify runs **100% offline**.
 
 ---
 
-## First run
+## Credits & Acknowledgments
 
-> **Home and All Songs look empty?** Verdant reads foobar's **Media Library**, not your playlists. A
-> fresh foobar has an empty library, so add a music folder under Preferences → **Media Library**.
-> That's expected, not a broken install.
+Flacify is built upon the wonderful work of the open-source foobar2000 and music communities:
 
-Lyrics are read from a `.lrc` (synced) or `.txt` (plain) file sitting next to the audio file, with the
-same name.
-
----
-
-## Tuning
-
-Right-click the panel → **Properties**:
-
-| Property | Default | What it does |
-|---|---|---|
-| `Display: UI scale (0 = auto)` | `0` | Scales every font and the title bar. `0` follows your display scaling; set `1.0` for a compact look, higher for a large or 4K screen. |
-| `Scrolling: wheel step (px)` | `180` | How far one wheel notch scrolls the lists. |
-
-Both are read when the panel loads — **reload the panel** (right-click → Reload) after changing them.
-
-Sidebar and queue-pane widths are still code: `M.navW` / `M.queueW` in
-[`theme/verdant/core/tokens.js`](theme/verdant/core/tokens.js).
+- **[superziper](https://github.com/superziper)** — Creator of the original **[Verdant](https://github.com/superziper/verdant-foobar2000-theme)** theme, which laid the magnificent architectural foundation for this project.
+- **[afkarxyz](https://github.com/afkarxyz)** — Creator of **[SpotiFLAC](https://github.com/afkarxyz/SpotiFLAC)**, the premier tool for acquiring high-quality lossless FLAC music collections.
+- **Reupen Shah** — Author of [Columns UI](https://github.com/reupen/columns_ui).
+- **LUR** — Author of **JSplitter** (`foo_uie_jsplitter`).
+- **The Wizardium** — Author of [UI Wizard](https://github.com/The-Wizardium/UI-Wizard).
 
 ---
 
-## Normalize volume
+## License & Disclaimer
 
-**All Songs → Normalize volume** makes every track in your library play back at the same loudness.
-
-Under the hood this is **ReplayGain**, which is two separate things — and the button owns both:
-
-1. **A loudness measurement per track**, stored as a `REPLAYGAIN_TRACK_GAIN` tag in the file.
-2. **Playback applying that measurement** (foobar's ReplayGain source mode).
-
-The pill turns **green only when both are true**, so it can never claim to be on while doing nothing.
-The line underneath tells you where you stand — e.g. `1,204 of 3,000 tracks scanned`.
-
-| State | Clicking it |
-|---|---|
-| Some tracks unscanned | Asks first, then scans them and switches normalizing on |
-| All scanned, normalizing off | Switches it on — instant, no rescan |
-| Normalizing on (green) | Switches it off. Tags are left alone, so switching back on is instant |
-
-**The scan writes tags into your audio files**, which is why it asks first. The scan itself is
-foobar's own — its progress window, its *update file tags* confirmation — so you can cancel there and
-nothing is written. Only unscanned tracks are ever handed to it. A large library takes a while the
-first time, but it's a one-off.
-
-Nothing here is destructive: no audio is re-encoded, no tag is removed. To undo it completely, use
-foobar's own *ReplayGain → Remove ReplayGain information from files*.
-
----
-
-## Requirements
-
-- **foobar2000 v2, 64-bit** (developed and tested on 2.25)
-- **Windows 10 or 11**
-- Bundled and installed for you: **Columns UI**, **JSplitter** (`foo_uie_jsplitter`),
-  **UI Wizard** (`foo_ui_wizard`, optional — without it you keep the normal Windows title bar)
-
----
-
-## FAQ
-
-**Is this a theme or a skin?** Both words get used for the same thing in the foobar2000 world.
-Verdant is a full visual replacement — layout, colours, fonts, every control — not a colour tweak.
-
-**Will it change how my music sounds?** No. Verdant is purely visual. The one exception is
-*Normalize volume*, which you have to switch on yourself and which uses foobar2000's own ReplayGain.
-
-**Does it work with foobar2000 v1.x?** No — v2, 64-bit only.
-
-**Can I still use the Default UI / my old Columns UI layout?** Yes. Columns UI keeps layout presets,
-so you can switch back at Preferences → Display → Columns UI → Layout. If you installed with
-`install.bat`, your previous layout is also backed up and restorable.
-
-**Is my music library safe?** Verdant never touches your audio files. The one feature that writes
-anything is *Normalize volume*, which asks first and writes only ReplayGain tags.
-
-**It looks huge / tiny on my screen.** Set `Display: UI scale` in the panel properties — see
-[Tuning](#tuning).
-
----
-
-## For developers
-
-```
-theme/verdant/        the theme — copied verbatim into <profile>\verdant\
-  main.js             entry point: declares the panel, sets the module load order
-  core/               props, tokens, utils, title formats, memory caps, job scheduler
-  data/               art, library, playback, lyrics, replaygain, dedupe, playlist edit
-  ui/                 skeletons + shimmer, window chrome and shared widgets
-  views/              nav, playlist, home, artist, songs, search, queue, bar, fullscreen
-  app.js              panel state, layout, paint dispatch, input, foobar callbacks
-components/           the three foobar components, bundled for the installer
-dist-config/          layout + core config harvested from a clean-room foobar
-tools/
-  deploy.ps1          dev sync into the foobar profile ( -Watch to auto-sync )
-  install.ps1/.bat    the shipped installer
-  harvest.ps1         pull configuration out of the clean-room rig
-  make-release.ps1    build Verdant-vX.Y.Z.zip
-```
-
-Every module is evaluated into **one shared global scope**, so any module can call into any other.
-`main.js` fixes the load order because a few things are computed at load time (fonts from `UISCALE`,
-the reveal-gate ceiling from `ART_CAP`).
-
-The whole theme runs on **one thread shared with the UI**, which is why the code caches aggressively,
-slices long builds across timer ticks, and scopes repaints to the one panel that changed.
-
-```powershell
-setx VERDANT_PROFILE D:\foobar2000\profile     # once, so deploy knows where to put it
-.\tools\deploy.ps1 -Watch                      # mirrors theme\verdant into the profile on every save
-```
-
-`deploy.ps1` auto-detects a standard install; for a portable one, set `VERDANT_PROFILE` as above or
-pass `-FoobarProfile`.
-
-Then reload the panel (right-click → Reload). `console.log` goes to foobar's console (View → Console).
-Deploy copies the same folder to the same place the installer does, so there's no separate build and
-no second code path.
-
----
-
-## Credits
-
-Built by **[superziper](https://github.com/superziper)**.
-
-Standing on: [Columns UI](https://github.com/reupen/columns_ui) by Reupen Shah, **JSplitter** by LUR,
-and [UI Wizard](https://github.com/The-Wizardium/UI-Wizard) by The Wizardium.
-
-## Licence
-
-Verdant is [MIT licensed](LICENSE) — its own code is everything under `theme/`, `tools/`,
-`dist-config/` and `docs/`.
-
-The three foobar2000 components bundled for the one-step install are **not** Verdant's work and keep
-their own licences (Columns UI is LGPL-3.0, UI Wizard is MIT). See
-[THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
-
-Not affiliated with or endorsed by Spotify. "Spotify" is a trademark of Spotify AB; this is a
-fan-made visual theme for a local music player.
+- Flacify code is licensed under the [MIT License](LICENSE).
+- Bundled third-party components retain their respective licenses (Columns UI: LGPL-3.0, UI Wizard: MIT).
+- Not affiliated with, sponsored by, or endorsed by Spotify AB. "Spotify" is a registered trademark of Spotify AB. This is an independent, open-source fan-made theme for personal offline music players.

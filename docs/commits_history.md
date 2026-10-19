@@ -449,6 +449,10 @@ git commit -m "fix(encoding): enforce UTF-8 console output encoding to eliminate
 # Commit 23: Remove Lyrics Subtitle & Enlarge Navigation Buttons with Left/Right Arrows
 git add theme/verdant/views/queue.js theme/verdant/core/tokens.js theme/verdant/ui/chrome.js dist/Verdant-v1.2.0.zip docs/commits_history.md
 git commit -m "fix(ui): remove lyrics subtitle, enlarge titlebar navigation buttons with left/right arrows"
+
+# Commit 24: Rebrand Documentation for Flacify, Credit Verdant and SpotiFLAC
+git add README.md docs/commits_history.md
+git commit -m "docs: introduce Flacify branding, credit Verdant base theme and SpotiFLAC companion"
 ```
 
 ---
@@ -523,7 +527,18 @@ git commit -m "fix(ui): remove lyrics subtitle, enlarge titlebar navigation butt
   - **Package Distribution**: Rebuilt and updated `dist/Verdant-v1.2.0.zip`.
 - **Rationale**: Elevates desktop chrome aesthetics to match modern Spotify desktop standards, providing tactile navigation controls and an uncluttered lyrics view.
 
+---
 
-
-
+### Commit 24: Rebrand Documentation for Flacify, Credit Verdant and SpotiFLAC
+- **Commit Title**: `docs: introduce Flacify branding, credit Verdant base theme and SpotiFLAC companion`
+- **Scope**: Documentation, project identity & community attribution
+- **Modified Files**:
+  - `README.md`
+  - `docs/commits_history.md`
+- **Key Changes**:
+  - **New Identity**: Formally introduced **Flacify** as the project identity — the modern Spotify-style experience for local lossless and high-resolution music libraries.
+  - **Upstream Credit**: Formally credited [superziper](https://github.com/superziper) for the base [Verdant](https://github.com/superziper/verdant-foobar2000-theme) theme, documenting Flacify as an extended feature-rich fork.
+  - **SpotiFLAC Integration**: Added dedicated highlight and credit for [afkarxyz/SpotiFLAC](https://github.com/afkarxyz/SpotiFLAC) as the premier companion downloader for building local FLAC collections.
+  - **Feature Matrix**: Added a comprehensive comparison table contrasting base Verdant capabilities with Flacify's additions (dedicated albums/artists grids, Spotify GraphQL artist sync, lossless song details with native vector barcodes, browser-style navigation history, aspect-fill cropping, and entity sanitization).
+- **Rationale**: Equips the repository with comprehensive, transparent, and respectful documentation ready for GitHub fork publication and community release.
 
