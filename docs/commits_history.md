@@ -441,6 +441,14 @@ git commit -m "feat(sync): integrate Spotify Web Scraper GraphQL API for officia
 # Commit 21: Prevent Image Stretching with aspectFillSquare & Sanitize Bio Entities and Emojis
 git add theme/verdant/data/art.js theme/verdant/views/artist.js theme/verdant/tools/sync_artists.ps1 theme/verdant/tools/clean_artist_cache.ps1 docs/commits_history.md
 git commit -m "fix(artist): prevent image stretching with aspectFillSquare and sanitize HTML entities and emojis in bios"
+
+# Commit 22: Enforce UTF-8 Output Encoding & Repair Mojibake
+git add theme/verdant/data/art.js theme/verdant/tools/sync_artists.ps1 theme/verdant/tools/clean_artist_cache.ps1 docs/commits_history.md
+git commit -m "fix(encoding): enforce UTF-8 console output encoding to eliminate CP437 mojibake in artist bios"
+
+# Commit 23: Remove Lyrics Subtitle & Enlarge Navigation Buttons with Left/Right Arrows
+git add theme/verdant/views/queue.js theme/verdant/core/tokens.js theme/verdant/ui/chrome.js dist/Verdant-v1.2.0.zip docs/commits_history.md
+git commit -m "fix(ui): remove lyrics subtitle, enlarge titlebar navigation buttons with left/right arrows"
 ```
 
 ---
@@ -495,6 +503,26 @@ git commit -m "fix(artist): prevent image stretching with aspectFillSquare and s
   - Added CP437 and Windows-1252 mojibake reversal patterns to `cleanBioText` in `data/art.js` and `Clean-BioText` in PowerShell scripts.
   - Repaired all 71 existing metadata files in the artist cache that contained `ΓÇÖ` / mojibake artifacts.
 - **Rationale**: Completely eradicates `ΓÇÖ` and related CP437 corrupted characters from ever appearing in artist biographies on screen or disk.
+
+---
+
+### Commit 23: Lyrics Tab Subtitle Removal & Enlarge Navigation Arrows
+- **Commit Title**: `fix(ui): remove lyrics subtitle, enlarge titlebar navigation buttons with left/right arrows`
+- **Scope**: UI polish, typography & titlebar navigation
+- **Modified Files**:
+  - `theme/verdant/views/queue.js`
+  - `theme/verdant/core/tokens.js`
+  - `theme/verdant/ui/chrome.js`
+  - `dist/Verdant-v1.2.0.zip`
+  - `docs/commits_history.md`
+- **Key Changes**:
+  - **Lyrics Tab Polish**: Removed `'No .lrc or .txt beside this track.'` subtitle from the lyrics empty state in `views/queue.js`, vertically centering `'No lyrics found'` cleanly within the panel.
+  - **Navigation Vector Icons**: Replaced media track skip icons (`prev`/`next`) with dedicated left and right navigation arrows (`arrowLeft` and `arrowRight`) in `core/tokens.js` (with Segoe MDL2 `0xE72B`/`0xE72A` fallbacks in `GLYPH`).
+  - **Enlarged Circular Navigation Buttons**: Increased titlebar button diameter from 22px to 28px (`28 * UISCALE`) with 18px vector icons (+62% hit area). Expanded titlebar height (`TBH`) to 36px (`36 * UISCALE`) for comfortable breathing room and modern Windows 11 framing.
+  - **Button State Polish**: Designed distinctive circular surfaces and borders for back/forward buttons: subtle surface plate + stroke when enabled, pure white icon on hover, and muted circular outline when inactive. Added smooth rounded hover pills for menu items.
+  - **Package Distribution**: Rebuilt and updated `dist/Verdant-v1.2.0.zip`.
+- **Rationale**: Elevates desktop chrome aesthetics to match modern Spotify desktop standards, providing tactile navigation controls and an uncluttered lyrics view.
+
 
 
 

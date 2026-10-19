@@ -3,7 +3,7 @@
    every module shares one global scope, so load order is set there. */
 
 /* Custom window title bar via UI Wizard (foo_ui_wizard) - frameless + our own controls */
-var TBH = Math.round(32*UISCALE), CAPBW = Math.round(46*UISCALE);
+var TBH = Math.round(36*UISCALE), CAPBW = Math.round(46*UISCALE);
 var HB_NAV_BACK=null, HB_NAV_FWD=null, HB_BACK_BTN=null;
 var UIWizard=null; try{ UIWizard=new ActiveXObject('UIWizard'); }catch(e){ UIWizard=null; }
 var MENUS=[['File','file'],['Library','library'],['Help','help']];
@@ -189,29 +189,44 @@ function drawTitleBar(gr){
   HB_MENU=[]; var mx0=12;
   for(var mi=0;mi<MENUS.length;mi++){
     var lbl=MENUS[mi][0], mw=gr.CalcTextWidth(lbl,FONT.menu)+24, mhover=hv(mx0,0,mx0+mw,TBH);
-    if(mhover) gr.FillSolidRect(mx0,0,mw,TBH,RGB(40,40,40));
+    if(mhover) gr.FillRoundRect(mx0+2,Math.round(4*UISCALE),mw-4,TBH-Math.round(8*UISCALE),6,6,RGBA(255,255,255,20));
     tC(gr,lbl,FONT.menu,mhover?COL.text:COL.text2,mx0,0,mw,TBH);
     HB_MENU.push({x0:mx0,y0:0,x1:mx0+mw,y1:TBH,root:MENUS[mi][1],mx:mx0});
     mx0+=mw;
   }
-  // navigation buttons (Spotify-style < and >)
+  // navigation buttons (Spotify-style left and right arrows)
   HB_NAV_BACK=null; HB_NAV_FWD=null;
-  var nbSz=Math.round(22*UISCALE), nbY=Math.round((TBH-nbSz)/2);
-  var bx=mx0+14, fx=bx+nbSz+6;
+  var nbSz=Math.round(28*UISCALE), nbY=Math.round((TBH-nbSz)/2);
+  var icoSz=Math.round(18*UISCALE);
+  var bx=mx0+16, fx=bx+nbSz+8;
 
   var canBack=typeof navCanBack==='function'?navCanBack():false;
   var bHot=canBack && hv(bx,nbY,bx+nbSz,nbY+nbSz);
-  if(bHot) gr.FillEllipse(bx,nbY,nbSz,nbSz,RGBA(255,255,255,30));
-  drawIcon(gr,'prev',canBack?(bHot?COL.text:COL.text2):COL.text3,bx,nbY,nbSz,nbSz,14);
-  if(canBack) HB_NAV_BACK={x0:bx,y0:nbY,x1:bx+nbSz,y1:nbY+nbSz};
+  if(canBack){
+    gr.FillEllipse(bx,nbY,nbSz,nbSz,bHot?RGBA(255,255,255,30):RGBA(255,255,255,14));
+    strokeRound(gr,bx,nbY,nbSz,nbSz,nbSz/2,1,bHot?RGBA(255,255,255,50):RGBA(255,255,255,22));
+    drawIcon(gr,'arrowLeft',bHot?COL.white:RGB(220,220,220),bx,nbY,nbSz,nbSz,icoSz);
+    HB_NAV_BACK={x0:bx,y0:nbY,x1:bx+nbSz,y1:nbY+nbSz};
+  } else {
+    gr.FillEllipse(bx,nbY,nbSz,nbSz,RGBA(255,255,255,6));
+    strokeRound(gr,bx,nbY,nbSz,nbSz,nbSz/2,1,RGBA(255,255,255,12));
+    drawIcon(gr,'arrowLeft',RGBA(255,255,255,45),bx,nbY,nbSz,nbSz,icoSz);
+  }
 
   var canFwd=typeof navCanForward==='function'?navCanForward():false;
   var fHot=canFwd && hv(fx,nbY,fx+nbSz,nbY+nbSz);
-  if(fHot) gr.FillEllipse(fx,nbY,nbSz,nbSz,RGBA(255,255,255,30));
-  drawIcon(gr,'next',canFwd?(fHot?COL.text:COL.text2):COL.text3,fx,nbY,nbSz,nbSz,14);
-  if(canFwd) HB_NAV_FWD={x0:fx,y0:nbY,x1:fx+nbSz,y1:nbY+nbSz};
+  if(canFwd){
+    gr.FillEllipse(fx,nbY,nbSz,nbSz,fHot?RGBA(255,255,255,30):RGBA(255,255,255,14));
+    strokeRound(gr,fx,nbY,nbSz,nbSz,nbSz/2,1,fHot?RGBA(255,255,255,50):RGBA(255,255,255,22));
+    drawIcon(gr,'arrowRight',fHot?COL.white:RGB(220,220,220),fx,nbY,nbSz,nbSz,icoSz);
+    HB_NAV_FWD={x0:fx,y0:nbY,x1:fx+nbSz,y1:nbY+nbSz};
+  } else {
+    gr.FillEllipse(fx,nbY,fx+nbSz,nbSz,RGBA(255,255,255,6));
+    strokeRound(gr,fx,nbY,nbSz,nbSz,nbSz/2,1,RGBA(255,255,255,12));
+    drawIcon(gr,'arrowRight',RGBA(255,255,255,45),fx,nbY,nbSz,nbSz,icoSz);
+  }
 
-  var endX=fx+nbSz+12;
+  var endX=fx+nbSz+16;
   if(endX!==MENU_END){ MENU_END=endX; applyCaption(); }
   // window controls (right)
   var closeX=W-CAPBW, maxX=W-CAPBW*2, minX=W-CAPBW*3;

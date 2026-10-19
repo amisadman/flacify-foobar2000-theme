@@ -38,8 +38,7 @@ function drawQueue(gr){
   if(!qOn){
     loadLyrics();
     if(noLyrics()){
-      tC(gr,'No lyrics found',FONT.sect,COL.text2,r.x,r.y+Math.round(r.h/2)-28,r.w,24);
-      tC(gr,'No .lrc or .txt beside this track.',FONT.qArtist,COL.text3,r.x,r.y+Math.round(r.h/2)+2,r.w,18);
+      tC(gr,'No lyrics found',FONT.sect,COL.text2,r.x,r.y+Math.round(r.h/2)-12,r.w,24);
       return;
     }
     var viewTop=r.y+64, viewBot=r.y+r.h-16, maxW=r.w-28;
