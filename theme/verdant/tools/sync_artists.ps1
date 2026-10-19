@@ -178,6 +178,7 @@ foreach ($art in $artistNames) {
             if ($picUrl) {
                 Invoke-WebRequest -Uri $picUrl -OutFile $jpgPath -TimeoutSec 10 -Headers @{ "User-Agent" = "Verdant-foobar2000/1.2.0" } | Out-Null
                 $fetchedImage = $true
+                $metaObj.imageSource = "Deezer HD"
             }
         }
     } catch {}
@@ -191,6 +192,14 @@ foreach ($art in $artistNames) {
             if ($wRes.extract) { $metaObj.bio = $wRes.extract }
             if ($wRes.description) { $metaObj.desc = $wRes.description }
             $fetchedMeta = $true
+
+            if (-not $fetchedImage -and $wRes.originalimage -and $wRes.originalimage.source) {
+                try {
+                    Invoke-WebRequest -Uri $wRes.originalimage.source -OutFile $jpgPath -TimeoutSec 10 -Headers @{ "User-Agent" = "Verdant-foobar2000/1.2.0" } | Out-Null
+                    $fetchedImage = $true
+                    $metaObj.imageSource = "Wikipedia"
+                } catch {}
+            }
         }
     } catch {
         # Fallback to base artist name
@@ -203,6 +212,14 @@ foreach ($art in $artistNames) {
                     if ($wRes2.extract) { $metaObj.bio = $wRes2.extract }
                     if ($wRes2.description) { $metaObj.desc = $wRes2.description }
                     $fetchedMeta = $true
+
+                    if (-not $fetchedImage -and $wRes2.originalimage -and $wRes2.originalimage.source) {
+                        try {
+                            Invoke-WebRequest -Uri $wRes2.originalimage.source -OutFile $jpgPath -TimeoutSec 10 -Headers @{ "User-Agent" = "Verdant-foobar2000/1.2.0" } | Out-Null
+                            $fetchedImage = $true
+                            $metaObj.imageSource = "Wikipedia"
+                        } catch {}
+                    }
                 }
             }
         } catch {}
@@ -220,6 +237,7 @@ foreach ($art in $artistNames) {
             hasMeta = (Test-Path $metaPath)
             fans = $metaObj.fans
             fansFormatted = $metaObj.fansFormatted
+            source = $(if ($metaObj.imageSource) { $metaObj.imageSource } else { "Deezer HD" })
             timestamp = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
         }
         $downloaded++

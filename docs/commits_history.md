@@ -280,6 +280,20 @@ This document outlines the sequential states of the repository from the upstream
   - Replaced UTF-8 unicode characters in the sync status pills (`✓`, `⏳`, `—`) with native 6px GDI LED indicator dots and clean ASCII text (`Cached`, `Syncing`, `Missing`), permanently eliminating broken byte glyphs and unknown character boxes.
 - **Rationale**: Improves visual consistency between the Album and Artist profile pages, ensures high contrast on all metadata numbers, and fixes font encoding artifacts in the sync table.
 
+### Commit 16: Image Source Tracking & Zero-Resync Cache Guard
+- **Commit Title**: `feat(sync): add image source column to sync table and guarantee cached artists are never re-fetched`
+- **Scope**: Metadata source attribution, sync table layout, cache skip verification
+- **Modified Files**:
+  - `theme/verdant/tools/sync_artists.ps1`
+  - `theme/verdant/views/artist_sync.js`
+- **Key Changes**:
+  - Added dedicated **`IMAGE SOURCE`** column to the Artist Cloud Sync table displaying the origin of each artist portrait (`Deezer HD`, `Wikipedia`, or `Local Track`).
+  - Recorded `imageSource` in `_meta.json` and `index.json` manifests when downloading artwork.
+  - Added Wikipedia image fallback when an artist lacks an official Deezer portrait.
+  - Reinforced zero-resync protection in `sync_artists.ps1`: cached artists with existing artwork and metadata are skipped in 0ms without redundant network requests or file overwrites.
+  - Realigned column coordinates in `views/artist_sync.js` for clear readability across all window dimensions.
+- **Rationale**: Transparently displays image origin for every artist in the library and provides absolute certainty that offline-cached media is preserved and never re-downloaded unnecessarily.
+
 ---
 
 ## Git Staging Instructions for Forking
@@ -341,5 +355,9 @@ git commit -m "feat(sync): add offline-first Artist Cloud Sync manager, live pro
 # Commit 15: Artist Hero Redesign & Sync UI Polish
 git add theme/verdant/data/art.js theme/verdant/views/artist.js theme/verdant/views/artist_sync.js docs/
 git commit -m "refactor(artist): redesign artist hero with album-style artwork card, white typography, and polish sync UI"
+
+# Commit 16: Image Source Column & Zero-Resync Cache Guard
+git add theme/verdant/tools/sync_artists.ps1 theme/verdant/views/artist_sync.js docs/
+git commit -m "feat(sync): add image source column to sync table and guarantee cached artists are never re-fetched"
 ```
 

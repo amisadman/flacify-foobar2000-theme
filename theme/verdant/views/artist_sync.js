@@ -218,11 +218,12 @@ function drawArtistSync(gr, r){
 
   // Table Header
   if(curY+24>r.y && curY<cropY){
-    tL(gr, 'ARTIST', FONT.eyebrow, COL.text3, x0+48, curY, 260, 20);
-    tL(gr, 'SONGS', FONT.eyebrow, COL.text3, x0+320, curY, 80, 20);
-    tL(gr, 'MONTHLY LISTENERS', FONT.eyebrow, COL.text3, x0+420, curY, 180, 20);
-    tL(gr, 'STATUS', FONT.eyebrow, COL.text3, x0+620, curY, 120, 20);
-    tR(gr, 'ACTION', FONT.eyebrow, COL.text3, x0+w-120, curY, 100, 20);
+    tL(gr, 'ARTIST', FONT.eyebrow, COL.text3, x0+48, curY, 230, 20);
+    tL(gr, 'TRACKS', FONT.eyebrow, COL.text3, x0+290, curY, 70, 20);
+    tL(gr, 'IMAGE SOURCE', FONT.eyebrow, COL.text3, x0+370, curY, 130, 20);
+    tL(gr, 'LISTENERS', FONT.eyebrow, COL.text3, x0+510, curY, 130, 20);
+    tL(gr, 'STATUS', FONT.eyebrow, COL.text3, x0+650, curY, 90, 20);
+    tR(gr, 'ACTION', FONT.eyebrow, COL.text3, x0+w-100, curY, 80, 20);
     gr.FillSolidRect(x0, curY+22, w, 1, COL.line);
   }
   curY+=28;
@@ -246,27 +247,40 @@ function drawArtistSync(gr, r){
     drawCircle(gr, avX, avY, avSz, artItem.handle, aName);
 
     // Artist Name
-    tL(gr, aName, FONT.card, isHov ? COL.green : COL.text, x0+48, ary+6, 260, 20);
-    tL(gr, 'Artist', FONT.plSub, COL.text3, x0+48, ary+26, 260, 16);
+    tL(gr, aName, FONT.card, isHov ? COL.green : COL.text, x0+48, ary+6, 230, 20);
+    tL(gr, 'Artist', FONT.plSub, COL.text3, x0+48, ary+26, 230, 16);
 
     // Song Count (White number)
     var sCnt=String(artItem.count||1);
     var sCntW=Math.round(gr.CalcTextWidth(sCnt, FONT.meta));
-    tL(gr, sCnt, FONT.meta, COL.white, x0+320, ary, sCntW, rowH);
-    tL(gr, ' tracks', FONT.meta, COL.text2, x0+320+sCntW, ary, 80-sCntW, rowH);
+    tL(gr, sCnt, FONT.meta, COL.white, x0+290, ary, sCntW, rowH);
+    tL(gr, ' tracks', FONT.meta, COL.text2, x0+290+sCntW, ary, 70-sCntW, rowH);
 
-    // Monthly Listeners
-    var mData=getArtistMeta(aName);
-    var fanTxt=(mData && mData.fansFormatted) ? (mData.fansFormatted+' listeners') : '-';
-    tL(gr, fanTxt, FONT.meta, (mData && mData.fansFormatted) ? COL.text : COL.text3, x0+420, ary, 180, rowH);
-
-    // Status Pill (Clean LED dot, zero unknown unicode characters)
+    // Cache existence test
     var cDir=fb.ProfilePath+'verdant\\cache\\artists\\';
     var hasJpg=false, hasMeta=false;
     try{ hasJpg=utils.FileTest && utils.FileTest(cDir+safe+'.jpg', 'e'); }catch(e){}
     try{ hasMeta=utils.FileTest && utils.FileTest(cDir+safe+'_meta.json', 'e'); }catch(e){}
 
-    var pillX=x0+620, pillW=86, pillH=22, pillY=ary+Math.round((rowH-pillH)/2);
+    // Image Source Indicator
+    var mData=getArtistMeta(aName);
+    var srcTxt='-';
+    var srcCol=COL.text3;
+    if(hasJpg){
+      srcTxt=(mData && mData.imageSource) ? mData.imageSource : 'Deezer HD';
+      srcCol=COL.green;
+    } else if(artItem.handle){
+      srcTxt='Local Track';
+      srcCol=COL.text2;
+    }
+    tL(gr, srcTxt, FONT.meta, srcCol, x0+370, ary, 130, rowH);
+
+    // Monthly Listeners
+    var fanTxt=(mData && mData.fansFormatted) ? (mData.fansFormatted+' listeners') : '-';
+    tL(gr, fanTxt, FONT.meta, (mData && mData.fansFormatted) ? COL.text : COL.text3, x0+510, ary, 130, rowH);
+
+    // Status Pill (Clean LED dot, zero unknown unicode characters)
+    var pillX=x0+650, pillW=86, pillH=22, pillY=ary+Math.round((rowH-pillH)/2);
     if(hasJpg && hasMeta){
       gr.FillRoundRect(pillX, pillY, pillW, pillH, 4, 4, RGBA(30,215,96,24));
       strokeRound(gr, pillX, pillY, pillW, pillH, 4, 1, RGBA(30,215,96,70));
