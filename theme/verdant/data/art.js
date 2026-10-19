@@ -346,6 +346,41 @@ function drawCircle(gr,x,y,size,h,seed){
   if(ci) gr.DrawImage(ci,x,y,size,size,0,0,ci.Width,ci.Height,0,255);
   else gr.FillEllipse(x,y,size,size,coverCol(seed));
 }
+var extArtistCardCache={};
+function getExternalArtistCard(name, size, rad){
+  if(!name || typeof name !== 'string') return null;
+  var key=name+'|'+size+'|'+rad;
+  if(extArtistCardCache.hasOwnProperty(key)) return extArtistCardCache[key];
+
+  var cacheDir=fb.ProfilePath+'verdant\\cache\\artists\\';
+  var safeName=name.replace(/[\\/:*?"<>|]/g, '_');
+  var filePath=cacheDir+safeName+'.jpg';
+
+  var exists=false;
+  try{ exists=utils.FileTest && utils.FileTest(filePath,'e'); }catch(e){ exists=false; }
+  if(exists){
+    try{
+      var raw=gdi.Image(filePath);
+      if(raw){
+        var masked=raw.Resize(size,size);
+        masked.ApplyMask(roundMask(size,rad));
+        extArtistCardCache[key]=masked;
+        return masked;
+      }
+    }catch(e2){}
+  }
+  return null;
+}
+
+function drawArtistCard(gr,x,y,size,rad,h,seed){
+  var ext=getExternalArtistCard(seed,size,rad);
+  if(ext){
+    gr.DrawImage(ext,x,y,size,size,0,0,ext.Width,ext.Height,0,255);
+    return;
+  }
+  drawRounded(gr,x,y,size,rad,h,seed);
+}
+
 function drawRounded(gr,x,y,size,rad,h,seed){
   var ri=maskedArt(h,seed,size,roundMask(size,rad),'r'+rad);
   if(ri) gr.DrawImage(ri,x,y,size,size,0,0,ri.Width,ri.Height,0,255);

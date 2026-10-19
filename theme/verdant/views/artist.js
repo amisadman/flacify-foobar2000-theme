@@ -66,69 +66,99 @@ function drawArtist(gr, r){
     }
   }
 
-  // 1. Hero Section (320px high)
-  var heroH=320;
-  var heroY=r.y-scroll;
+  // 1. Dynamic Ambient Tinted Gradient (Anchored to view top, just like album view)
+  var gradH=Math.max(380, Math.min(500, Math.round(r.h*0.65)));
+  gr.FillGradRect(r.x, r.y, r.w, gradH, 90, blend(artHue(firstHandle, viewArtist), COL.base, 0.42), COL.base, 1.0);
 
-  if(heroY+heroH>r.y && heroY<cropY){
-    if(heroImg){
-      // Cinematic cover-scaled background
-      var srcW=heroImg.Width, srcH=heroImg.Height;
-      var scale=Math.max(r.w/srcW, heroH/srcH);
-      var dw=Math.round(srcW*scale), dh=Math.round(srcH*scale);
-      var dx=r.x+Math.round((r.w-dw)/2), dy=heroY+Math.round((heroH-dh)/2);
-      gr.DrawImage(heroImg, dx, dy, dw, dh, 0, 0, srcW, srcH, 0, 255);
+  // 2. Hero Section: Enlarged Artist Portrait Card (240x240) & Rich Metadata (Matching Album view)
+  var artSz=240;
+  var ax=x0, ay=r.y+24-scroll;
 
-      // Gradient fade to black at bottom + dark tint for text contrast
-      gr.FillGradRect(r.x, heroY+Math.round(heroH*0.35), r.w, Math.round(heroH*0.65)+2, 90, RGBA(18,18,18,0), COL.base, 1.0);
-      gr.FillSolidRect(r.x, heroY, r.w, heroH, RGBA(0,0,0,85));
-    } else {
-      // Dynamic ambient gradient based on artist dominant hue
-      var aHue=artHue(firstHandle, viewArtist);
-      gr.FillGradRect(r.x, heroY, r.w, heroH, 90, blend(aHue, COL.base, 0.48), COL.base, 1.0);
-      gr.FillSolidRect(r.x, heroY, r.w, heroH, RGBA(0,0,0,50));
-    }
+  if(ay+artSz>r.y && ay<cropY){
+    // Ambient drop shadow behind artist portrait card
+    gr.FillRoundRect(ax+4, ay+6, artSz, artSz, 10, 10, RGBA(0,0,0,160));
+    drawArtistCard(gr, ax, ay, artSz, 8, firstHandle, viewArtist);
+    strokeRound(gr, ax, ay, artSz, artSz, 8, 1, RGBA(255,255,255,24));
   }
 
-  // Hero Content: Verified Badge, Big Artist Name, Listener & Library Stats
-  var hy=heroY+64;
-  if(hy+130>r.y && hy<cropY){
-    // Verified Artist Capsule Badge
-    var vbW=126, vbH=24;
-    gr.FillRoundRect(x0, hy, vbW, vbH, vbH/2, vbH/2, RGBA(41,128,255,180));
-    strokeRound(gr, x0, hy, vbW, vbH, vbH/2, 1, RGBA(255,255,255,60));
-    drawIcon(gr, 'badge', COL.white, x0+6, hy, 18, vbH, 14);
-    tL(gr, 'Verified Artist', FONT.eyebrow, COL.white, x0+26, hy, vbW-28, vbH);
-    hy+=32;
+  // Right Column: Eyebrow, White Title, Description, and Stats with Pure White Numbers
+  var tx=ax+artSz+28, tw=r.x+r.w-pad-tx;
+  var ty=ay+6;
 
-    // Artist Title (Auto-scaling for long names)
-    var nameFont=(viewArtist.length>22 ? FONT.sect2 : FONT.title);
-    var nameH=(viewArtist.length>22 ? 44 : 64);
-    tL(gr, viewArtist, nameFont, COL.white, x0, hy, w, nameH);
-    hy+=nameH+8;
+  // Eyebrow: Verified Artist Badge
+  var vbW=126, vbH=24;
+  if(ty+vbH>r.y && ty<cropY){
+    gr.FillRoundRect(tx, ty, vbW, vbH, vbH/2, vbH/2, RGBA(41,128,255,180));
+    strokeRound(gr, tx, ty, vbW, vbH, vbH/2, 1, RGBA(255,255,255,60));
+    drawIcon(gr, 'badge', COL.white, tx+6, ty, 18, vbH, 14);
+    tL(gr, 'Verified Artist', FONT.eyebrow, COL.white, tx+26, ty, vbW-28, vbH);
+  }
+  ty+=vbH+12;
 
-    // Monthly Listeners & Library Stats
-    var statsText='';
+  // Artist Title (User requested: "make the artist name white")
+  var nameFont=(viewArtist.length>22 ? FONT.sect2 : FONT.title);
+  var nameH=(viewArtist.length>22 ? 40 : 64);
+  if(ty+nameH>r.y && ty<cropY){
+    tL(gr, viewArtist, nameFont, COL.white, tx, ty, tw, nameH);
+  }
+  ty+=nameH+10;
+
+  // Wikipedia Short Description / Bio teaser (if available)
+  if(meta && meta.desc){
+    if(ty+20>r.y && ty<cropY){
+      tL(gr, meta.desc, FONT.pl, COL.text2, tx, ty, tw, 20);
+    }
+    ty+=26;
+  }
+
+  // Monthly Listeners & Library Stats (User requested: "library artist number should be white")
+  var totalAlbs=artistAlbums.length+artistSingles.length;
+  if(ty+22>r.y && ty<cropY){
+    var curStatX=tx;
     if(meta && meta.fansFormatted){
-      statsText+=meta.fansFormatted+' monthly listeners '+CH_DOT+' ';
+      var fVal=meta.fansFormatted;
+      var fValW=Math.round(gr.CalcTextWidth(fVal, FONT.meta));
+      tL(gr, fVal, FONT.meta, COL.white, curStatX, ty, fValW, 22);
+      curStatX+=fValW;
+
+      var fLbl=' monthly listeners '+CH_DOT+' ';
+      var fLblW=Math.round(gr.CalcTextWidth(fLbl, FONT.meta));
+      tL(gr, fLbl, FONT.meta, COL.text2, curStatX, ty, fLblW, 22);
+      curStatX+=fLblW;
     }
-    var totalAlbs=artistAlbums.length+artistSingles.length;
-    statsText+=totalAlbs+' release'+(totalAlbs===1?'':'s')+' '+CH_DOT+' '+artistTotalSongs+' song'+(artistTotalSongs===1?'':'s')+' in your library';
-    tL(gr, statsText, FONT.meta, RGBA(255,255,255,210), x0, hy, w, 20);
+
+    var rVal=String(totalAlbs);
+    var rValW=Math.round(gr.CalcTextWidth(rVal, FONT.meta));
+    tL(gr, rVal, FONT.meta, COL.white, curStatX, ty, rValW, 22);
+    curStatX+=rValW;
+
+    var rLbl=' release'+(totalAlbs===1?'':'s')+' '+CH_DOT+' ';
+    var rLblW=Math.round(gr.CalcTextWidth(rLbl, FONT.meta));
+    tL(gr, rLbl, FONT.meta, COL.text2, curStatX, ty, rLblW, 22);
+    curStatX+=rLblW;
+
+    var sVal=String(artistTotalSongs);
+    var sValW=Math.round(gr.CalcTextWidth(sVal, FONT.meta));
+    tL(gr, sVal, FONT.meta, COL.white, curStatX, ty, sValW, 22);
+    curStatX+=sValW;
+
+    var sLbl=' songs in your library';
+    var sLblW=Math.round(gr.CalcTextWidth(sLbl, FONT.meta));
+    tL(gr, sLbl, FONT.meta, COL.text2, curStatX, ty, sLblW, 22);
   }
 
-  // 2. Action Controls Bar: Big Play (56px) + Shuffle (38px) + Following (36px)
-  var actY=heroY+heroH-28;
+  // 3. Action Controls Bar: Big Play Button (56px) + Shuffle (38px) + Following (34px)
+  var playRowY=ay+artSz+24;
   var pb=56;
-  var pbHot=hv(x0, Math.max(actY, r.y), x0+pb, Math.min(actY+pb, cropY));
-  if(actY+pb>r.y && actY<cropY){
-    gr.FillEllipse(x0, actY, pb, pb, pbHot ? RGB(45,230,115) : COL.green);
-    drawIcon(gr, 'play', COL.black, x0, actY, pb, pb, 24);
-    HB_ARTIST_PLAY={x0:x0, y0:Math.max(actY, r.y), x1:x0+pb, y1:Math.min(actY+pb, cropY), handles:allArtistHandles};
+  var pbHot=hv(x0, Math.max(playRowY, r.y), x0+pb, Math.min(playRowY+pb, cropY));
+  if(playRowY+pb>r.y && playRowY<cropY){
+    gr.FillEllipse(x0, playRowY, pb, pb, pbHot ? RGB(45,230,115) : COL.green);
+    drawIcon(gr, 'play', COL.black, x0, playRowY, pb, pb, 24);
+    HB_ARTIST_PLAY={x0:x0, y0:Math.max(playRowY, r.y), x1:x0+pb, y1:Math.min(playRowY+pb, cropY), handles:allArtistHandles};
   }
 
   // Shuffle Button
-  var shufX=x0+pb+16, shufSz=38, shufY=actY+Math.round((pb-shufSz)/2);
+  var shufX=x0+pb+18, shufSz=38, shufY=playRowY+Math.round((pb-shufSz)/2);
   var shufHot=hv(shufX, Math.max(shufY, r.y), shufX+shufSz, Math.min(shufY+shufSz, cropY));
   if(shufY+shufSz>r.y && shufY<cropY){
     gr.FillEllipse(shufX, shufY, shufSz, shufSz, shufHot ? RGBA(255,255,255,24) : RGBA(255,255,255,12));
@@ -138,7 +168,7 @@ function drawArtist(gr, r){
   }
 
   // Follow Capsule Button
-  var folX=shufX+shufSz+16, folW=104, folH=34, folY=actY+Math.round((pb-folH)/2);
+  var folX=shufX+shufSz+18, folW=104, folH=34, folY=playRowY+Math.round((pb-folH)/2);
   var isFollowing=!!artistFollowingMap[viewArtist];
   var folHot=hv(folX, Math.max(folY, r.y), folX+folW, Math.min(folY+folH, cropY));
   if(folY+folH>r.y && folY<cropY){
@@ -148,7 +178,7 @@ function drawArtist(gr, r){
     HB_ARTIST_FOLLOW={x0:folX, y0:Math.max(folY, r.y), x1:folX+folW, y1:Math.min(folY+folH, cropY), artist:viewArtist};
   }
 
-  var curY=actY+pb+32;
+  var curY=playRowY+pb+32;
 
   // 3. Popular Tracks Section
   if(artistPopularTracks && artistPopularTracks.length>0){
@@ -398,7 +428,7 @@ function drawArtist(gr, r){
     var btw=w-bArtSz-72;
 
     var monthlyTxt=(meta && meta.fansFormatted) ? (meta.fansFormatted+' monthly listeners') : (artistTotalSongs+' tracks in your library');
-    tL(gr, monthlyTxt, FONT.sect, COL.text, btx, bioY+20, btw, 24);
+    tL(gr, monthlyTxt, FONT.sect, COL.white, btx, bioY+20, btw, 24);
 
     var bioContent=(meta && meta.bio) ? meta.bio : (
       (meta && meta.desc) ? (viewArtist+' is a '+meta.desc+'.') :
@@ -415,7 +445,7 @@ function drawArtist(gr, r){
   curY+=bioH+64;
 
   // 9. Sticky Header Bar (Pins to top when scrolled past hero)
-  if(scroll>heroH-50){
+  if(scroll>230){
     gr.FillSolidRect(r.x, r.y, r.w, 52, COL.base);
     gr.FillSolidRect(r.x, r.y+51, r.w, 1, COL.line);
 
@@ -430,8 +460,8 @@ function drawArtist(gr, r){
     drawIcon(gr, 'play', COL.black, spbX, spbY, spbSz, spbSz, 16);
     HB_ARTIST_PLAY={x0:spbX, y0:r.y+4, x1:spbX+spbSz, y1:r.y+4+spbSz, handles:allArtistHandles};
 
-    // Artist Name
-    tL(gr, viewArtist, FONT.sect, COL.text, spbX+spbSz+14, r.y+12, w-spbX-spbSz, 28);
+    // Artist Name (Pure White)
+    tL(gr, viewArtist, FONT.sect, COL.white, spbX+spbSz+14, r.y+12, w-spbX-spbSz, 28);
   }
 
   // 10. Max Scroll Calculation & Custom Scrollbar

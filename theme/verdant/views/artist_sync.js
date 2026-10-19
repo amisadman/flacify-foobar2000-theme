@@ -25,6 +25,7 @@ function startSyncProgressPoll(){
               loadArtistIndex(true);
               extArtistHeroCache={};
               extArtistImgCache={};
+              extArtistCardCache={};
               artistMetaCache={};
             }
             if(view==='artist_sync') repaintMain();
@@ -163,8 +164,7 @@ function drawArtistSync(gr, r){
     var b1W=170;
     var b1Hot=hv(x0, Math.max(curY, r.y), x0+b1W, Math.min(curY+btnH, cropY));
     gr.FillRoundRect(x0, curY, b1W, btnH, btnH/2, btnH/2, isRunning ? RGB(40,40,40) : (b1Hot ? RGB(45,230,115) : COL.green));
-    drawIcon(gr, 'play', isRunning ? COL.text3 : COL.black, x0+14, curY+10, 18, 18, 16);
-    tC(gr, 'Fetch Missing ('+missingCount+')', FONT.card, isRunning ? COL.text3 : COL.black, x0+20, curY, b1W-20, btnH);
+    tC(gr, 'Fetch Missing ('+missingCount+')', FONT.card, isRunning ? COL.text3 : COL.black, x0, curY, b1W, btnH);
     if(!isRunning) HB_SYNC_FETCH_MISSING={x0:x0, y0:Math.max(curY,r.y), x1:x0+b1W, y1:Math.min(curY+btnH,cropY)};
 
     // Button 2: Re-fetch All
@@ -249,33 +249,39 @@ function drawArtistSync(gr, r){
     tL(gr, aName, FONT.card, isHov ? COL.green : COL.text, x0+48, ary+6, 260, 20);
     tL(gr, 'Artist', FONT.plSub, COL.text3, x0+48, ary+26, 260, 16);
 
-    // Song Count
-    tL(gr, String(artItem.count||1)+' tracks', FONT.meta, COL.text2, x0+320, ary, 80, rowH);
+    // Song Count (White number)
+    var sCnt=String(artItem.count||1);
+    var sCntW=Math.round(gr.CalcTextWidth(sCnt, FONT.meta));
+    tL(gr, sCnt, FONT.meta, COL.white, x0+320, ary, sCntW, rowH);
+    tL(gr, ' tracks', FONT.meta, COL.text2, x0+320+sCntW, ary, 80-sCntW, rowH);
 
     // Monthly Listeners
     var mData=getArtistMeta(aName);
-    var fanTxt=(mData && mData.fansFormatted) ? (mData.fansFormatted+' listeners') : '—';
+    var fanTxt=(mData && mData.fansFormatted) ? (mData.fansFormatted+' listeners') : '-';
     tL(gr, fanTxt, FONT.meta, (mData && mData.fansFormatted) ? COL.text : COL.text3, x0+420, ary, 180, rowH);
 
-    // Status Pill
+    // Status Pill (Clean LED dot, zero unknown unicode characters)
     var cDir=fb.ProfilePath+'verdant\\cache\\artists\\';
     var hasJpg=false, hasMeta=false;
     try{ hasJpg=utils.FileTest && utils.FileTest(cDir+safe+'.jpg', 'e'); }catch(e){}
     try{ hasMeta=utils.FileTest && utils.FileTest(cDir+safe+'_meta.json', 'e'); }catch(e){}
 
-    var pillX=x0+620, pillW=90, pillH=22, pillY=ary+Math.round((rowH-pillH)/2);
+    var pillX=x0+620, pillW=86, pillH=22, pillY=ary+Math.round((rowH-pillH)/2);
     if(hasJpg && hasMeta){
-      gr.FillRoundRect(pillX, pillY, pillW, pillH, 4, 4, RGBA(30,215,96,28));
-      strokeRound(gr, pillX, pillY, pillW, pillH, 4, 1, RGBA(30,215,96,80));
-      tC(gr, '✓ Cached', FONT.eyebrow, COL.green, pillX, pillY, pillW, pillH);
+      gr.FillRoundRect(pillX, pillY, pillW, pillH, 4, 4, RGBA(30,215,96,24));
+      strokeRound(gr, pillX, pillY, pillW, pillH, 4, 1, RGBA(30,215,96,70));
+      gr.FillEllipse(pillX+10, pillY+8, 6, 6, COL.green);
+      tL(gr, 'Cached', FONT.eyebrow, COL.green, pillX+22, pillY, pillW-22, pillH);
     } else if(syncProgress.running && syncProgress.currentArtist===aName){
-      gr.FillRoundRect(pillX, pillY, pillW, pillH, 4, 4, RGBA(255,200,60,28));
-      strokeRound(gr, pillX, pillY, pillW, pillH, 4, 1, RGBA(255,200,60,80));
-      tC(gr, '⏳ Fetching', FONT.eyebrow, RGB(255,200,60), pillX, pillY, pillW, pillH);
+      gr.FillRoundRect(pillX, pillY, pillW, pillH, 4, 4, RGBA(255,200,60,24));
+      strokeRound(gr, pillX, pillY, pillW, pillH, 4, 1, RGBA(255,200,60,70));
+      gr.FillEllipse(pillX+10, pillY+8, 6, 6, RGB(255,200,60));
+      tL(gr, 'Syncing', FONT.eyebrow, RGB(255,200,60), pillX+22, pillY, pillW-22, pillH);
     } else {
-      gr.FillRoundRect(pillX, pillY, pillW, pillH, 4, 4, RGBA(255,255,255,10));
-      strokeRound(gr, pillX, pillY, pillW, pillH, 4, 1, RGBA(255,255,255,18));
-      tC(gr, '— Missing', FONT.eyebrow, COL.text3, pillX, pillY, pillW, pillH);
+      gr.FillRoundRect(pillX, pillY, pillW, pillH, 4, 4, RGBA(255,255,255,8));
+      strokeRound(gr, pillX, pillY, pillW, pillH, 4, 1, RGBA(255,255,255,16));
+      gr.FillEllipse(pillX+10, pillY+8, 6, 6, COL.text3);
+      tL(gr, 'Missing', FONT.eyebrow, COL.text3, pillX+22, pillY, pillW-22, pillH);
     }
 
     // Action button: [ Fetch ] or [ View ]

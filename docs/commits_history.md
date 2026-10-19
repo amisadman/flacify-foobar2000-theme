@@ -264,6 +264,22 @@ This document outlines the sequential states of the repository from the upstream
   - Implemented detached rate-limited background worker (`tools/sync_artists.ps1`) updating `sync_progress.json` without blocking foobar2000's UI thread.
 - **Rationale**: Gives users complete control over when and how online artist media is fetched, with visual progress feedback and guaranteed zero UI freezes.
 
+### Commit 15: Artist Page Album-Style Hero Redesign & Sync UI Polish
+- **Commit Title**: `refactor(artist): redesign artist hero with album-style artwork card, white typography, and polish sync UI`
+- **Scope**: Artist view hero redesign, typography styling, sync manager button & status indicator polish
+- **Modified Files**:
+  - `theme/verdant/views/artist.js`
+  - `theme/verdant/views/artist_sync.js`
+  - `theme/verdant/data/art.js`
+- **Key Changes**:
+  - Removed full-width stretched background hero banner on the Artist page in favor of a clean, anchored ambient tinted gradient and a prominent 240×240 artwork card with rounded corners and drop shadow matching the Album view.
+  - Added `drawArtistCard` and `getExternalArtistCard` in `art.js` to render the artist's portrait as a rounded card with library artwork fallback.
+  - Made the artist title pure bold white (`COL.white`) across the hero and the sticky top bar.
+  - Formatted artist page statistics with numbers in pure bright white (`COL.white`) for monthly listeners, release count, and total library songs.
+  - Removed play icon from the `[ Fetch Missing ]` button in the Artist Cloud Sync view and centered the text.
+  - Replaced UTF-8 unicode characters in the sync status pills (`✓`, `⏳`, `—`) with native 6px GDI LED indicator dots and clean ASCII text (`Cached`, `Syncing`, `Missing`), permanently eliminating broken byte glyphs and unknown character boxes.
+- **Rationale**: Improves visual consistency between the Album and Artist profile pages, ensures high contrast on all metadata numbers, and fixes font encoding artifacts in the sync table.
+
 ---
 
 ## Git Staging Instructions for Forking
@@ -321,5 +337,9 @@ git commit -m "feat(artist): redesign artist view with Deezer imagery, fan stats
 # Commit 14: Offline-First Artist Cloud Sync Manager & Unresponsive Script Fix
 git add theme/verdant/data/art.js theme/verdant/views/artist_sync.js theme/verdant/tools/sync_artists.ps1 theme/verdant/views/nav.js theme/verdant/views/artists.js theme/verdant/core/tokens.js theme/verdant/main.js theme/verdant/ui/chrome.js theme/verdant/app.js docs/
 git commit -m "feat(sync): add offline-first Artist Cloud Sync manager, live progress page, and fix unresponsive script warning"
+
+# Commit 15: Artist Hero Redesign & Sync UI Polish
+git add theme/verdant/data/art.js theme/verdant/views/artist.js theme/verdant/views/artist_sync.js docs/
+git commit -m "refactor(artist): redesign artist hero with album-style artwork card, white typography, and polish sync UI"
 ```
 
