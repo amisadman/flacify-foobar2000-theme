@@ -78,22 +78,43 @@ Flacify is an extended evolution of the original **[Verdant](https://github.com/
 
 ## Screenshots
 
+### Library & Navigation
 <table>
 <tr>
-<td width="50%"><img src="docs/images/playlist.png" alt="Playlist view"><br><sub><b>Playlist View with Dynamic Gradient</b></sub></td>
-<td width="50%"><img src="docs/images/all-songs.png" alt="All Songs view"><br><sub><b>All Songs Virtualized List</b></sub></td>
+<td width="50%"><img src="docs/images/albums.png" alt="Dedicated Albums Grid"><br><sub><b>Dedicated Albums Grid (Release Years & Track Counts)</b></sub></td>
+<td width="50%"><img src="docs/images/artists.png" alt="Dedicated Artists Grid"><br><sub><b>Dedicated Artists Grid (Circular High-Res Avatars)</b></sub></td>
 </tr>
 <tr>
-<td><img src="docs/images/search.png" alt="Search"><br><sub><b>Instant Search Across Library</b></sub></td>
-<td><img src="docs/images/artist.png" alt="Artist page"><br><sub><b>Rich Artist Profile & Discography</b></sub></td>
+<td><img src="docs/images/playlist.png" alt="Playlist View"><br><sub><b>Playlist View with Adaptive Artwork Gradient</b></sub></td>
+<td><img src="docs/images/all-songs.png" alt="All Songs View"><br><sub><b>All Songs Virtualized List (Instant Scrolling)</b></sub></td>
 </tr>
 <tr>
-<td><img src="docs/images/fullscreen.png" alt="Fullscreen now playing"><br><sub><b>Fullscreen Now Playing</b></sub></td>
-<td><img src="docs/images/fullscreen-lyrics.png" alt="Fullscreen synced lyrics"><br><sub><b>Fullscreen Synced Lyrics</b></sub></td>
+<td><img src="docs/images/search.png" alt="Instant Search"><br><sub><b>Instant Search Across Tracks & Artists</b></sub></td>
+<td><img src="docs/images/artist%20sync.png" alt="Artist Cloud Sync"><br><sub><b>Artist Cloud Sync (Spotify GraphQL & Deezer HD)</b></sub></td>
+</tr>
+</table>
+
+### Album & Artist Experience
+<table>
+<tr>
+<td width="50%"><img src="docs/images/album%20details.png" alt="Album Details"><br><sub><b>Album Details (Action Bar & Track Table)</b></sub></td>
+<td width="50%"><img src="docs/images/album%20details%20part%202.png" alt="Album Discography"><br><sub><b>Album Details (Artist Spotlight & More Releases)</b></sub></td>
 </tr>
 <tr>
-<td><img src="docs/images/fullscreen-visualizer.png" alt="Fullscreen visualizer"><br><sub><b>Real-Time FFT Visualizer</b></sub></td>
-<td><img src="docs/images/playlist-empty-rename.png" alt="Empty playlist and rename dialog"><br><sub><b>Playlist Management</b></sub></td>
+<td><img src="docs/images/artist%20details.png" alt="Artist Profile"><br><sub><b>Artist Profile (Verified Listeners & Popular Tracks)</b></sub></td>
+<td><img src="docs/images/artist%20details%20part%202.png" alt="Artist Discography & Bio"><br><sub><b>Artist Discography (Categorized Shelves & Bio)</b></sub></td>
+</tr>
+</table>
+
+### Lossless Details & Fullscreen
+<table>
+<tr>
+<td width="50%"><img src="docs/images/song%20details.png" alt="Lossless Song Details"><br><sub><b>Lossless Song Details (Audio Specs & Native Vector Barcode)</b></sub></td>
+<td width="50%"><img src="docs/images/fullscreen.png" alt="Fullscreen Now Playing"><br><sub><b>Fullscreen Now Playing View</b></sub></td>
+</tr>
+<tr>
+<td><img src="docs/images/fullscreen-lyrics.png" alt="Fullscreen Synced Lyrics"><br><sub><b>Fullscreen Rolling Synced Lyrics</b></sub></td>
+<td><img src="docs/images/fullscreen-visualizer.png" alt="Fullscreen FFT Visualizer"><br><sub><b>Fullscreen Real-Time FFT Visualizer (4 Styles)</b></sub></td>
 </tr>
 </table>
 
