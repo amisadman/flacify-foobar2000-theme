@@ -224,7 +224,7 @@ function drawArtist(gr, r){
       } else if(isPlaying) {
         drawIcon(gr, 'equalizer', COL.green, x0+8, pry+Math.round((prh-16)/2), 20, 16, 14);
       } else {
-        tC(gr, String(pi+1), FONT.rowNum, COL.text2, x0, pry, numW, prh);
+        tC(gr, String(pi+1), FONT.rowNum, COL.white, x0, pry, numW, prh);
       }
 
       // 40x40 Thumbnail Album Art
@@ -243,7 +243,7 @@ function drawArtist(gr, r){
       tL(gr, ptrk.album || '-', FONT.rowCell, isHov ? COL.text : COL.text2, albX, pry, albW, prh);
 
       // Duration Column
-      tR(gr, ptrk.dur, FONT.rowCell, isPlaying ? COL.green : COL.text2, durX, pry, durW, prh);
+      tR(gr, ptrk.dur, FONT.rowCell, isPlaying ? COL.green : COL.white, durX, pry, durW, prh);
 
       var pcy0=Math.max(pry, r.y), pcy1=Math.min(pry+prh, cropY);
       if(pcy1>pcy0){
@@ -302,10 +302,29 @@ function drawArtist(gr, r){
       var ltw=w-lArtSz-40;
       tL(gr, 'LATEST RELEASE', FONT.eyebrow, COL.text3, ltx, lcY+16, ltw, 16);
       tL(gr, artistLatestRelease.album, FONT.sect, lcHov ? COL.green : COL.text, ltx, lcY+36, ltw, 26);
-      var lsubText=(artistLatestRelease.year ? (artistLatestRelease.year+' '+CH_DOT+' ') : '') +
-                   (artistLatestRelease.tracks.length>3 ? 'Album' : 'Single/EP') + ' '+CH_DOT+' ' +
-                   artistLatestRelease.tracks.length+' song'+(artistLatestRelease.tracks.length===1?'':'s');
-      tL(gr, lsubText, FONT.plSub, COL.text2, ltx, lcY+66, ltw, 20);
+      var curLrx=ltx;
+      if(artistLatestRelease.year){
+        var lYr=String(artistLatestRelease.year);
+        var lYrW=Math.round(gr.CalcTextWidth(lYr, FONT.plSub));
+        tL(gr, lYr, FONT.plSub, COL.white, curLrx, lcY+66, lYrW, 20);
+        curLrx+=lYrW;
+        var dotL=' '+CH_DOT+' ';
+        var dotLW=Math.round(gr.CalcTextWidth(dotL, FONT.plSub));
+        tL(gr, dotL, FONT.plSub, COL.text2, curLrx, lcY+66, dotLW, 20);
+        curLrx+=dotLW;
+      }
+      var relTypeStr=(artistLatestRelease.tracks.length>3 ? 'Album' : 'Single/EP')+' '+CH_DOT+' ';
+      var relTypeW=Math.round(gr.CalcTextWidth(relTypeStr, FONT.plSub));
+      tL(gr, relTypeStr, FONT.plSub, COL.text2, curLrx, lcY+66, relTypeW, 20);
+      curLrx+=relTypeW;
+
+      var sNumStr=String(artistLatestRelease.tracks.length);
+      var sNumW=Math.round(gr.CalcTextWidth(sNumStr, FONT.plSub));
+      tL(gr, sNumStr, FONT.plSub, COL.white, curLrx, lcY+66, sNumW, 20);
+      curLrx+=sNumW;
+
+      var sLblStr=' song'+(artistLatestRelease.tracks.length===1?'':'s');
+      tL(gr, sLblStr, FONT.plSub, COL.text2, curLrx, lcY+66, ltw-(curLrx-ltx), 20);
 
       HB_ARTIST_LATEST={
         x0:x0, y0:Math.max(lcY, r.y), x1:x0+w, y1:Math.min(lcY+lCardH, cropY),
@@ -345,7 +364,7 @@ function drawArtist(gr, r){
         }
 
         tL(gr, albObj.album, FONT.card, aHov ? COL.green : COL.text, acX, acY+aCardW+10, aCardW, 20);
-        tL(gr, albObj.year || 'Album', FONT.plSub, COL.text3, acX, acY+aCardW+32, aCardW, 16);
+        tL(gr, albObj.year || 'Album', FONT.plSub, albObj.year ? COL.white : COL.text3, acX, acY+aCardW+32, aCardW, 16);
 
         HB_ARTIST_ALBUMS.push({
           x0:acX-6, y0:Math.max(acY-6, r.y), x1:acX+aCardW+6, y1:Math.min(acY+aCardH+6, cropY),
@@ -386,7 +405,7 @@ function drawArtist(gr, r){
         }
 
         tL(gr, sObj.album, FONT.card, sHov ? COL.green : COL.text, scX, scY+sCardW+10, sCardW, 20);
-        tL(gr, sObj.year || 'Single', FONT.plSub, COL.text3, scX, scY+sCardW+32, sCardW, 16);
+        tL(gr, sObj.year || 'Single', FONT.plSub, sObj.year ? COL.white : COL.text3, scX, scY+sCardW+32, sCardW, 16);
 
         HB_ARTIST_SINGLES.push({
           x0:scX-6, y0:Math.max(scY-6, r.y), x1:scX+sCardW+6, y1:Math.min(scY+sCardH+6, cropY),

@@ -21,7 +21,23 @@ function drawSongs(gr,r){
   var tx=lx+art+24, tw=Math.max(120,clX-12-tx);
   tL(gr,'LIBRARY',FONT.eyebrow,COL.text,tx,ay+6,tw,18);
   tL(gr,'All Songs',FONT.title,COL.text,tx,ay+28,tw,84);
-  tL(gr,fmtNum(songsTracks.length)+' songs'+(songsTotalSec>0?(' '+CH_DOT+' '+fmtDur(songsTotalSec)):''),FONT.meta,COL.text2,tx,ay+150,tw,22);
+  var sCntStr=fmtNum(songsTracks.length);
+  var sCntW=Math.round(gr.CalcTextWidth(sCntStr, FONT.meta));
+  tL(gr, sCntStr, FONT.meta, COL.white, tx, ay+150, sCntW, 22);
+  var sRestX=tx+sCntW;
+  var sLbl=' song'+(songsTracks.length===1?'':'s');
+  var sLblW=Math.round(gr.CalcTextWidth(sLbl, FONT.meta));
+  tL(gr, sLbl, FONT.meta, COL.text2, sRestX, ay+150, sLblW, 22);
+  sRestX+=sLblW;
+  if(songsTotalSec>0){
+    var dotSep=' '+CH_DOT+' ';
+    var dotSepW=Math.round(gr.CalcTextWidth(dotSep, FONT.meta));
+    tL(gr, dotSep, FONT.meta, COL.text2, sRestX, ay+150, dotSepW, 22);
+    sRestX+=dotSepW;
+    var durStr=fmtDur(songsTotalSec);
+    var durW=Math.round(gr.CalcTextWidth(durStr, FONT.meta));
+    tL(gr, durStr, FONT.meta, COL.white, sRestX, ay+150, durW, 22);
+  }
   HB_RGNORM=drawNormalizePill(gr,clX,ay+142,nzW,38);
   HB_SG=drawDropPill(gr,gpX,ay+142,gpW,38,'Group: '+labelOf(SONGS_GROUPS,songsGroup,'No grouping'),sgMenuOpen);
   // one line of truth under the pill: what normalizing has left to do, or what it's currently doing
@@ -79,7 +95,7 @@ function drawSongs(gr,r){
       var isHover=hv(lx-8,vy0,rx+8,vy1);
       if(isHover) gr.FillRoundRect(lx-8,ry,rx-lx+16,gh,4,4,COL.rowHover);
       if(isHover) drawIcon(gr,'play',COL.text,numX,ry,numW,gh,14);
-      else tR(gr,String(row.n),FONT.rowNum,isPlaying?COL.green:COL.text2,numX,ry,numW-8,gh);
+      else tR(gr,String(row.n),FONT.rowNum,isPlaying?COL.green:COL.white,numX,ry,numW-8,gh);
       if(flat){
         var cs=40, cy=ry+(gh-cs)/2;
         drawCover(gr,titleX,cy,cs,3,t.h,t.album||t.title,t.artkey);
@@ -90,7 +106,7 @@ function drawSongs(gr,r){
       }
       if(showAlbum) tL(gr,t.album,FONT.rowCell,COL.text2,colX,ry,colW,gh);
       else if(showArtist) tL(gr,t.artist,FONT.rowCell,COL.text2,colX,ry,colW,gh);
-      tR(gr,t.len,FONT.rowCell,COL.text2,rx-durW,ry,durW,gh);
+      tR(gr,t.len,FONT.rowCell,isPlaying?COL.green:COL.white,rx-durW,ry,durW,gh);
       HB_TR.push({x0:lx-8,y0:vy0,x1:rx+8,y1:vy1,songs:true,ti:row.ti,pgx0:numX,pgx1:numX+numW});
     } else {
       /* Group header: every kind is the same block on the same rhythm (GAP, artwork, PADB),

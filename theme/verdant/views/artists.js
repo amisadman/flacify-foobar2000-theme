@@ -66,7 +66,10 @@ function drawArtists(gr, r){
   // Sticky header mask
   gr.FillSolidRect(r.x,r.y,r.w,gy-r.y,COL.base);
   tL(gr,'Artists',FONT.sect2,COL.text,x0,titleY,w,30);
-  tL(gr,fmtNum(list.length)+' artists in your library',FONT.meta,COL.text2,x0,titleY+32,w,20);
+  var cntStr=fmtNum(list.length);
+  var cntW=Math.round(gr.CalcTextWidth(cntStr, FONT.meta));
+  tL(gr,cntStr,FONT.meta,COL.white,x0,titleY+32,cntW,20);
+  tL(gr,' artists in your library',FONT.meta,COL.text2,x0+cntW,titleY+32,w-cntW,20);
 
   // Cloud Sync Header Button
   var csBtnW=130, csBtnH=32, csBtnX=x0+w-csBtnW, csBtnY=titleY+8;

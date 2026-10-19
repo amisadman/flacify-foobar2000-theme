@@ -23,7 +23,23 @@ function drawPlaylist(gr,r){
   tL(gr,'PLAYLIST',FONT.eyebrow,COL.text,tx,ay+6,tw,18);
   tL(gr,p.name,FONT.title,COL.text,tx,ay+28,tw,84);
   var meta0=getMeta(p.i);
-  tL(gr,p.count+' songs'+(meta0.totalSec>0?(' '+CH_DOT+' '+fmtDur(meta0.totalSec)):''),FONT.meta,COL.text2,tx,ay+150,tw,22);
+  var pCntStr=fmtNum(p.count);
+  var pCntW=Math.round(gr.CalcTextWidth(pCntStr, FONT.meta));
+  tL(gr, pCntStr, FONT.meta, COL.white, tx, ay+150, pCntW, 22);
+  var pRestX=tx+pCntW;
+  var sLbl=' song'+(p.count===1?'':'s');
+  var sLblW=Math.round(gr.CalcTextWidth(sLbl, FONT.meta));
+  tL(gr, sLbl, FONT.meta, COL.text2, pRestX, ay+150, sLblW, 22);
+  pRestX+=sLblW;
+  if(meta0.totalSec>0){
+    var dotSep=' '+CH_DOT+' ';
+    var dotSepW=Math.round(gr.CalcTextWidth(dotSep, FONT.meta));
+    tL(gr, dotSep, FONT.meta, COL.text2, pRestX, ay+150, dotSepW, 22);
+    pRestX+=dotSepW;
+    var durStr=fmtDur(meta0.totalSec);
+    var durW=Math.round(gr.CalcTextWidth(durStr, FONT.meta));
+    tL(gr, durStr, FONT.meta, COL.white, pRestX, ay+150, durW, 22);
+  }
   HB_PLSORT=drawDropPill(gr,sortX,sortY,sortPillW,38,'Sort: '+labelOf(PL_SORTS,plSort,'Artist'),plSortMenuOpen);
   drawSortDirBtn(gr,sortX+sortPillW+sortGap,sortY,sortDirW,38);
 
@@ -53,14 +69,14 @@ function drawPlaylist(gr,r){
     if(isHover) gr.FillRoundRect(lx-8,ry,rx-lx+16,rh,4,4,isMenuRow?COL.rowActive:COL.rowHover);
     var titleCol=isPlaying?COL.green:COL.text;
     if(isHover) drawIcon(gr,'play',COL.text,lx,ry,numW,rh,14);
-    else tL(gr,String(d+1),FONT.rowNum,isPlaying?COL.green:COL.text2,lx,ry,numW,rh);
+    else tL(gr,String(d+1),FONT.rowNum,isPlaying?COL.green:COL.white,lx,ry,numW,rh);
     var cs=40, cy=ry+(rh-cs)/2, alb=meta.album[j];
     drawCover(gr,titleX,cy,cs,3,h,alb||String(j),meta.artkey[j]);
     var ttx=titleX+cs+12, ttw=titleW-cs-12;
     tL(gr,meta.title[j],FONT.rowTitle,titleCol,ttx,ry+8,ttw,20);
     tL(gr,meta.artist[j],FONT.rowArtist,COL.text2,ttx,ry+30,ttw,16);
     tL(gr,alb,FONT.rowCell,COL.text2,albumX,ry,albumW,rh);
-    tR(gr,meta.len[j],FONT.rowCell,COL.text2,rx-durW,ry,durW,rh);
+    tR(gr,meta.len[j],FONT.rowCell,isPlaying?COL.green:COL.white,rx-durW,ry,durW,rh);
     HB_TR.push({x0:lx-8,y0:ry,x1:rx+8,y1:ry+rh,pl:p.i,item:j,pgx0:lx,pgx1:lx+numW});
   }
   // crop the partial rows top & bottom, then draw the sticky column header on top

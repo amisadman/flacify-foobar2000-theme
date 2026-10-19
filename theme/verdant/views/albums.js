@@ -56,8 +56,14 @@ function drawAlbums(gr, r){
     // Text labels
     var ty=ay+cardW+10;
     tL(gr,alb.name,FONT.card,hov?COL.green:COL.text,ax,ty,cardW,20);
-    var sub=(alb.year?alb.year+' '+CH_DOT+' ':'')+alb.artist;
-    tL(gr,sub,FONT.plSub,COL.text2,ax,ty+22,cardW,18);
+    if(alb.year){
+      var yrStr=String(alb.year);
+      var yrW=Math.round(gr.CalcTextWidth(yrStr, FONT.plSub));
+      tL(gr, yrStr, FONT.plSub, COL.white, ax, ty+22, yrW, 18);
+      tL(gr, ' '+CH_DOT+' '+alb.artist, FONT.plSub, COL.text2, ax+yrW, ty+22, cardW-yrW, 18);
+    } else {
+      tL(gr, alb.artist, FONT.plSub, COL.text2, ax, ty+22, cardW, 18);
+    }
 
     var cy0=Math.max(ay,gy), cy1=Math.min(ay+cardH,cropY);
     if(cy1>cy0) HB_CARD.push({x0:ax-6,y0:cy0,x1:ax+cardW+6,y1:cy1,kind:'album',name:alb.name,artist:alb.artist,handles:alb.handles});
@@ -66,7 +72,10 @@ function drawAlbums(gr, r){
   // Sticky header mask
   gr.FillSolidRect(r.x,r.y,r.w,gy-r.y,COL.base);
   tL(gr,'Albums',FONT.sect2,COL.text,x0,titleY,w,30);
-  tL(gr,fmtNum(list.length)+' albums in your library',FONT.meta,COL.text2,x0,titleY+32,w,20);
+  var cntStr=fmtNum(list.length);
+  var cntW=Math.round(gr.CalcTextWidth(cntStr, FONT.meta));
+  tL(gr,cntStr,FONT.meta,COL.white,x0,titleY+32,cntW,20);
+  tL(gr,' albums in your library',FONT.meta,COL.text2,x0+cntW,titleY+32,w-cntW,20);
 
   // Bottom gutter
   gr.FillSolidRect(r.x,cropY,r.w,M.pad+2,COL.black);

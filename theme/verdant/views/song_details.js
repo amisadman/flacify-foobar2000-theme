@@ -217,7 +217,7 @@ function drawSongDetails(gr){
 
   var trkInfo=(d.trackno?('Track '+d.trackno+(d.totaltracks?('/'+d.totaltracks):'')):'')+(d.disc?(' '+CH_DOT+' Disc '+d.disc):'');
   var durInfo=(d.dur?((trkInfo?(' '+CH_DOT+' '):'')+d.dur):'')+(d.filesize?(' '+CH_DOT+' '+d.filesize):'');
-  if(ty>=viewTop && ty+20<=cropY) tL(gr,trkInfo+durInfo,FONT.meta,COL.text3,tx,ty,tw,20);
+  if(ty>=viewTop && ty+20<=cropY) tL(gr,trkInfo+durInfo,FONT.meta,COL.white,tx,ty,tw,20);
   ty+=30;
 
   // Technical Audio Specs Banner

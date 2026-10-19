@@ -309,6 +309,40 @@ This document outlines the sequential states of the repository from the upstream
     - Restyled the `[ Show 5 more ]` / `[ Show less ]` toggle into a rounded capsule button with hover feedback.
 - **Rationale**: Eliminates the crash when opening the artist profile and elevates the popular tracks table into a polished, streaming-grade component matching the Album view tracklist.
 
+### Commit 18: Distribute Artist Sync Table Columns Evenly & Make Numbers White Across Views
+- **Commit Title**: `refactor(ui): distribute artist sync table columns evenly and make all numbers pure white across all views`
+- **Scope**: Table layout optimization, space distribution, universal white typography for numbers
+- **Modified Files**:
+  - `theme/verdant/core/tokens.js`
+  - `theme/verdant/views/artist_sync.js`
+  - `theme/verdant/views/artist.js`
+  - `theme/verdant/views/album.js`
+  - `theme/verdant/views/albums.js`
+  - `theme/verdant/views/artists.js`
+  - `theme/verdant/views/bar.js`
+  - `theme/verdant/views/fullscreen.js`
+  - `theme/verdant/views/playlist.js`
+  - `theme/verdant/views/search.js`
+  - `theme/verdant/views/song_details.js`
+  - `theme/verdant/views/songs.js`
+  - `docs/commits_history.md`
+- **Key Changes**:
+  - **Artist Cloud Sync Table Column Distribution**:
+    - Eliminated the wide, vacant dead-space gap between the `STATUS` column and the right-aligned `ACTION` button by recalculating table column layout from the right margin with consistent 24px column gaps.
+    - Assigned balanced, proportional widths: `Action` (76px), `Status` (86px), `Listeners` (18% fluid, min 140px), `Image Source` (16% fluid, min 130px), `Tracks` (76px), with `Artist Name` fluidly taking all remaining left-side space.
+  - **Universal Pure White Numbers (`COL.white`)**:
+    - Added `white: RGB(255, 255, 255)` explicitly to the `COL` palette in `tokens.js`.
+    - Converted all numbers that previously rendered dark or muted (`COL.black`, `COL.text2`, `COL.text3`) to pure `COL.white` across every view:
+      - **Artist Sync View**: Metrics cards (Library Artists, Offline Cached count & percentage, Pending/Missing), `Fetch Missing (X)` button text, sync progress percentage and ratio `X% (Y/Z)`, track counts, and monthly listener counts.
+      - **Artist Profile View**: Monthly listener figures, release counts, library song totals, Popular Tracks rank numbers (`1..10`), popular track durations, Latest Release year and track count, and discography release years.
+      - **Album View**: Track numbers (`tr.trackno`), track durations (`tr.dur`), and album header year, track count, and total duration.
+      - **Songs View**: Row index numbers, track durations, and header total songs count and library duration.
+      - **Playlist View**: Track indices (`1..N`), track durations, and playlist header songs count and duration.
+      - **Albums & Artists Grid Views**: Total library album/artist count numbers in sticky headers, and album release years on cards.
+      - **Bottom Playback Bar & Fullscreen Seekbar**: Playback elapsed time and total duration numbers (`fmtTime`) rendered in crisp `COL.white`.
+      - **Search View & Song Details Modal**: Search result durations and Song Details track/disc/duration metadata numbers rendered in `COL.white`.
+- **Rationale**: Eliminates awkward layout stretching on widescreen monitors and dramatically improves contrast and legibility across dark backgrounds by ensuring all numerical metrics are sharp, vibrant white.
+
 ---
 
 ## Git Staging Instructions for Forking
@@ -378,5 +412,10 @@ git commit -m "feat(sync): add image source column to sync table and guarantee c
 # Commit 17: Fix Name Collision in Cards & Redesign Popular Table
 git add theme/verdant/data/art.js theme/verdant/views/artist.js docs/
 git commit -m "fix(artist): rename drawArtistPhoto to resolve collision with cards.js and redesign Popular tracks table"
+
+# Commit 18: Distribute Artist Sync Table Columns Evenly & Make Numbers White Across Views
+git add theme/verdant/core/tokens.js theme/verdant/views/artist_sync.js theme/verdant/views/artist.js theme/verdant/views/album.js theme/verdant/views/albums.js theme/verdant/views/artists.js theme/verdant/views/bar.js theme/verdant/views/fullscreen.js theme/verdant/views/playlist.js theme/verdant/views/search.js theme/verdant/views/song_details.js theme/verdant/views/songs.js docs/commits_history.md
+git commit -m "refactor(ui): distribute artist sync table columns evenly and make all numbers pure white across all views"
 ```
+
 

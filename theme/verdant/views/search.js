@@ -75,7 +75,7 @@ function drawSearch(gr,r){
       drawCover(gr,x0,ry+8,40,4,tr.h,tr.album||tr.title);
       tL(gr,tr.title,FONT.rowTitle,COL.text,x0+52,ry+8,w-52-durW,20);
       tL(gr,tr.artist+(tr.album?('  '+CH_BULL+'  '+tr.album):''),FONT.rowArtist,COL.text2,x0+52,ry+30,w-52-durW,16);
-      tR(gr,tr.len,FONT.rowCell,COL.text2,r.x+r.w-pad-durW,ry,durW,rh);
+      tR(gr,tr.len,FONT.rowCell,COL.white,r.x+r.w-pad-durW,ry,durW,rh);
       var hy0=Math.max(ry,top), hy1=Math.min(ry+rh,cropY);   // clip the click target to the viewport
       if(hy1>hy0) HB_TR.push({x0:x0-8,y0:hy0,x1:r.x+r.w-pad+8,y1:hy1,srch:true,idx:i});
     }

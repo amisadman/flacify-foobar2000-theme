@@ -345,8 +345,8 @@ function drawFsBar(gr){
   var len=fb.PlaybackLength, pos=(drag==='seek')?dragFrac:(len>0?fb.PlaybackTime/len:0);
   var rail=RGBA(255,255,255,55);
   HB_SEEK=drawTrackBar(gr,sbX,sbY,sbW,4,rail,pos);
-  tR(gr,fmtTime((drag==='seek')?len*dragFrac:fb.PlaybackTime),FONT.time,COL.text2,sbX-54,sbY-6,46,16);
-  tL(gr,fmtTime(len),FONT.time,COL.text2,sbX+sbW+8,sbY-6,46,16);
+  tR(gr,fmtTime((drag==='seek')?len*dragFrac:fb.PlaybackTime),FONT.time,COL.white,sbX-54,sbY-6,46,16);
+  tL(gr,fmtTime(len),FONT.time,COL.white,sbX+sbW+8,sbY-6,46,16);
   var cxC=Math.round(W/2), cy=by+86, pb=56, pbx=cxC-pb/2, pby=cy-pb/2;
   ctrlBtn(gr,'shuffle',cxC-150,cy,pbShuffle,'shuffle');
   ctrlBtn(gr,'prev',cxC-84,cy,false,'prev');

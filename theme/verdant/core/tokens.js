@@ -10,7 +10,7 @@ function RGBA(r,g,b,a){ return ((a<<24)|(r<<16)|(g<<8)|b); }
    The two knobs worth touching are UISCALE (a panel property now -- see core/props.js) and
    M.navW / M.queueW (sidebar and queue-pane widths). Everything else is derived layout. */
 var COL = {
-  black:RGB(0,0,0), base:RGB(18,18,18), elev:RGB(24,24,24), hover:RGB(42,42,42),
+  black:RGB(0,0,0), white:RGB(255,255,255), base:RGB(18,18,18), elev:RGB(24,24,24), hover:RGB(42,42,42),
   text:RGB(255,255,255), text2:RGB(179,179,179), text3:RGB(106,106,106),
   green:RGB(30,215,96), greenC:RGB(29,185,84),
   rowHover:RGBA(255,255,255,18), rowActive:RGBA(255,255,255,38),

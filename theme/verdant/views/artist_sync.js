@@ -144,14 +144,14 @@ function drawArtistSync(gr, r){
     strokeRound(gr, c2x, curY, cardW, cardH, 8, 1, RGBA(255,255,255,16));
     tL(gr, 'OFFLINE CACHED', FONT.eyebrow, COL.text3, c2x+14, curY+12, cardW-28, 16);
     var pctTxt=totalArt>0 ? (' ('+Math.round((cachedCount/totalArt)*100)+'%)') : '';
-    tL(gr, cachedCount+pctTxt, FONT.sect2, COL.green, c2x+14, curY+30, cardW-28, 32);
+    tL(gr, cachedCount+pctTxt, FONT.sect2, COL.white, c2x+14, curY+30, cardW-28, 32);
 
     // Card 3: Missing
     var c3x=c2x+cardW+cardGap;
     gr.FillRoundRect(c3x, curY, cardW, cardH, 8, 8, RGB(26,26,26));
     strokeRound(gr, c3x, curY, cardW, cardH, 8, 1, RGBA(255,255,255,16));
     tL(gr, 'PENDING / MISSING', FONT.eyebrow, COL.text3, c3x+14, curY+12, cardW-28, 16);
-    tL(gr, String(missingCount), FONT.sect2, missingCount>0 ? RGB(255,180,60) : COL.text2, c3x+14, curY+30, cardW-28, 32);
+    tL(gr, String(missingCount), FONT.sect2, COL.white, c3x+14, curY+30, cardW-28, 32);
   }
   curY+=cardH+20;
 
@@ -161,10 +161,10 @@ function drawArtistSync(gr, r){
     var isRunning=!!syncProgress.running;
 
     // Button 1: Fetch Missing
-    var b1W=170;
+    var b1W=180;
     var b1Hot=hv(x0, Math.max(curY, r.y), x0+b1W, Math.min(curY+btnH, cropY));
-    gr.FillRoundRect(x0, curY, b1W, btnH, btnH/2, btnH/2, isRunning ? RGB(40,40,40) : (b1Hot ? RGB(45,230,115) : COL.green));
-    tC(gr, 'Fetch Missing ('+missingCount+')', FONT.card, isRunning ? COL.text3 : COL.black, x0, curY, b1W, btnH);
+    gr.FillRoundRect(x0, curY, b1W, btnH, btnH/2, btnH/2, isRunning ? RGB(40,40,40) : (b1Hot ? RGB(35,210,105) : COL.greenC));
+    tC(gr, 'Fetch Missing ('+missingCount+')', FONT.card, isRunning ? COL.text3 : COL.white, x0, curY, b1W, btnH);
     if(!isRunning) HB_SYNC_FETCH_MISSING={x0:x0, y0:Math.max(curY,r.y), x1:x0+b1W, y1:Math.min(curY+btnH,cropY)};
 
     // Button 2: Re-fetch All
@@ -204,7 +204,7 @@ function drawArtistSync(gr, r){
     if(syncProgress.currentArtist) pLabel+=' ('+syncProgress.currentArtist+')';
 
     tL(gr, pLabel, FONT.meta, COL.text, x0+16, curY+12, w-140, 18);
-    tR(gr, pct+'% ('+(syncProgress.processed||cachedCount)+'/'+totalArt+')', FONT.meta, COL.green, x0+w-180, curY+12, 164, 18);
+    tR(gr, pct+'% ('+(syncProgress.processed||cachedCount)+'/'+totalArt+')', FONT.meta, COL.white, x0+w-180, curY+12, 164, 18);
 
     // Progress Bar Track & Fill
     var pbx=x0+16, pby=curY+38, pbw=w-32, pbh=12;
@@ -216,14 +216,33 @@ function drawArtistSync(gr, r){
   }
   curY+=pbCardH+28;
 
+  // Proportional, evenly distributed table column layout
+  var actW=76, actH=26;
+  var actX=x0+w-actW-10;
+
+  var pillW=86, pillH=22;
+  var pillX=actX-pillW-24;
+
+  var lisW=Math.max(140, Math.round(w*0.18));
+  var lisX=pillX-lisW-24;
+
+  var srcW=Math.max(130, Math.round(w*0.16));
+  var srcX=lisX-srcW-24;
+
+  var trkW=76;
+  var trkX=srcX-trkW-24;
+
+  var artNameX=x0+48;
+  var artNameW=trkX-16-artNameX;
+
   // Table Header
   if(curY+24>r.y && curY<cropY){
-    tL(gr, 'ARTIST', FONT.eyebrow, COL.text3, x0+48, curY, 230, 20);
-    tL(gr, 'TRACKS', FONT.eyebrow, COL.text3, x0+290, curY, 70, 20);
-    tL(gr, 'IMAGE SOURCE', FONT.eyebrow, COL.text3, x0+370, curY, 130, 20);
-    tL(gr, 'LISTENERS', FONT.eyebrow, COL.text3, x0+510, curY, 130, 20);
-    tL(gr, 'STATUS', FONT.eyebrow, COL.text3, x0+650, curY, 90, 20);
-    tR(gr, 'ACTION', FONT.eyebrow, COL.text3, x0+w-100, curY, 80, 20);
+    tL(gr, 'ARTIST', FONT.eyebrow, COL.text3, artNameX, curY, artNameW, 20);
+    tL(gr, 'TRACKS', FONT.eyebrow, COL.text3, trkX, curY, trkW, 20);
+    tL(gr, 'IMAGE SOURCE', FONT.eyebrow, COL.text3, srcX, curY, srcW, 20);
+    tL(gr, 'LISTENERS', FONT.eyebrow, COL.text3, lisX, curY, lisW, 20);
+    tL(gr, 'STATUS', FONT.eyebrow, COL.text3, pillX, curY, pillW, 20);
+    tR(gr, 'ACTION', FONT.eyebrow, COL.text3, actX, curY, actW, 20);
     gr.FillSolidRect(x0, curY+22, w, 1, COL.line);
   }
   curY+=28;
@@ -247,14 +266,14 @@ function drawArtistSync(gr, r){
     drawCircle(gr, avX, avY, avSz, artItem.handle, aName);
 
     // Artist Name
-    tL(gr, aName, FONT.card, isHov ? COL.green : COL.text, x0+48, ary+6, 230, 20);
-    tL(gr, 'Artist', FONT.plSub, COL.text3, x0+48, ary+26, 230, 16);
+    tL(gr, aName, FONT.card, isHov ? COL.green : COL.text, artNameX, ary+6, artNameW, 20);
+    tL(gr, 'Artist', FONT.plSub, COL.text3, artNameX, ary+26, artNameW, 16);
 
-    // Song Count (White number)
+    // Song Count (Pure White number)
     var sCnt=String(artItem.count||1);
     var sCntW=Math.round(gr.CalcTextWidth(sCnt, FONT.meta));
-    tL(gr, sCnt, FONT.meta, COL.white, x0+290, ary, sCntW, rowH);
-    tL(gr, ' tracks', FONT.meta, COL.text2, x0+290+sCntW, ary, 70-sCntW, rowH);
+    tL(gr, sCnt, FONT.meta, COL.white, trkX, ary, sCntW, rowH);
+    tL(gr, ' tracks', FONT.meta, COL.text2, trkX+sCntW, ary, trkW-sCntW, rowH);
 
     // Cache existence test
     var cDir=fb.ProfilePath+'verdant\\cache\\artists\\';
@@ -273,14 +292,18 @@ function drawArtistSync(gr, r){
       srcTxt='Local Track';
       srcCol=COL.text2;
     }
-    tL(gr, srcTxt, FONT.meta, srcCol, x0+370, ary, 130, rowH);
+    tL(gr, srcTxt, FONT.meta, srcCol, srcX, ary, srcW, rowH);
 
-    // Monthly Listeners
-    var fanTxt=(mData && mData.fansFormatted) ? (mData.fansFormatted+' listeners') : '-';
-    tL(gr, fanTxt, FONT.meta, (mData && mData.fansFormatted) ? COL.text : COL.text3, x0+510, ary, 130, rowH);
+    // Monthly Listeners (Pure White number)
+    var fanVal=(mData && mData.fansFormatted) ? mData.fansFormatted : '-';
+    var fanValW=Math.round(gr.CalcTextWidth(fanVal, FONT.meta));
+    tL(gr, fanVal, FONT.meta, COL.white, lisX, ary, fanValW, rowH);
+    if(mData && mData.fansFormatted){
+      tL(gr, ' listeners', FONT.meta, COL.text2, lisX+fanValW, ary, lisW-fanValW, rowH);
+    }
 
     // Status Pill (Clean LED dot, zero unknown unicode characters)
-    var pillX=x0+650, pillW=86, pillH=22, pillY=ary+Math.round((rowH-pillH)/2);
+    var pillY=ary+Math.round((rowH-pillH)/2);
     if(hasJpg && hasMeta){
       gr.FillRoundRect(pillX, pillY, pillW, pillH, 4, 4, RGBA(30,215,96,24));
       strokeRound(gr, pillX, pillY, pillW, pillH, 4, 1, RGBA(30,215,96,70));
@@ -299,11 +322,11 @@ function drawArtistSync(gr, r){
     }
 
     // Action button: [ Fetch ] or [ View ]
-    var actW=68, actH=26, actX=x0+w-actW-10, actY=ary+Math.round((rowH-actH)/2);
+    var actY=ary+Math.round((rowH-actH)/2);
     var actHot=hv(actX, Math.max(actY, r.y), actX+actW, Math.min(actY+actH, cropY));
     gr.FillRoundRect(actX, actY, actW, actH, 4, 4, actHot ? RGBA(255,255,255,20) : RGBA(255,255,255,8));
     strokeRound(gr, actX, actY, actW, actH, 4, 1, actHot ? COL.green : RGBA(255,255,255,22));
-    tC(gr, (hasJpg&&hasMeta)?'View':'Fetch', FONT.plSub, actHot ? COL.green : COL.text2, actX, actY, actW, actH);
+    tC(gr, (hasJpg&&hasMeta)?'View':'Fetch', FONT.plSub, actHot ? COL.green : COL.white, actX, actY, actW, actH);
 
     var cy0=Math.max(ary, r.y), cy1=Math.min(ary+rowH, cropY);
     if(cy1>cy0){

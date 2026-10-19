@@ -96,11 +96,34 @@ function drawAlbum(gr, r){
     }
   }
 
-  var dotYear=(alb.year ? (' '+CH_DOT+' '+alb.year) : '');
-  var dotTracks=' '+CH_DOT+' '+alb.count+' song'+(alb.count===1?'':'s')+', '+fmtDur(alb.totalSec);
   var metaRestW=tx+tw-curArtX;
   if(ty+aavSz>r.y && ty<cropY && metaRestW>10){
-    tL(gr, dotYear+dotTracks, FONT.meta, COL.text2, curArtX, ty, metaRestW, aavSz);
+    var mx=curArtX;
+    if(alb.year){
+      var dStr=' '+CH_DOT+' ';
+      var dW=Math.round(gr.CalcTextWidth(dStr, FONT.meta));
+      tL(gr, dStr, FONT.meta, COL.text2, mx, ty, dW, aavSz);
+      mx+=dW;
+      var yStr=String(alb.year);
+      var yW=Math.round(gr.CalcTextWidth(yStr, FONT.meta));
+      tL(gr, yStr, FONT.meta, COL.white, mx, ty, yW, aavSz);
+      mx+=yW;
+    }
+    var d2Str=' '+CH_DOT+' ';
+    var d2W=Math.round(gr.CalcTextWidth(d2Str, FONT.meta));
+    tL(gr, d2Str, FONT.meta, COL.text2, mx, ty, d2W, aavSz);
+    mx+=d2W;
+    var cStr=String(alb.count);
+    var cW=Math.round(gr.CalcTextWidth(cStr, FONT.meta));
+    tL(gr, cStr, FONT.meta, COL.white, mx, ty, cW, aavSz);
+    mx+=cW;
+    var restStr=' song'+(alb.count===1?'':'s')+', ';
+    var restW=Math.round(gr.CalcTextWidth(restStr, FONT.meta));
+    tL(gr, restStr, FONT.meta, COL.text2, mx, ty, restW, aavSz);
+    mx+=restW;
+    var durStr=fmtDur(alb.totalSec);
+    var durW=Math.round(gr.CalcTextWidth(durStr, FONT.meta));
+    tL(gr, durStr, FONT.meta, COL.white, mx, ty, durW, aavSz);
   }
   ty+=aavSz+18;
 
@@ -175,7 +198,7 @@ function drawAlbum(gr, r){
     // Number / Playing Indicator / Hover Play
     if(isHov) drawIcon(gr, 'play', COL.text, x0, ry, numW, rh, 14);
     else if(isPlaying) drawIcon(gr, 'equalizer', COL.green, x0, ry, numW, rh, 14);
-    else tL(gr, String(tr.trackno), FONT.rowNum, COL.text2, x0, ry, numW, rh);
+    else tL(gr, String(tr.trackno), FONT.rowNum, COL.white, x0, ry, numW, rh);
 
     // Title + Collaboration/Featured Artist Subline
     if(tr.artist && tr.artist!==alb.artist){
@@ -186,7 +209,7 @@ function drawAlbum(gr, r){
     }
 
     // Duration
-    tR(gr, tr.dur, FONT.rowCell, isPlaying ? COL.green : COL.text2, durX, ry, durW, rh);
+    tR(gr, tr.dur, FONT.rowCell, isPlaying ? COL.green : COL.white, durX, ry, durW, rh);
 
     var cy0=Math.max(ry, r.y), cy1=Math.min(ry+rh, cropY);
     if(cy1>cy0){
