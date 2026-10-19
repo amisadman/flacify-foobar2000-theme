@@ -77,7 +77,7 @@ function drawArtist(gr, r){
   if(ay+artSz>r.y && ay<cropY){
     // Ambient drop shadow behind artist portrait card
     gr.FillRoundRect(ax+4, ay+6, artSz, artSz, 10, 10, RGBA(0,0,0,160));
-    drawArtistCard(gr, ax, ay, artSz, 8, firstHandle, viewArtist);
+    drawArtistPhoto(gr, ax, ay, artSz, 8, firstHandle, viewArtist);
     strokeRound(gr, ax, ay, artSz, artSz, 8, 1, RGBA(255,255,255,24));
   }
 
@@ -182,16 +182,30 @@ function drawArtist(gr, r){
 
   // 3. Popular Tracks Section
   if(artistPopularTracks && artistPopularTracks.length>0){
-    if(curY+24>r.y && curY<cropY){
-      tL(gr, 'Popular', FONT.sect, COL.text, x0, curY, w, 24);
+    if(curY+26>r.y && curY<cropY){
+      tL(gr, 'Popular', FONT.sect, COL.white, x0, curY, w, 28);
     }
-    curY+=32;
+    curY+=36;
+
+    var numW=36, thumbSz=40, durW=60;
+    var durX=x0+w-durW;
+    var titleX=x0+numW+thumbSz+16;
+    var albW=Math.max(140, Math.round(w*0.30));
+    var titleW=Math.max(160, durX-16-albW-titleX);
+    var albX=titleX+titleW+16;
+
+    // Tracklist Column Headers
+    if(curY+24>r.y && curY<cropY){
+      tL(gr, '#', FONT.eyebrow, COL.text3, x0+12, curY, numW, 20);
+      tL(gr, 'TITLE', FONT.eyebrow, COL.text3, titleX, curY, titleW, 20);
+      tL(gr, 'ALBUM', FONT.eyebrow, COL.text3, albX, curY, albW, 20);
+      tR(gr, 'DURATION', FONT.eyebrow, COL.text3, durX, curY, durW, 20);
+      gr.FillSolidRect(x0, curY+22, w, 1, COL.line);
+    }
+    curY+=30;
 
     var popCount=artistPopularExpanded ? Math.min(10, artistPopularTracks.length) : Math.min(5, artistPopularTracks.length);
     var prh=52;
-    var numW=32, thumbSz=40, durW=56;
-    var titleX=x0+numW+thumbSz+16;
-    var titleW=w-(numW+thumbSz+16)-durW-16;
 
     for(var pi=0; pi<popCount; pi++){
       var pry=curY+pi*prh;
@@ -200,14 +214,18 @@ function drawArtist(gr, r){
 
       var ptrk=artistPopularTracks[pi];
       var isPlaying=!!(NP && ptrk.handle && NP.Path===ptrk.handle.Path);
-      var isHov=hv(x0-6, Math.max(pry, r.y), x0+w+6, Math.min(pry+prh, cropY));
+      var isHov=hv(x0-4, Math.max(pry, r.y), x0+w+4, Math.min(pry+prh, cropY));
 
-      if(isHov) gr.FillRoundRect(x0-6, pry, w+12, prh, 4, 4, COL.rowHover);
+      if(isHov) gr.FillRoundRect(x0-4, pry, w+8, prh, 6, 6, COL.rowHover);
 
       // Rank Number / Equalizer / Hover Play
-      if(isHov) drawIcon(gr, 'play', COL.text, x0, pry, numW, prh, 14);
-      else if(isPlaying) drawIcon(gr, 'equalizer', COL.green, x0, pry, numW, prh, 14);
-      else tL(gr, String(pi+1), FONT.rowNum, COL.text2, x0, pry, numW, prh);
+      if(isHov) {
+        drawIcon(gr, 'play', COL.text, x0+8, pry+Math.round((prh-16)/2), 20, 16, 14);
+      } else if(isPlaying) {
+        drawIcon(gr, 'equalizer', COL.green, x0+8, pry+Math.round((prh-16)/2), 20, 16, 14);
+      } else {
+        tC(gr, String(pi+1), FONT.rowNum, COL.text2, x0, pry, numW, prh);
+      }
 
       // 40x40 Thumbnail Album Art
       var thX=x0+numW+6, thY=pry+Math.round((prh-thumbSz)/2);
@@ -215,36 +233,41 @@ function drawArtist(gr, r){
 
       // Track Title & Collaborating Artist Subtitle
       if(ptrk.artist && ptrk.artist!==viewArtist){
-        tL(gr, ptrk.title, FONT.rowTitle, isPlaying ? COL.green : COL.text, titleX, pry+6, titleW, 20);
+        tL(gr, ptrk.title, FONT.rowTitle, isPlaying ? COL.green : (isHov ? COL.white : COL.text), titleX, pry+6, titleW, 20);
         tL(gr, ptrk.artist, FONT.plSub, COL.text3, titleX, pry+27, titleW, 16);
       } else {
-        tL(gr, ptrk.title, FONT.rowTitle, isPlaying ? COL.green : COL.text, titleX, pry, titleW, prh);
+        tL(gr, ptrk.title, FONT.rowTitle, isPlaying ? COL.green : (isHov ? COL.white : COL.text), titleX, pry, titleW, prh);
       }
 
-      // Duration
-      tR(gr, ptrk.dur, FONT.rowCell, isPlaying ? COL.green : COL.text2, x0+w-durW, pry, durW, prh);
+      // Album Column
+      tL(gr, ptrk.album || '-', FONT.rowCell, isHov ? COL.text : COL.text2, albX, pry, albW, prh);
+
+      // Duration Column
+      tR(gr, ptrk.dur, FONT.rowCell, isPlaying ? COL.green : COL.text2, durX, pry, durW, prh);
 
       var pcy0=Math.max(pry, r.y), pcy1=Math.min(pry+prh, cropY);
       if(pcy1>pcy0){
         HB_TR.push({
-          x0:x0-6, y0:pcy0, x1:x0+w+6, y1:pcy1,
+          x0:x0-4, y0:pcy0, x1:x0+w+4, y1:pcy1,
           albumRow:true, idx:0, handles:[ptrk.handle], pgx0:x0, pgx1:x0+numW
         });
       }
     }
-    curY+=popCount*prh+12;
+    curY+=popCount*prh+14;
 
-    // "See more" / "Show less" toggle button if more than 5 tracks exist
+    // "See more" / "Show less" toggle capsule button if more than 5 tracks exist
     if(artistPopularTracks.length>5){
-      var smW=96, smH=26;
+      var smW=124, smH=30;
       var smHot=hv(x0, Math.max(curY, r.y), x0+smW, Math.min(curY+smH, cropY));
       if(curY+smH>r.y && curY<cropY){
-        tL(gr, artistPopularExpanded ? 'Show less' : 'See more', FONT.plSub, smHot ? COL.green : COL.text2, x0, curY, smW, smH);
+        gr.FillRoundRect(x0, curY, smW, smH, smH/2, smH/2, smHot ? RGBA(255,255,255,24) : RGBA(255,255,255,10));
+        strokeRound(gr, x0, curY, smW, smH, smH/2, 1, smHot ? COL.green : RGBA(255,255,255,26));
+        tC(gr, artistPopularExpanded ? 'Show less' : 'Show 5 more', FONT.plSub, smHot ? COL.green : COL.text, x0, curY, smW, smH);
         HB_ARTIST_SEE_MORE={x0:x0, y0:Math.max(curY, r.y), x1:x0+smW, y1:Math.min(curY+smH, cropY)};
       }
-      curY+=smH+28;
+      curY+=smH+30;
     } else {
-      curY+=20;
+      curY+=24;
     }
   }
 

@@ -372,7 +372,7 @@ function getExternalArtistCard(name, size, rad){
   return null;
 }
 
-function drawArtistCard(gr,x,y,size,rad,h,seed){
+function drawArtistPhoto(gr,x,y,size,rad,h,seed){
   var ext=getExternalArtistCard(seed,size,rad);
   if(ext){
     gr.DrawImage(ext,x,y,size,size,0,0,ext.Width,ext.Height,0,255);

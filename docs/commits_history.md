@@ -294,6 +294,21 @@ This document outlines the sequential states of the repository from the upstream
   - Realigned column coordinates in `views/artist_sync.js` for clear readability across all window dimensions.
 - **Rationale**: Transparently displays image origin for every artist in the library and provides absolute certainty that offline-cached media is preserved and never re-downloaded unnecessarily.
 
+### Commit 17: Fix Function Name Collision in Cards & Redesign Artist Popular Table
+- **Commit Title**: `fix(artist): rename drawArtistPhoto to resolve collision with cards.js and redesign Popular tracks table`
+- **Scope**: Runtime crash fix (`can't convert clipTop to number`), table UI overhaul
+- **Modified Files**:
+  - `theme/verdant/data/art.js`
+  - `theme/verdant/views/artist.js`
+- **Key Changes**:
+  - Resolved `can't convert clipTop to number` crash at `cards.js:68:12` by renaming our rounded artist photo function in `art.js` from `drawArtistCard` to `drawArtistPhoto`, eliminating the namespace collision with `views/cards.js`.
+  - Overhauled the Popular Tracks table in `views/artist.js`:
+    - Added dedicated column headers: `#` (rank), `TITLE`, `ALBUM`, and `DURATION` (clock icon) with an aligned horizontal rule `COL.line`.
+    - Added clean **ALBUM** column displaying the originating album name for each popular track.
+    - Added 40×40 album art thumbnail, rank number, play icon on hover, and playing equalizer indicator.
+    - Restyled the `[ Show 5 more ]` / `[ Show less ]` toggle into a rounded capsule button with hover feedback.
+- **Rationale**: Eliminates the crash when opening the artist profile and elevates the popular tracks table into a polished, streaming-grade component matching the Album view tracklist.
+
 ---
 
 ## Git Staging Instructions for Forking
@@ -359,5 +374,9 @@ git commit -m "refactor(artist): redesign artist hero with album-style artwork c
 # Commit 16: Image Source Column & Zero-Resync Cache Guard
 git add theme/verdant/tools/sync_artists.ps1 theme/verdant/views/artist_sync.js docs/
 git commit -m "feat(sync): add image source column to sync table and guarantee cached artists are never re-fetched"
+
+# Commit 17: Fix Name Collision in Cards & Redesign Popular Table
+git add theme/verdant/data/art.js theme/verdant/views/artist.js docs/
+git commit -m "fix(artist): rename drawArtistPhoto to resolve collision with cards.js and redesign Popular tracks table"
 ```
 
