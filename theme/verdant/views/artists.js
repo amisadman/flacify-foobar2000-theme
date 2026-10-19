@@ -32,7 +32,7 @@ function drawArtists(gr, r){
   artistsScroll=clampPx(artistsScroll,maxPx); artistsScrollT=clampPx(artistsScrollT,maxPx);
 
   var startRow=Math.floor(artistsScroll/rowStep);
-  for(i=startRow*cols; i<list.length; i++){
+  for(var i=startRow*cols; i<list.length; i++){
     var col=(i%cols), row=Math.floor(i/cols);
     var ax=x0+col*(cardW+gap), ay=gy+row*rowStep-artistsScroll;
     if(ay>=cropY) break;

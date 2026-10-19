@@ -343,6 +343,19 @@ This document outlines the sequential states of the repository from the upstream
       - **Search View & Song Details Modal**: Search result durations and Song Details track/disc/duration metadata numbers rendered in `COL.white`.
 - **Rationale**: Eliminates awkward layout stretching on widescreen monitors and dramatically improves contrast and legibility across dark backgrounds by ensuring all numerical metrics are sharp, vibrant white.
 
+### Commit 19: Scope View Hitboxes & Clear Stale Click Targets to Prevent Artist Navigation Corruption
+- **Commit Title**: `fix(navigation): scope view hitboxes and clear stale click targets to prevent artist navigation corruption`
+- **Scope**: Hitbox isolation, event routing, navigation integrity
+- **Modified Files**:
+  - `theme/verdant/app.js`
+  - `theme/verdant/views/artists.js`
+  - `docs/commits_history.md`
+- **Key Changes**:
+  - **Hitbox View Scoping**: Wrapped all view-specific hitbox checks in `on_mouse_lbtn_up` within explicit view guards (`if(view === 'album')`, `if(view === 'artist')`, `if(view === 'artists')`, `if(view === 'artist_sync')`). Previously, unguarded checks for `HB_SYNC_ROWS` and `HB_ALBUM_ARTISTS` were evaluated before `HB_CARD`, causing full-width rows from the sync table to intercept clicks in the Artists grid and open unrelated artists.
+  - **Comprehensive Hit Target Clearance**: Updated `drawMain` to clean up all previously unreset hit target arrays and objects (`HB_ALBUM_ARTISTS = []`, `HB_SYNC_ROWS = []`, `HB_ARTISTS_SYNC_BTN = null`, `HB_SYNC_FETCH_MISSING = null`, etc.) on every frame.
+  - **State Hygiene**: Removed duplicate declarations of `viewArtist` and `artistAlbums` in `app.js` that shadowed `data/library.js`, and properly localized the loop iterator in `views/artists.js`.
+- **Rationale**: Guarantees that clicks on any artist card in the library grid or any row in the cloud sync table always navigate to that exact artist's profile page without cross-view interference.
+
 ---
 
 ## Git Staging Instructions for Forking
@@ -416,6 +429,10 @@ git commit -m "fix(artist): rename drawArtistPhoto to resolve collision with car
 # Commit 18: Distribute Artist Sync Table Columns Evenly & Make Numbers White Across Views
 git add theme/verdant/core/tokens.js theme/verdant/views/artist_sync.js theme/verdant/views/artist.js theme/verdant/views/album.js theme/verdant/views/albums.js theme/verdant/views/artists.js theme/verdant/views/bar.js theme/verdant/views/fullscreen.js theme/verdant/views/playlist.js theme/verdant/views/search.js theme/verdant/views/song_details.js theme/verdant/views/songs.js docs/commits_history.md
 git commit -m "refactor(ui): distribute artist sync table columns evenly and make all numbers pure white across all views"
+
+# Commit 19: Scope View Hitboxes & Clear Stale Click Targets to Prevent Artist Navigation Corruption
+git add theme/verdant/app.js theme/verdant/views/artists.js docs/commits_history.md
+git commit -m "fix(navigation): scope view hitboxes and clear stale click targets to prevent artist navigation corruption"
 ```
 
 
