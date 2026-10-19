@@ -30,7 +30,7 @@ $meta = @{
 try {
     $encodedArtist = [System.Uri]::EscapeDataString($Artist)
     $dUrl = "https://api.deezer.com/search/artist?q=$encodedArtist"
-    $dRes = Invoke-RestMethod -Uri $dUrl -TimeoutSec 5 -Headers @{ "User-Agent" = "Flacify-foobar2000/1.0.0" }
+    $dRes = Invoke-RestMethod -Uri $dUrl -TimeoutSec 5 -Headers @{ "User-Agent" = "FLACify-foobar2000/1.2.0" }
     if ($dRes -and $dRes.data -and $dRes.data.Count -gt 0) {
         $top = $dRes.data[0]
         $meta.id = $top.id
@@ -45,7 +45,7 @@ try {
         if (-not $picUrl) { $picUrl = $top.picture_medium }
 
         if ($picUrl -and -not (Test-Path -Path $jpgPath)) {
-            Invoke-WebRequest -Uri $picUrl -OutFile $jpgPath -TimeoutSec 8 -Headers @{ "User-Agent" = "Flacify-foobar2000/1.0.0" } | Out-Null
+            Invoke-WebRequest -Uri $picUrl -OutFile $jpgPath -TimeoutSec 8 -Headers @{ "User-Agent" = "FLACify-foobar2000/1.2.0" } | Out-Null
         }
     }
 } catch {
@@ -68,7 +68,7 @@ try {
         $cleanName = ($Artist -split '[,;&/]| feat\.| ft\.')[0].Trim()
         if ($cleanName -and $cleanName -ne $Artist) {
             $wClean = [System.Uri]::EscapeDataString($cleanName)
-            $wRes2 = Invoke-RestMethod -Uri "https://en.wikipedia.org/api/rest_v1/page/summary/$wClean" -TimeoutSec 5 -Headers @{ "User-Agent" = "Flacify-foobar2000/1.0.0" }
+            $wRes2 = Invoke-RestMethod -Uri "https://en.wikipedia.org/api/rest_v1/page/summary/$wClean" -TimeoutSec 5 -Headers @{ "User-Agent" = "FLACify-foobar2000/1.2.0" }
             if ($wRes2) {
                 if ($wRes2.extract) { $meta.bio = $wRes2.extract }
                 if ($wRes2.description) { $meta.desc = $wRes2.description }

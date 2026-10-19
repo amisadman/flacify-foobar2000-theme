@@ -65,13 +65,93 @@ function getHandleByPath(p){
 }
 
 /* ------------------------- library-backed artist list ------------------------- */
+var PRESERVED_BANDS = {
+  'ac/dc': 'AC/DC',
+  'above & beyond': 'Above & Beyond',
+  'simon & garfunkel': 'Simon & Garfunkel',
+  'simon and garfunkel': 'Simon & Garfunkel',
+  'earth, wind & fire': 'Earth, Wind & Fire',
+  'earth wind & fire': 'Earth, Wind & Fire',
+  'hall & oates': 'Hall & Oates',
+  'daryl hall & john oates': 'Daryl Hall & John Oates',
+  'bob marley & the wailers': 'Bob Marley & The Wailers',
+  'mumford & sons': 'Mumford & Sons',
+  'kool & the gang': 'Kool & The Gang',
+  'kc & the sunshine band': 'KC & The Sunshine Band',
+  'kc and the sunshine band': 'KC & The Sunshine Band',
+  'crosby, stills, nash & young': 'Crosby, Stills, Nash & Young',
+  'crosby, stills & nash': 'Crosby, Stills & Nash',
+  'tom petty & the heartbreakers': 'Tom Petty & The Heartbreakers',
+  'huey lewis & the news': 'Huey Lewis & The News',
+  'joan jett & the blackhearts': 'Joan Jett & The Blackhearts',
+  'florence & the machine': 'Florence & The Machine',
+  'florence + the machine': 'Florence + The Machine',
+  'echo & the bunnymen': 'Echo & The Bunnymen',
+  'nick cave & the bad seeds': 'Nick Cave & The Bad Seeds',
+  'sly & the family stone': 'Sly & The Family Stone',
+  'gladys knight & the pips': 'Gladys Knight & The Pips',
+  'emerson, lake & palmer': 'Emerson, Lake & Palmer',
+  'blood, sweat & tears': 'Blood, Sweat & Tears',
+  'brooks & dunn': 'Brooks & Dunn',
+  'iron & wine': 'Iron & Wine',
+  'belle & sebastian': 'Belle & Sebastian',
+  'angus & julia stone': 'Angus & Julia Stone',
+  'tegan & sara': 'Tegan & Sara',
+  'tegan and sara': 'Tegan & Sara',
+  'king gizzard & the lizard wizard': 'King Gizzard & The Lizard Wizard',
+  'fitz & the tantrums': 'Fitz & The Tantrums',
+  'fitz and the tantrums': 'Fitz & The Tantrums',
+  'toots & the maytals': 'Toots & The Maytals',
+  'ziggy marley & the melody makers': 'Ziggy Marley & The Melody Makers',
+  'captain & tennille': 'Captain & Tennille',
+  'peaches & herb': 'Peaches & Herb',
+  'sam & dave': 'Sam & Dave',
+  'chase & status': 'Chase & Status',
+  'marina & the diamonds': 'Marina & The Diamonds',
+  'dan + shay': 'Dan + Shay',
+  'arms and sleepers': 'Arms and Sleepers',
+  'of monsters and men': 'Of Monsters and Men',
+  'me first and the gimme gimmes': 'Me First and the Gimme Gimmes',
+  'guns n\' roses': 'Guns N\' Roses',
+  'twenty one pilots': 'Twenty One Pilots'
+};
+
 function splitArtists(str){
   if(!str) return [];
-  var raw=String(str).split(/\s*,\s*|\s*;\s*|\s*\/\s*|\s+feat\.?\s+|\s+ft\.?\s+|\s+featuring\s+/i);
+  var s=String(str).trim();
+  if(!s.length) return [];
+  var sLow=s.toLowerCase();
+  if(PRESERVED_BANDS[sLow]) return [PRESERVED_BANDS[sLow]];
+
+  var preserved=[];
+  for(var band in PRESERVED_BANDS){
+    var idx=sLow.indexOf(band);
+    if(idx!==-1){
+      var before=idx>0?sLow.charAt(idx-1):' ';
+      var after=(idx+band.length<sLow.length)?sLow.charAt(idx+band.length):' ';
+      if(/[\s,;\/&]/.test(before) && /[\s,;\/&]/.test(after)){
+        var token='__PRESERVED_'+preserved.length+'__';
+        preserved.push({token:token, name:PRESERVED_BANDS[band]});
+        s=s.substring(0,idx)+token+s.substring(idx+band.length);
+        sLow=s.toLowerCase();
+      }
+    }
+  }
+
+  var raw=s.split(/\s*,\s*&\s*|\s*,\s*|\s*;\s*|\s*\/+\s*|\s*\\+\s*|\s+&\s*|\s*&\s+|\s+feat\.?\s+|\s+ft\.?\s+|\s+featuring\s+|\s+with\s+/i);
   var out=[], seen={};
   for(var i=0;i<raw.length;i++){
     var a=raw[i].trim();
-    if(a.length && !seen[a.toLowerCase()]){ seen[a.toLowerCase()]=1; out.push(a); }
+    for(var p=0;p<preserved.length;p++){
+      if(a===preserved[p].token){
+        a=preserved[p].name;
+        break;
+      }
+    }
+    if(a.length && !seen[a.toLowerCase()]){
+      seen[a.toLowerCase()]=1;
+      out.push(a);
+    }
   }
   return out;
 }

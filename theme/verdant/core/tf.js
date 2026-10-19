@@ -11,7 +11,7 @@ var TF = {
   year:fb.TitleFormat('$year(%date%)'), lensec:fb.TitleFormat('%length_seconds%'),
   trackno:fb.TitleFormat('%tracknumber%'),
   rg:fb.TitleFormat('$if(%replaygain_track_gain%,1,0)'),   // '1' once a loudness scan has tagged the file
-  rawArtist:fb.TitleFormat('[$if3($meta(artist),$meta(performer),$meta(album artist),%artist%,%performer%,%album artist%)]'),
+  rawArtist:fb.TitleFormat('[$if3($meta_sep(artist, ; ),$meta_sep(performer, ; ),$meta_sep(album artist, ; ),%artist%,%performer%,%album artist%)]'),
   barcode:fb.TitleFormat('[$if3($meta(barcode),$meta(upc),$meta(ean),$meta(catalog),$meta(catalognumber),%barcode%,%upc%,%ean%)]'),
   copyright:fb.TitleFormat('[$if3($meta(copyright),$meta(c),%copyright%,%c%)]'),
   isrc:fb.TitleFormat('[$if2($meta(isrc),%isrc%)]'),
@@ -36,7 +36,7 @@ var TF = {
   path:fb.TitleFormat('%path%'),
   encoder:fb.TitleFormat('[$if4($info(tool),$info(encoder),$meta(writing application),%__writing_application%)]'),
   audioMd5:fb.TitleFormat('[$if2($info(md5),$info(flac_md5))]'),
-  albumArtist:fb.TitleFormat('[$if4($meta(album artist),$meta(albumartist),$meta(album_performer),$meta(band),%album artist%)]'),
+  albumArtist:fb.TitleFormat('[$if4($meta_sep(album artist, ; ),$meta_sep(albumartist, ; ),$meta_sep(album_performer, ; ),$meta_sep(band, ; ),%album artist%)]'),
   catalog:fb.TitleFormat('[$if2($meta(catalognumber),$meta(catalog))]'),
   folder:fb.TitleFormat('$directory_path(%path%)')
 };

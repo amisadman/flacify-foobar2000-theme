@@ -111,7 +111,7 @@ function drawBar(gr){
       HB_CTRL.push({x0:bx, y0:byBadge, x1:bx+bw, y1:byBadge+bh, act:'details'});
     }
   } else {
-    tL(gr, 'Flacify', FONT.npTitle, COL.text2, tx, by+26, 260, 20);
+    tL(gr, 'FLACify', FONT.npTitle, COL.text2, tx, by+26, 260, 20);
     tL(gr, 'Ready to play lossless music', FONT.npArtist, COL.text3, tx, by+50, 260, 18);
   }
   // center: transport row + seekbar

@@ -74,8 +74,7 @@ Copy-Item (Join-Path $repo 'THIRD-PARTY-NOTICES.md') $stage -Force
 
 # ---- install notes ----------------------------------------------------------
 @"
-Verdant v$version -- a modern Spotify-style theme for foobar2000
-by superziper
+FLACify v$version -- The Audiophile Lossless Music Experience for foobar2000
 
 INSTALL
   1. Install foobar2000 as portable from https://www.foobar2000.org/download
@@ -83,7 +82,7 @@ INSTALL
      (the folder containing foobar2000.exe).
   3. Start foobar2000 and enjoy.
 
-  No fonts to install: Verdant uses Segoe UI and Segoe MDL2 Assets, which ship
+  No fonts to install: FLACify uses Segoe UI and Segoe MDL2 Assets, which ship
   with Windows 10 and 11.
 
   For a STANDARD (non-portable) install, extract the CONTENTS of the "profile"
@@ -113,7 +112,7 @@ REQUIREMENTS
   Components: Columns UI, JSplitter, UI Wizard -- all bundled, installed only if missing.
 
 FIRST RUN
-  Verdant reads foobar's Media Library. On a new foobar that library is empty, so
+  FLACify reads foobar's Media Library. On a new foobar that library is empty, so
   Home, All Songs and the artist views will be blank until you add a music folder
   under Preferences > Media Library. That is expected, not a broken install.
 
@@ -128,16 +127,18 @@ UNINSTALL
   then delete <profile>\verdant\.
 
 NOTES
-  Verdant restyles your local library. It does not connect to Spotify's service.
+  FLACify restyles your local lossless library. It does not connect to Spotify's streaming service.
   Not affiliated with or endorsed by Spotify; "Spotify" is a trademark of Spotify AB.
 "@ | Set-Content -Path (Join-Path $stage 'README-INSTALL.txt') -Encoding utf8
 
 # ---- zip --------------------------------------------------------------------
 New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
-$zip = Join-Path $OutDir "Verdant-v$version.zip"
+$zip = Join-Path $OutDir "FLACify-v$version.zip"
 if (Test-Path $zip) { [System.IO.File]::Delete($zip) }
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 [System.IO.Compression.ZipFile]::CreateFromDirectory($stage, $zip, [System.IO.Compression.CompressionLevel]::Optimal, $false)
+$vZip = Join-Path $OutDir "Verdant-v$version.zip"
+Copy-Item $zip $vZip -Force
 [System.IO.Directory]::Delete($stage, $true)
 
 $mb = [math]::Round((Get-Item $zip).Length/1MB, 1)

@@ -398,7 +398,7 @@ foreach ($art in $artistNames) {
         try {
             $encoded = [System.Uri]::EscapeDataString($art)
             $dUrl = "https://api.deezer.com/search/artist?q=$encoded"
-            $dRes = Invoke-RestMethod -Uri $dUrl -TimeoutSec 6 -Headers @{ "User-Agent" = "Flacify-foobar2000/1.0.0" }
+            $dRes = Invoke-RestMethod -Uri $dUrl -TimeoutSec 6 -Headers @{ "User-Agent" = "FLACify-foobar2000/1.2.0" }
             if ($dRes -and $dRes.data -and $dRes.data.Count -gt 0) {
                 $top = $dRes.data[0]
                 if (-not $metaObj.name) { $metaObj.name = $top.name }
@@ -416,7 +416,7 @@ foreach ($art in $artistNames) {
                     if (-not $picUrl) { $picUrl = $top.picture_medium }
 
                     if ($picUrl) {
-                        Invoke-WebRequest -Uri $picUrl -OutFile $jpgPath -TimeoutSec 10 -Headers @{ "User-Agent" = "Flacify-foobar2000/1.0.0" } | Out-Null
+                        Invoke-WebRequest -Uri $picUrl -OutFile $jpgPath -TimeoutSec 10 -Headers @{ "User-Agent" = "FLACify-foobar2000/1.2.0" } | Out-Null
                         if (Test-Path $jpgPath) {
                             $fetchedImage = $true
                             $metaObj.imageSource = "Deezer HD"
@@ -431,7 +431,7 @@ foreach ($art in $artistNames) {
     try {
         $wName = [System.Uri]::EscapeDataString($art)
         $wUrl = "https://en.wikipedia.org/api/rest_v1/page/summary/$wName"
-        $wRes = Invoke-RestMethod -Uri $wUrl -TimeoutSec 5 -Headers @{ "User-Agent" = "Flacify-foobar2000/1.0.0" }
+        $wRes = Invoke-RestMethod -Uri $wUrl -TimeoutSec 5 -Headers @{ "User-Agent" = "FLACify-foobar2000/1.2.0" }
         if ($wRes) {
             if ($wRes.extract) { $metaObj.bio = $wRes.extract }
             if ($wRes.description) { $metaObj.desc = $wRes.description }
@@ -439,7 +439,7 @@ foreach ($art in $artistNames) {
 
             if (-not $fetchedImage -and $wRes.originalimage -and $wRes.originalimage.source) {
                 try {
-                    Invoke-WebRequest -Uri $wRes.originalimage.source -OutFile $jpgPath -TimeoutSec 10 -Headers @{ "User-Agent" = "Flacify-foobar2000/1.0.0" } | Out-Null
+                    Invoke-WebRequest -Uri $wRes.originalimage.source -OutFile $jpgPath -TimeoutSec 10 -Headers @{ "User-Agent" = "FLACify-foobar2000/1.2.0" } | Out-Null
                     $fetchedImage = $true
                     $metaObj.imageSource = "Wikipedia"
                 } catch {}
@@ -451,7 +451,7 @@ foreach ($art in $artistNames) {
             $cleanName = ($art -split '[,;&/]| feat\.| ft\.')[0].Trim()
             if ($cleanName -and $cleanName -ne $art) {
                 $wClean = [System.Uri]::EscapeDataString($cleanName)
-                $wRes2 = Invoke-RestMethod -Uri "https://en.wikipedia.org/api/rest_v1/page/summary/$wClean" -TimeoutSec 5 -Headers @{ "User-Agent" = "Flacify-foobar2000/1.0.0" }
+                $wRes2 = Invoke-RestMethod -Uri "https://en.wikipedia.org/api/rest_v1/page/summary/$wClean" -TimeoutSec 5 -Headers @{ "User-Agent" = "FLACify-foobar2000/1.2.0" }
                 if ($wRes2) {
                     if ($wRes2.extract) { $metaObj.bio = $wRes2.extract }
                     if ($wRes2.description) { $metaObj.desc = $wRes2.description }
@@ -459,7 +459,7 @@ foreach ($art in $artistNames) {
 
                     if (-not $fetchedImage -and $wRes2.originalimage -and $wRes2.originalimage.source) {
                         try {
-                            Invoke-WebRequest -Uri $wRes2.originalimage.source -OutFile $jpgPath -TimeoutSec 10 -Headers @{ "User-Agent" = "Flacify-foobar2000/1.0.0" } | Out-Null
+                            Invoke-WebRequest -Uri $wRes2.originalimage.source -OutFile $jpgPath -TimeoutSec 10 -Headers @{ "User-Agent" = "FLACify-foobar2000/1.2.0" } | Out-Null
                             $fetchedImage = $true
                             $metaObj.imageSource = "Wikipedia"
                         } catch {}
