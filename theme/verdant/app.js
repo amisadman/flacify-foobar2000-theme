@@ -806,8 +806,9 @@ function on_mouse_lbtn_up(x,y){
         var sRow=HB_SYNC_ROWS[sri];
         if(inRect(x,y,sRow)){
           if(sRow.fetchBtn && inRect(x,y,sRow.fetchBtn)){
-            if(sRow.isCached){ loadArtist(sRow.artist); artistScroll=artistScrollT=0; pushNav('artist',{artist:sRow.artist}); view='artist'; }
-            else triggerArtistSync('single', sRow.artist);
+            triggerArtistSync('all', sRow.artist);
+          } else if(sRow.viewBtn && inRect(x,y,sRow.viewBtn)){
+            loadArtist(sRow.artist); artistScroll=artistScrollT=0; pushNav('artist',{artist:sRow.artist}); view='artist';
           } else if(sRow.artist){
             loadArtist(sRow.artist); artistScroll=artistScrollT=0; pushNav('artist',{artist:sRow.artist}); view='artist';
           }
@@ -1019,7 +1020,10 @@ function hoverSig(x,y){
   if(HB_SYNC_OPEN_DIR && inRect(x,y,HB_SYNC_OPEN_DIR)) return 'syncopendir';
   if(HB_SYNC_ROWS && HB_SYNC_ROWS.length){
     for(var sri2=0; sri2<HB_SYNC_ROWS.length; sri2++){
-      if(inRect(x,y,HB_SYNC_ROWS[sri2])) return 'syncrow'+sri2;
+      var sRow2=HB_SYNC_ROWS[sri2];
+      if(sRow2.fetchBtn && inRect(x,y,sRow2.fetchBtn)) return 'syncfetch'+sri2;
+      if(sRow2.viewBtn && inRect(x,y,sRow2.viewBtn)) return 'syncview'+sri2;
+      if(inRect(x,y,sRow2)) return 'syncrow'+sri2;
     }
   }
   if(HB_SG && inRect(x,y,HB_SG)) return 'sgb';

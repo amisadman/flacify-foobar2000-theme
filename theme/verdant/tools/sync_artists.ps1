@@ -339,7 +339,14 @@ foreach ($art in $artistNames) {
         } catch {}
     }
 
-    if ($isCustom -or ($Mode -eq "missing" -and $hasJpg -and $hasMeta)) {
+    $shouldSkip = $false
+    if ([string]::IsNullOrWhiteSpace($SingleArtist)) {
+        if ($isCustom -or ($Mode -eq "missing" -and $hasJpg -and $hasMeta)) {
+            $shouldSkip = $true
+        }
+    }
+
+    if ($shouldSkip) {
         $skipped++
         $processed++
         # Ensure it is recorded in index
@@ -485,6 +492,10 @@ foreach ($art in $artistNames) {
         if ($metaObj.desc) { $metaObj.desc = Clean-BioText $metaObj.desc }
         if (Test-Path $jpgPath) {
             Crop-ToSquare $jpgPath | Out-Null
+        }
+        if ($mContent -and $mContent.imageFile) {
+            $metaObj.imageFile = $mContent.imageFile
+            $metaObj.isCustom = $true
         }
         try {
             $jsonStr = $metaObj | ConvertTo-Json -Compress

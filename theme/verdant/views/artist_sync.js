@@ -44,6 +44,7 @@ function stopSyncProgressPoll(){
 }
 
 function triggerArtistSync(mode, singleArtist){
+  if(syncProgress.running) return;
   var cacheDir=fb.ProfilePath+'verdant\\cache\\artists\\';
   var scriptPath=fb.ProfilePath+'verdant\\tools\\sync_artists.ps1';
   var listFile=cacheDir+'all_artists.json';
@@ -62,12 +63,13 @@ function triggerArtistSync(mode, singleArtist){
     var sh=new ActiveXObject('WScript.Shell');
     var cmd='powershell.exe -WindowStyle Hidden -ExecutionPolicy Bypass -File "' + scriptPath + '" -Mode "' + (mode||'missing') + '" -CacheDir "' + cacheDir.replace(/\\$/, '') + '" -ArtistListFile "' + listFile + '"';
     if(singleArtist){
-      cmd='powershell.exe -WindowStyle Hidden -ExecutionPolicy Bypass -File "' + scriptPath + '" -SingleArtist "' + singleArtist.replace(/"/g, '`"') + '" -CacheDir "' + cacheDir.replace(/\\$/, '') + '"';
+      cmd='powershell.exe -WindowStyle Hidden -ExecutionPolicy Bypass -File "' + scriptPath + '" -SingleArtist "' + singleArtist.replace(/"/g, '`"') + '" -CacheDir "' + cacheDir.replace(/\\$/, '') + '" -Mode "all"';
     }
     sh.Run(cmd, 0, false);
 
     syncProgress.running=true;
-    syncProgress.status='Initializing sync...';
+    syncProgress.currentArtist=singleArtist||'';
+    syncProgress.status=singleArtist ? ('Fetching '+singleArtist+'...') : 'Initializing sync...';
     startSyncProgressPoll();
     repaintMain();
   }catch(e){}
@@ -217,20 +219,20 @@ function drawArtistSync(gr, r){
   curY+=pbCardH+28;
 
   // Proportional, evenly distributed table column layout
-  var actW=76, actH=26;
+  var actW=126, actH=26;
   var actX=x0+w-actW-10;
 
   var pillW=86, pillH=22;
-  var pillX=actX-pillW-24;
+  var pillX=actX-pillW-20;
 
-  var lisW=Math.max(140, Math.round(w*0.18));
-  var lisX=pillX-lisW-24;
+  var lisW=Math.max(130, Math.round(w*0.16));
+  var lisX=pillX-lisW-20;
 
-  var srcW=Math.max(130, Math.round(w*0.16));
-  var srcX=lisX-srcW-24;
+  var srcW=Math.max(120, Math.round(w*0.14));
+  var srcX=lisX-srcW-20;
 
-  var trkW=76;
-  var trkX=srcX-trkW-24;
+  var trkW=72;
+  var trkX=srcX-trkW-20;
 
   var artNameX=x0+48;
   var artNameW=trkX-16-artNameX;
@@ -242,7 +244,7 @@ function drawArtistSync(gr, r){
     tL(gr, 'IMAGE SOURCE', FONT.eyebrow, COL.text3, srcX, curY, srcW, 20);
     tL(gr, 'LISTENERS', FONT.eyebrow, COL.text3, lisX, curY, lisW, 20);
     tL(gr, 'STATUS', FONT.eyebrow, COL.text3, pillX, curY, pillW, 20);
-    tR(gr, 'ACTION', FONT.eyebrow, COL.text3, actX, curY, actW, 20);
+    tC(gr, 'ACTIONS', FONT.eyebrow, COL.text3, actX, curY, actW, 20);
     gr.FillSolidRect(x0, curY+22, w, 1, COL.line);
   }
   curY+=28;
@@ -321,20 +323,42 @@ function drawArtistSync(gr, r){
       tL(gr, 'Missing', FONT.eyebrow, COL.text3, pillX+22, pillY, pillW-22, pillH);
     }
 
-    // Action button: [ Fetch ] or [ View ]
+    // Action buttons: [ View ] and [ Fetch ] / [ Re-fetch ]
     var actY=ary+Math.round((rowH-actH)/2);
-    var actHot=hv(actX, Math.max(actY, r.y), actX+actW, Math.min(actY+actH, cropY));
-    gr.FillRoundRect(actX, actY, actW, actH, 4, 4, actHot ? RGBA(255,255,255,20) : RGBA(255,255,255,8));
-    strokeRound(gr, actX, actY, actW, actH, 4, 1, actHot ? COL.green : RGBA(255,255,255,22));
-    tC(gr, (hasJpg&&hasMeta)?'View':'Fetch', FONT.plSub, actHot ? COL.green : COL.white, actX, actY, actW, actH);
+    var isRunning=!!syncProgress.running;
+    var isCurSync=(isRunning && syncProgress.currentArtist===aName);
+    var hasCache=(hasJpg && hasMeta);
+
+    var fW=68, fX=actX+actW-fW;
+    var vW=50, vX=fX-vW-8;
+
+    // View button (if artist has cached profile)
+    if(hasCache){
+      var vHot=hv(vX, Math.max(actY, r.y), vX+vW, Math.min(actY+actH, cropY));
+      gr.FillRoundRect(vX, actY, vW, actH, 4, 4, vHot ? RGBA(255,255,255,20) : RGBA(255,255,255,8));
+      strokeRound(gr, vX, actY, vW, actH, 4, 1, vHot ? COL.white : RGBA(255,255,255,22));
+      tC(gr, 'View', FONT.plSub, vHot ? COL.white : COL.text2, vX, actY, vW, actH);
+    }
+
+    // Fetch / Re-fetch button
+    var fHot=(!isRunning && hv(fX, Math.max(actY, r.y), fX+fW, Math.min(actY+actH, cropY)));
+    var fLabel = isCurSync ? 'Syncing' : (hasCache ? 'Re-fetch' : 'Fetch');
+    var fBg = isCurSync ? RGBA(255,200,60,24) : (fHot ? (hasCache ? RGBA(255,255,255,24) : RGB(35,210,105)) : (hasCache ? RGBA(255,255,255,10) : RGBA(30,215,96,22)));
+    var fBorder = isCurSync ? RGBA(255,200,60,80) : (fHot ? COL.green : (hasCache ? RGBA(255,255,255,28) : RGBA(30,215,96,70)));
+    var fTxtCol = isCurSync ? RGB(255,200,60) : (fHot ? (hasCache ? COL.green : COL.white) : (hasCache ? COL.text2 : COL.green));
+
+    gr.FillRoundRect(fX, actY, fW, actH, 4, 4, fBg);
+    strokeRound(gr, fX, actY, fW, actH, 4, 1, fBorder);
+    tC(gr, fLabel, FONT.plSub, fTxtCol, fX, actY, fW, actH);
 
     var cy0=Math.max(ary, r.y), cy1=Math.min(ary+rowH, cropY);
     if(cy1>cy0){
       HB_SYNC_ROWS.push({
         x0:x0-4, y0:cy0, x1:x0+w+4, y1:cy1,
         artist:aName,
-        fetchBtn:{x0:actX, y0:actY, x1:actX+actW, y1:actY+actH},
-        isCached:(hasJpg&&hasMeta)
+        fetchBtn:{x0:fX, y0:actY, x1:fX+fW, y1:actY+actH},
+        viewBtn:hasCache ? {x0:vX, y0:actY, x1:vX+vW, y1:actY+actH} : null,
+        isCached:hasCache
       });
     }
   }
