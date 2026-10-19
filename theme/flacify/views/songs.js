@@ -24,11 +24,12 @@ function drawSongs(gr,r){
   var tx=lx+art+24, tw=Math.max(120,fltBtnX-12-tx);
   tL(gr,'LIBRARY',FONT.eyebrow,COL.text,tx,ay+6,tw,18);
   tL(gr,'All Songs',FONT.title,COL.text,tx,ay+28,tw,84);
-  var sCntStr=fmtNum(songsTracks.length);
+  var totalUniqueSongs = (songsIdx && songsIdx.length) ? songsIdx.length : songsTracks.length;
+  var sCntStr=fmtNum(totalUniqueSongs);
   var sCntW=Math.round(gr.CalcTextWidth(sCntStr, FONT.meta));
   tL(gr, sCntStr, FONT.meta, COL.white, tx, ay+150, sCntW, 22);
   var sRestX=tx+sCntW;
-  var sLbl=' song'+(songsTracks.length===1?'':'s');
+  var sLbl=' song'+(totalUniqueSongs===1?'':'s');
   var sLblW=Math.round(gr.CalcTextWidth(sLbl, FONT.meta));
   tL(gr, sLbl, FONT.meta, COL.text2, sRestX, ay+150, sLblW, 22);
   sRestX+=sLblW;
@@ -88,7 +89,15 @@ function drawSongs(gr,r){
         var stTitle=(sRow.t.title||'').toLowerCase();
         var stArtist=(sRow.t.artist||'').toLowerCase();
         var stAlbum=(sRow.t.album||'').toLowerCase();
-        if(stTitle.indexOf(sfq)!==-1 || stArtist.indexOf(sfq)!==-1 || stAlbum.indexOf(sfq)!==-1){
+        var matchArtist=(stArtist.indexOf(sfq)!==-1);
+        if(!matchArtist && sRow.t.splitArtists){
+          for(var sp=0; sp<sRow.t.splitArtists.length; sp++){
+            if(sRow.t.splitArtists[sp].toLowerCase().indexOf(sfq)!==-1){
+              matchArtist=true; break;
+            }
+          }
+        }
+        if(stTitle.indexOf(sfq)!==-1 || matchArtist || stAlbum.indexOf(sfq)!==-1){
           displaySongsRows.push(sRow);
         }
       }

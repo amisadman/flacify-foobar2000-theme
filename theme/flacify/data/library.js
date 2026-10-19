@@ -363,23 +363,31 @@ function getSongsIdx(){
   if(lib && lib.Count){
     var ti=libTF('title'), ar=libTF('artist'), aa=libTF('artistName'),
         al=libTF('album'), ln=libTF('len'), ls=libTF('lensec'),
-        ak=libTF('albkey'), tn=libTF('trackno'), yr=libTF('year');
+        ak=libTF('albkey'), tn=libTF('trackno'), yr=libTF('year'),
+        ra=libTF('rawArtist');
     for(var i=0;i<ti.length;i++){
       songsTotalSec+=parseInt(ls[i],10)||0;
       var eT=ti[i]||'', eR=ar[i]||'', eA=aa[i]||'Unknown Artist', eL=al[i]||'Unknown Album';
-      // sort keys are lowercased once here instead of on every comparison inside cmpStr; a sort
-      // does n*log(n) comparisons, so doing it per-comparison scales as badly as the sort itself
+      var rawA=(ra && ra[i]) ? ra[i] : (eR || eA);
+      var parts=splitArtists(rawA);
+      if(!parts.length){
+        var fbA=(eA && eA!=='Unknown Artist') ? eA : (eR || 'Unknown Artist');
+        parts=[fbA.trim()];
+      }
+      var primaryA=parts[0] || eA;
+      // sort keys are lowercased once here instead of on every comparison inside cmpStr
       out.push({h:lib[i], title:eT, artist:eR, aartist:eA,
+                primaryArtist:primaryA, splitArtists:parts,
                 album:eL, len:ln[i], artkey:ak[i], year:yr[i]||'', tn:parseInt(tn[i],10)||0,
-                kT:eT.toLowerCase(), kR:eR.toLowerCase(), kA:eA.toLowerCase(), kL:eL.toLowerCase()});
+                kT:eT.toLowerCase(), kR:eR.toLowerCase(), kA:primaryA.toLowerCase(), kL:eL.toLowerCase()});
     }
   }
   songsIdx=out; return out;
 }
-/* Build steps for the All Songs view. The nine title-formatting passes are the bulk of the work
+/* Build steps for the All Songs view. The ten title-formatting passes are the bulk of the work
    and each is atomic, so they run one per tick rather than back to back; libTF memoises them, so
    getSongsIdx then finds everything cached and only has to assemble. */
-var SONGS_FIELDS=['title','artist','artistName','album','len','lensec','albkey','trackno','year'];
+var SONGS_FIELDS=['title','artist','artistName','album','len','lensec','albkey','trackno','year','rawArtist'];
 function songsSteps(){
   var steps=[], i;
   for(i=0;i<SONGS_FIELDS.length;i++) steps.push((function(f){ return function(){ libTF(f); }; })(SONGS_FIELDS[i]));
@@ -394,31 +402,133 @@ function cmpK(a,b){ return a<b?-1:(a>b?1:0); }   // operands already lowercased 
 function cmpTrk(a,b){ return (a.tn-b.tn)||cmpStr(a.title,b.title); }   // within an album: disc order, then title
 function buildSongsRows(){
   var idx=getSongsIdx().slice(0), g=songsGroup, rows=[], tracks=[], i;
-  // compares the lowercase keys precomputed in getSongsIdx -- identical ordering to cmpStr, but
-  // without re-lowercasing both operands on every one of the n*log(n) comparisons
-  if(g==='artist')     idx.sort(function(a,b){ return cmpK(a.kA,b.kA)||cmpK(a.kL,b.kL)||cmpTrk(a,b); });
-  else if(g==='album') idx.sort(function(a,b){ return cmpK(a.kL,b.kL)||cmpK(a.kA,b.kA)||cmpTrk(a,b); });
-  else if(g==='both')  idx.sort(function(a,b){ return cmpK(a.kA,b.kA)||cmpK(a.kL,b.kL)||cmpTrk(a,b); });
-  else                 idx.sort(function(a,b){ return cmpK(a.kT,b.kT)||cmpK(a.kR,b.kR); });
-  var curA=null, curAl=null, ref1=null, ref2=null, n=0, trH=(g==='none')?M.rowH:SG_TRH;
+  var trH=(g==='none')?M.rowH:SG_TRH;
   var h1=(g==='both')?SG_H1B:SG_H1;
-  for(i=0;i<idx.length;i++){
-    var t=idx[i];
-    if(g==='artist'){
-      if(t.aartist!==curA){ curA=t.aartist; n=0; ref1={k:'g1',kind:'artist',label:t.aartist,sub:'',h:h1,handle:t.h,seed:t.aartist,count:0,albums:0,cands:[],ckey:''}; rows.push(ref1); }
-    } else if(g==='album'){
-      if(t.artkey!==curAl){ curAl=t.artkey; n=0; ref1={k:'g1',kind:'album',label:t.album,sub:t.aartist+(t.year?(' '+CH_DOT+' '+t.year):''),h:h1,handle:t.h,seed:t.artkey,count:0,albums:0}; rows.push(ref1); }
-    } else if(g==='both'){
-      if(t.aartist!==curA){ curA=t.aartist; curAl=null; ref2=null; ref1={k:'g1',kind:'artist',label:t.aartist,sub:'',h:h1,handle:t.h,seed:t.aartist,count:0,albums:0,cands:[],ckey:''}; rows.push(ref1); }
-      if(t.artkey!==curAl){ curAl=t.artkey; n=0; ref2={k:'g2',kind:'album',label:t.album,sub:t.year||'',h:SG_H2,handle:t.h,seed:t.artkey,count:0}; rows.push(ref2); if(ref1) ref1.albums++; }
+
+  if(g==='artist' || g==='both'){
+    // FLACify split artist grouping: collaborations are split into their respective artists
+    var artistMap={}, artistOrder=[];
+    for(i=0;i<idx.length;i++){
+      var t=idx[i];
+      var artists=(t.splitArtists && t.splitArtists.length)?t.splitArtists:[t.primaryArtist||t.aartist||'Unknown Artist'];
+      for(var a=0;a<artists.length;a++){
+        var artName=artists[a];
+        if(!artistMap[artName]){
+          artistMap[artName]=[];
+          artistOrder.push(artName);
+        }
+        artistMap[artName].push(t);
+      }
     }
-    n++; tracks.push(t);
-    // one candidate per album for the artist header's avatar -- the first with art wins (rowCover)
-    if(ref1 && ref1.cands && ref1.ckey!==t.artkey && ref1.cands.length<COVER_CANDS){ ref1.ckey=t.artkey; ref1.cands.push(t.h); }
-    rows.push({k:'t',t:t,n:(g==='none'?tracks.length:n),ti:tracks.length-1,h:trH});
-    if(ref1) ref1.count++;
-    if(ref2) ref2.count++;
+    artistOrder.sort(function(a,b){
+      var an=a.toLowerCase(), bn=b.toLowerCase();
+      return an<bn?-1:(an>bn?1:0);
+    });
+
+    for(var ai=0;ai<artistOrder.length;ai++){
+      var artName=artistOrder[ai];
+      var artTracks=artistMap[artName];
+      if(!artTracks || !artTracks.length) continue;
+
+      var albMap={}, albOrder=[];
+      for(i=0;i<artTracks.length;i++){
+        var trk=artTracks[i];
+        var aKey=trk.artkey||trk.album||'Unknown Album';
+        if(!albMap[aKey]){
+          albMap[aKey]=[];
+          albOrder.push(aKey);
+        }
+        albMap[aKey].push(trk);
+      }
+
+      albOrder.sort(function(k1,k2){
+        var t1=albMap[k1][0], t2=albMap[k2][0];
+        return cmpK(t1.kL,t2.kL) || cmpTrk(t1,t2);
+      });
+
+      var ref1={
+        k:'g1',
+        kind:'artist',
+        label:artName,
+        sub:'',
+        h:h1,
+        handle:artTracks[0].h,
+        seed:artName,
+        count:artTracks.length,
+        albums:albOrder.length,
+        cands:[],
+        ckey:''
+      };
+      rows.push(ref1);
+
+      var n=0;
+      if(g==='artist'){
+        artTracks.sort(function(t1,t2){
+          return cmpK(t1.kL,t2.kL) || cmpTrk(t1,t2);
+        });
+        for(i=0;i<artTracks.length;i++){
+          var t=artTracks[i];
+          n++;
+          tracks.push(t);
+          if(ref1.cands.length<COVER_CANDS && ref1.ckey!==t.artkey){
+            ref1.ckey=t.artkey;
+            ref1.cands.push(t.h);
+          }
+          rows.push({k:'t',t:t,n:n,ti:tracks.length-1,h:trH});
+        }
+      } else { // g==='both'
+        for(var bi=0;bi<albOrder.length;bi++){
+          var aKey=albOrder[bi];
+          var aTrks=albMap[aKey];
+          var firstT=aTrks[0];
+          var ref2={
+            k:'g2',
+            kind:'album',
+            label:firstT.album,
+            sub:firstT.year||'',
+            h:SG_H2,
+            handle:firstT.h,
+            seed:aKey,
+            count:aTrks.length
+          };
+          rows.push(ref2);
+
+          aTrks.sort(cmpTrk);
+          for(i=0;i<aTrks.length;i++){
+            var t=aTrks[i];
+            n++;
+            tracks.push(t);
+            if(ref1.cands.length<COVER_CANDS && ref1.ckey!==t.artkey){
+              ref1.ckey=t.artkey;
+              ref1.cands.push(t.h);
+            }
+            rows.push({k:'t',t:t,n:i+1,ti:tracks.length-1,h:trH});
+          }
+        }
+      }
+    }
+  } else if(g==='album'){
+    idx.sort(function(a,b){ return cmpK(a.kL,b.kL)||cmpK(a.kA,b.kA)||cmpTrk(a,b); });
+    var curAl=null, ref1=null, n=0;
+    for(i=0;i<idx.length;i++){
+      var t=idx[i];
+      if(t.artkey!==curAl){
+        curAl=t.artkey; n=0;
+        ref1={k:'g1',kind:'album',label:t.album,sub:(t.primaryArtist||t.aartist)+(t.year?(' '+CH_DOT+' '+t.year):''),h:SG_H1,handle:t.h,seed:t.artkey,count:0,albums:0};
+        rows.push(ref1);
+      }
+      n++; tracks.push(t);
+      rows.push({k:'t',t:t,n:n,ti:tracks.length-1,h:trH});
+      if(ref1) ref1.count++;
+    }
+  } else { // g==='none'
+    idx.sort(function(a,b){ return cmpK(a.kT,b.kT)||cmpK(a.kR,b.kR); });
+    for(i=0;i<idx.length;i++){
+      tracks.push(idx[i]);
+      rows.push({k:'t',t:idx[i],n:i+1,ti:i,h:M.rowH});
+    }
   }
+
   var yy=0;
   for(i=0;i<rows.length;i++){ rows[i].y=yy; yy+=rows[i].h; }
   // link each row to its top-level header + record where the group ends, so the connector

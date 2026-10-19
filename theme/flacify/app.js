@@ -423,6 +423,18 @@ function on_mouse_lbtn_up(x,y){
   }
   if(songDetails){
     if(SONG_DET_HB){
+      if(SONG_DET_HB.artist && inRect(x,y,SONG_DET_HB.artist)){
+        var aTarget=SONG_DET_HB.artist.name;
+        closeSongDetails();
+        if(aTarget){
+          loadArtist(aTarget);
+          artistScroll=artistScrollT=0;
+          pushNav('artist',{artist:aTarget});
+          view='artist';
+          repaintAll();
+        }
+        return;
+      }
       if((SONG_DET_HB.play && inRect(x,y,SONG_DET_HB.play)) || (SONG_DET_HB.artPlay && inRect(x,y,SONG_DET_HB.artPlay))){
         var sh=songDetails.handle; closeSongDetails();
         if(sh) playHandleList([sh],0);
@@ -930,6 +942,7 @@ function hoverSig(x,y){
       if(SONG_DET_HB.close && inRect(x,y,SONG_DET_HB.close)) return 'sdc';
       if(SONG_DET_HB.play && inRect(x,y,SONG_DET_HB.play)) return 'sdp';
       if(SONG_DET_HB.artPlay && inRect(x,y,SONG_DET_HB.artPlay)) return 'sda';
+      if(SONG_DET_HB.artist && inRect(x,y,SONG_DET_HB.artist)) return 'sdart';
       if(SONG_DET_HB.toggleLyrics && inRect(x,y,SONG_DET_HB.toggleLyrics)) return 'sdtl';
       if(SONG_DET_HB.toggleLyricsBottom && inRect(x,y,SONG_DET_HB.toggleLyricsBottom)) return 'sdtlb';
       if(SONG_DET_HB.lyricCard && inRect(x,y,SONG_DET_HB.lyricCard)) return 'sdlc';

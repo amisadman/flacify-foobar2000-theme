@@ -116,7 +116,9 @@ function openSongDetails(h){
     albumArtist:albumArtist,
     catalog:catalog,
     lyrics:lyricLines,
-    lyricsExpanded:false
+    lyricsExpanded:false,
+    primaryArtist:(typeof splitArtists==='function'&&splitArtists(artist).length)?splitArtists(artist)[0]:(artist||'Unknown Artist'),
+    splitArtists:(typeof splitArtists==='function')?splitArtists(artist):[]
   };
   repaintAll();
 }
@@ -209,7 +211,12 @@ function drawSongDetails(gr){
   if(ty>=viewTop && ty+32<=cropY) tL(gr,d.title,FONT.sect2,COL.green,tx,ty,tw,32);
   ty+=36;
 
-  if(ty>=viewTop && ty+24<=cropY) tL(gr,d.artist,FONT.sect,COL.text,tx,ty,tw,24);
+  if(ty>=viewTop && ty+24<=cropY){
+    var aTxtW=Math.min(tw, Math.round(gr.CalcTextWidth(d.artist, FONT.sect)));
+    var artHov=hv(tx, ty, tx+aTxtW, ty+24);
+    tL(gr,d.artist,FONT.sect,artHov?COL.green:COL.text,tx,ty,tw,24);
+    SONG_DET_HB.artist={x0:tx, y0:ty, x1:tx+aTxtW, y1:ty+24, name:d.primaryArtist||d.artist};
+  }
   ty+=30;
 
   if(ty>=viewTop && ty+22<=cropY) tL(gr,d.album+(d.year?(' ('+d.year+')'):''),FONT.card,COL.text2,tx,ty,tw,22);
