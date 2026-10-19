@@ -167,8 +167,18 @@ function drawAlbum(gr, r){
     HB_ALBUM_SHUFFLE={x0:shufX, y0:Math.max(shufY, r.y), x1:shufX+shufSz, y1:Math.min(shufY+shufSz, cropY), handles:alb.handles};
   }
 
-  // 4. Tracklist Column Headers
+  var fltBtnX=shufX+shufSz+14, fltBtnSz=38, fltBtnY=shufY;
+  if(fltBtnY+fltBtnSz>r.y && fltBtnY<cropY){
+    drawFilterButton(gr, fltBtnX, fltBtnY, fltBtnSz);
+  }
+
+  // 4. Tracklist Column Headers & Inline Filter
+  var filterActive=(typeof inlineFilterOpen!=='undefined'&&inlineFilterOpen)||(typeof inlineFilterText!=='undefined'&&inlineFilterText.length>0);
   var listTop=playRowY+pb+24;
+  if(filterActive){
+    if(listTop+34>r.y && listTop<cropY) drawInlineFilterBar(gr, x0, listTop, w, 32, 0, alb.trackRows.length);
+    listTop+=42;
+  }
   var numW=34, durW=60;
   var titleX=x0+numW+16, titleW=w-numW-durW-32;
   var durX=x0+w-durW;
@@ -181,15 +191,37 @@ function drawAlbum(gr, r){
   }
 
   // 5. Track Rows
+  var displayTracks=alb.trackRows;
+  if(typeof inlineFilterText!=='undefined' && inlineFilterText.length>0){
+    var afq=inlineFilterText.toLowerCase();
+    displayTracks=[];
+    for(var adi=0; adi<alb.trackRows.length; adi++){
+      var atr=alb.trackRows[adi];
+      var atTitle=(atr.title||'').toLowerCase();
+      var atArtist=(atr.artist||'').toLowerCase();
+      if(atTitle.indexOf(afq)!==-1 || atArtist.indexOf(afq)!==-1){
+        displayTracks.push(atr);
+      }
+    }
+    if(filterActive && listTop-42+34>r.y && listTop-42<cropY){
+      drawInlineFilterBar(gr, x0, listTop-42, w, 32, displayTracks.length, alb.trackRows.length);
+    }
+  }
+
   var rowsTop=listTop+34;
   var rh=50;
 
-  for(var d=0; d<alb.trackRows.length; d++){
+  if(displayTracks.length===0 && alb.trackRows.length>0 && rowsTop+40>r.y && rowsTop<cropY){
+    tC(gr,'No tracks match "'+inlineFilterText+'"',FONT.sect,COL.text2,x0,rowsTop+20,w,24);
+    tC(gr,'Press Escape to clear the filter',FONT.meta,COL.text3,x0,rowsTop+50,w,20);
+  }
+
+  for(var d=0; d<displayTracks.length; d++){
     var ry=rowsTop+d*rh;
     if(ry+rh<=r.y) continue;
     if(ry>=cropY) break;
 
-    var tr=alb.trackRows[d];
+    var tr=displayTracks[d];
     var isPlaying=!!(NP && tr.handle && NP.Path===tr.handle.Path);
     var isHov=hv(x0-6, Math.max(ry, r.y), x0+w+6, Math.min(ry+rh, cropY));
 
@@ -218,7 +250,7 @@ function drawAlbum(gr, r){
   }
 
   // 6. Artist Spotlight Section (Below Tracklist)
-  var curY=rowsTop+alb.trackRows.length*rh+28;
+  var curY=rowsTop+displayTracks.length*rh+28;
   if(curY>r.y && curY<cropY) gr.FillSolidRect(x0, curY, w, 1, COL.line);
   curY+=24;
 

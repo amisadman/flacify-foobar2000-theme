@@ -377,6 +377,57 @@ function getArtistMeta(name){
   return null;
 }
 
+function clearArtistCache(artistName){
+  extArtistHeroCache={};
+  extArtistImgCache={};
+  extArtistCardCache={};
+  artistMetaCache={};
+  artCardMap={};
+}
+
+function chooseArtistPhoto(artistName){
+  if(!artistName) return;
+  var script=fb.ProfilePath + 'verdant\\tools\\pick_cover.ps1';
+  var cacheDir=fb.ProfilePath + 'verdant\\cache\\artists';
+  try{
+    var sh=new ActiveXObject('WScript.Shell');
+    var cmd='powershell.exe -WindowStyle Hidden -ExecutionPolicy Bypass -File "' + script + '" -PlaylistName "' + artistName.replace(/"/g, '`"') + '" -CacheDir "' + cacheDir + '" -Action pick -DialogTitle "Choose Artist Photo - ' + artistName.replace(/"/g, '`"') + '"';
+    sh.Run(cmd, 0, true);
+    clearArtistCache(artistName);
+    var meta=getArtistMeta(artistName)||{};
+    meta.name=artistName;
+    meta.isCustom=true;
+    meta.imageSource="Custom Upload";
+    saveArtistMeta(artistName, meta);
+    repaintAll();
+  }catch(e){}
+}
+
+function removeArtistPhoto(artistName){
+  if(!artistName) return;
+  var script=fb.ProfilePath + 'verdant\\tools\\pick_cover.ps1';
+  var cacheDir=fb.ProfilePath + 'verdant\\cache\\artists';
+  try{
+    var sh=new ActiveXObject('WScript.Shell');
+    var cmd='powershell.exe -WindowStyle Hidden -ExecutionPolicy Bypass -File "' + script + '" -PlaylistName "' + artistName.replace(/"/g, '`"') + '" -CacheDir "' + cacheDir + '" -Action remove';
+    sh.Run(cmd, 0, true);
+    clearArtistCache(artistName);
+    repaintAll();
+  }catch(e){}
+}
+
+function saveArtistMeta(artistName, meta){
+  if(!artistName || !meta) return;
+  var cacheDir=fb.ProfilePath+'verdant\\cache\\artists\\';
+  var safeName=artistName.replace(/[\\/:*?"<>|]/g, '_');
+  var metaPath=cacheDir+safeName+'_meta.json';
+  try{
+    if(utils.CreateFolder) utils.CreateFolder(cacheDir);
+    if(utils.WriteTextFile) utils.WriteTextFile(metaPath, JSON.stringify(meta, null, 2));
+    artistMetaCache[artistName]=meta;
+  }catch(e){}
+}
+
 function getArtistHeroImg(name){
   if(!name || typeof name !== 'string') return null;
   if(extArtistHeroCache.hasOwnProperty(name)) return extArtistHeroCache[name];

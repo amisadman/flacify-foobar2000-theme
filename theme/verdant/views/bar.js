@@ -129,7 +129,7 @@ function drawBar(gr){
   HB_SEEK=drawTrackBar(gr,sbX,sbY,sbW,5,COL.seekbg,pos);
   tR(gr,fmtTime((drag==='seek')?len*dragFrac:fb.PlaybackTime),FONT.time,COL.white,sbX-54,sbY-7,46,17);
   tL(gr,fmtTime(len),FONT.time,COL.white,sbX+sbW+10,sbY-7,46,17);
-  // right: volume + fullscreen
+  // right: volume + fullscreen + sleep timer
   var gearC=by+M.barH/2, fsx=W-46;
   drawIcon(gr,'expand',hv(fsx-8,gearC-16,fsx+30,gearC+16)?COL.text:COL.text2,fsx,gearC-13,26,26,22);
   HB_CTRL.push({x0:fsx-8,y0:gearC-16,x1:fsx+30,y1:gearC+16,act:'fullscreen'});
@@ -142,4 +142,20 @@ function drawBar(gr){
   drawIcon(gr,spkIco,spkCol,spkX,spkY,spkW,spkH,22);
   HB_CTRL.push({x0:spkX-6,y0:gearC-16,x1:spkX+spkW+4,y1:gearC+16,act:'mute'});
   HB_VOL=drawTrackBar(gr,volX,volY,volW,5,COL.seekbg,isMuted?0:clamp01(vol2pos(fb.Volume)));
+
+  // sleep timer button / active countdown badge
+  var stActive=(typeof sleepTimer!=='undefined' && sleepTimer.active);
+  var stStr=stActive ? formatSleepTimerRemaining() : '';
+  var stW=stActive ? (Math.round(gr.CalcTextWidth(stStr, FONT.plSub))+38) : 26;
+  var stX=spkX-14-stW, stY=gearC-13;
+  var stHov=hv(stX-4, gearC-16, stX+stW+4, gearC+16);
+  if(stActive){
+    gr.FillRoundRect(stX, gearC-14, stW, 26, 13, 13, stHov ? RGBA(30,215,96,40) : RGBA(30,215,96,20));
+    strokeRound(gr, stX, gearC-14, stW, 26, 13, 1, stHov ? COL.green : RGBA(30,215,96,120));
+    drawIcon(gr, 'moon', COL.green, stX+8, gearC-8, 14, 14, 12);
+    tL(gr, stStr, FONT.plSub, COL.green, stX+26, gearC-11, stW-30, 22);
+  } else {
+    drawIcon(gr, 'timer', stHov ? COL.text : COL.text2, stX, stY, 26, 26, 20);
+  }
+  HB_CTRL.push({x0:stX-4, y0:gearC-16, x1:stX+stW+4, y1:gearC+16, act:'sleep_timer'});
 }

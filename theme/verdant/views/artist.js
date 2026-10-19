@@ -6,6 +6,8 @@
 
 var HB_ARTIST_PLAY=null, HB_ARTIST_SHUFFLE=null, HB_ARTIST_FOLLOW=null, HB_ARTIST_SEE_MORE=null;
 var HB_ARTIST_LATEST=null, HB_ARTIST_ALBUMS=[], HB_ARTIST_SINGLES=[], HB_ARTIST_APPEARS=[];
+var HB_ARTIST_PHOTO=null, HB_ARTIST_EDIT_BTN=null, HB_ARTIST_EDIT_BIO_BTN=null;
+var artistStudioModal=null, ARTIST_STUDIO_HB=null;
 var artistFollowingMap={};
 
 function wrapText(gr, str, font, maxW, maxLines){
@@ -53,6 +55,9 @@ function drawArtist(gr, r){
   HB_ARTIST_ALBUMS=[];
   HB_ARTIST_SINGLES=[];
   HB_ARTIST_APPEARS=[];
+  HB_ARTIST_PHOTO=null;
+  HB_ARTIST_EDIT_BTN=null;
+  HB_ARTIST_EDIT_BIO_BTN=null;
 
   if(!viewArtist){
     tC(gr, 'No artist selected', FONT.sect, COL.text2, r.x, r.y+Math.round(r.h/2)-20, r.w, 24);
@@ -94,6 +99,21 @@ function drawArtist(gr, r){
     gr.FillRoundRect(ax+4, ay+6, artSz, artSz, 10, 10, RGBA(0,0,0,160));
     drawArtistPhoto(gr, ax, ay, artSz, 8, firstHandle, viewArtist);
     strokeRound(gr, ax, ay, artSz, artSz, 8, 1, RGBA(255,255,255,24));
+
+    // Hover overlay: Choose/Change photo (Spotify-style)
+    var photoHot=hv(ax, Math.max(ay, r.y), ax+artSz, Math.min(ay+artSz, cropY));
+    if(photoHot){
+      gr.FillRoundRect(ax, ay, artSz, artSz, 8, 8, RGBA(0,0,0,140));
+      var isz=44, icx=ax+(artSz-isz)/2, icy=ay+(artSz-isz)/2-14;
+      drawIcon(gr, 'album', COL.white, icx, icy, isz, isz, 36);
+      var plbl=(getArtistHeroImg(viewArtist) ? 'Change photo' : 'Choose photo');
+      var plblW=Math.round(gr.CalcTextWidth(plbl, FONT.plSub))+24, plblH=28;
+      var plblX=ax+(artSz-plblW)/2, plblY=icy+isz+10;
+      gr.FillRoundRect(plblX, plblY, plblW, plblH, plblH/2, plblH/2, RGBA(255,255,255,28));
+      gr.DrawRoundRect(plblX, plblY, plblW, plblH, plblH/2, plblH/2, 1, RGBA(255,255,255,140));
+      gr.GdiDrawText(plbl, FONT.plSub, COL.white, plblX, plblY, plblW, plblH, DT_C);
+    }
+    HB_ARTIST_PHOTO={x0:ax, y0:Math.max(ay, r.y), x1:ax+artSz, y1:Math.min(ay+artSz, cropY), artist:viewArtist};
   }
 
   // Right Column: Eyebrow, White Title, Description, and Stats with Pure White Numbers
@@ -191,6 +211,16 @@ function drawArtist(gr, r){
     strokeRound(gr, folX, folY, folW, folH, folH/2, 1, folHot ? COL.green : RGBA(255,255,255,30));
     tC(gr, isFollowing ? 'Following' : 'Follow', FONT.plSub, folHot ? COL.green : COL.text, folX, folY, folW, folH);
     HB_ARTIST_FOLLOW={x0:folX, y0:Math.max(folY, r.y), x1:folX+folW, y1:Math.min(folY+folH, cropY), artist:viewArtist};
+  }
+
+  // Edit Profile Capsule Button
+  var editX=folX+folW+12, editW=110, editH=34, editY=folY;
+  var editHot=hv(editX, Math.max(editY, r.y), editX+editW, Math.min(editY+editH, cropY));
+  if(editY+editH>r.y && editY<cropY){
+    gr.FillRoundRect(editX, editY, editW, editH, editH/2, editH/2, editHot ? RGBA(255,255,255,24) : RGBA(255,255,255,10));
+    strokeRound(gr, editX, editY, editW, editH, editH/2, 1, editHot ? COL.green : RGBA(255,255,255,30));
+    tC(gr, 'Edit Profile', FONT.plSub, editHot ? COL.green : COL.text, editX, editY, editW, editH);
+    HB_ARTIST_EDIT_BTN={x0:editX, y0:Math.max(editY, r.y), x1:editX+editW, y1:Math.min(editY+editH, cropY), artist:viewArtist};
   }
 
   var curY=playRowY+pb+32;
@@ -465,7 +495,13 @@ function drawArtist(gr, r){
 
   // 8. About Section: Artist Portrait & Biography Card
   if(curY+24>r.y && curY<cropY){
-    tL(gr, 'About', FONT.sect, COL.text, x0, curY, w, 24);
+    tL(gr, 'About', FONT.sect, COL.text, x0, curY, w-120, 24);
+    var abEbW=92, abEbH=24, abEbX=x0+w-abEbW, abEbY=curY;
+    var abEbHot=hv(abEbX, Math.max(abEbY, r.y), abEbX+abEbW, Math.min(abEbY+abEbH, cropY));
+    gr.FillRoundRect(abEbX, abEbY, abEbW, abEbH, abEbH/2, abEbH/2, abEbHot ? RGBA(255,255,255,24) : RGBA(255,255,255,10));
+    strokeRound(gr, abEbX, abEbY, abEbW, abEbH, abEbH/2, 1, abEbHot ? COL.green : RGBA(255,255,255,30));
+    tC(gr, 'Edit Bio', FONT.plSub, abEbHot ? COL.green : COL.text, abEbX, abEbY, abEbW, abEbH);
+    HB_ARTIST_EDIT_BIO_BTN={x0:abEbX, y0:Math.max(abEbY, r.y), x1:abEbX+abEbW, y1:Math.min(abEbY+abEbH, cropY), artist:viewArtist};
   }
   curY+=32;
 
@@ -531,4 +567,170 @@ function drawArtist(gr, r){
   artistScrollT=clampPx(artistScrollT, maxPx);
 
   drawScrollbar(gr, x0+w+8, r.y, r.h, artistScroll, maxPx, r.h, totalContentH, hv(x0, r.y, x0+w+16, r.y+r.h)||drag==='scroll');
+}
+
+function openArtistStudio(artistName){
+  if(!artistName) return;
+  var meta=getArtistMeta(artistName)||{};
+  var currentBio=meta.bio||meta.desc||'';
+  var currentListeners=meta.fansFormatted?meta.fansFormatted:(meta.fans?fmtNum(meta.fans):'');
+  artistStudioModal={
+    artist:artistName,
+    bio:currentBio,
+    listeners:currentListeners,
+    originalBio:currentBio,
+    originalListeners:currentListeners,
+    activeField:'bio',
+    meta:meta
+  };
+  caretOn=true;
+  startCaret();
+  applyKeyMode();
+  repaintAll();
+}
+
+function closeArtistStudio(){
+  artistStudioModal=null;
+  ARTIST_STUDIO_HB=null;
+  applyKeyMode();
+  repaintAll();
+}
+
+function saveArtistStudio(){
+  if(!artistStudioModal) return;
+  var m=artistStudioModal;
+  var meta=m.meta||{};
+  meta.name=m.artist;
+  meta.bio=m.bio.trim();
+  meta.isCustom=true;
+  meta.imageSource=meta.imageSource||"Custom Studio";
+
+  var lisRaw=m.listeners.replace(/[^\d]/g, '');
+  if(lisRaw.length>0){
+    meta.fans=parseInt(lisRaw, 10)||0;
+    meta.fansFormatted=m.listeners.trim();
+  } else {
+    meta.fansFormatted=m.listeners.trim();
+  }
+
+  saveArtistMeta(m.artist, meta);
+  closeArtistStudio();
+}
+
+function drawArtistStudioModal(gr){
+  if(!artistStudioModal) return;
+  ARTIST_STUDIO_HB={};
+  var m=artistStudioModal;
+
+  // Dark modal backdrop
+  gr.FillSolidRect(0, 0, W, H, RGBA(0, 0, 0, 190));
+
+  var mw=Math.min(580, W-40);
+  var mh=Math.min(520, H-40);
+  var mx=Math.round((W-mw)/2);
+  var my=Math.round((H-mh)/2);
+
+  // Modal Card
+  gr.FillRoundRect(mx, my, mw, mh, 12, 12, RGB(24, 24, 24));
+  strokeRound(gr, mx, my, mw, mh, 12, 1, RGBA(255, 255, 255, 30));
+  ARTIST_STUDIO_HB.panel = {x0:mx, y0:my, x1:mx+mw, y1:my+mh};
+
+  // Header
+  tL(gr, 'Artist Profile Studio', FONT.sect2, COL.white, mx+28, my+24, mw-90, 28);
+  tL(gr, 'Customize photo, monthly listeners, and bio for '+m.artist, FONT.plSub, COL.text2, mx+28, my+54, mw-90, 20);
+
+  // Close X button
+  var cbSz=32, cbX=mx+mw-24-cbSz, cbY=my+22;
+  var cbHot=hv(cbX, cbY, cbX+cbSz, cbY+cbSz);
+  if(cbHot) gr.FillEllipse(cbX, cbY, cbSz, cbSz, RGBA(255, 255, 255, 20));
+  drawIcon(gr, 'close', cbHot ? COL.white : COL.text2, cbX+7, cbY+7, 18, 18, 14);
+  ARTIST_STUDIO_HB.close={x0:cbX, y0:cbY, x1:cbX+cbSz, y1:cbY+cbSz};
+
+  // Section 1: Portrait & Listener Count
+  var pSz=80;
+  var px=mx+28, py=my+92;
+  drawCircle(gr, px, py, pSz, null, m.artist);
+  strokeRound(gr, px, py, pSz, pSz, pSz/2, 1, RGBA(255, 255, 255, 40));
+
+  var chBtnW=100, chBtnH=26, chBtnX=px-10, chBtnY=py+pSz+8;
+  var chHot=hv(chBtnX, chBtnY, chBtnX+chBtnW, chBtnY+chBtnH);
+  gr.FillRoundRect(chBtnX, chBtnY, chBtnW, chBtnH, chBtnH/2, chBtnH/2, chHot ? RGBA(255, 255, 255, 30) : RGBA(255, 255, 255, 14));
+  strokeRound(gr, chBtnX, chBtnY, chBtnW, chBtnH, chBtnH/2, 1, chHot ? COL.green : RGBA(255, 255, 255, 40));
+  tC(gr, 'Change Photo', FONT.meta, chHot ? COL.green : COL.white, chBtnX, chBtnY, chBtnW, chBtnH);
+  ARTIST_STUDIO_HB.changePhoto={x0:chBtnX, y0:chBtnY, x1:chBtnX+chBtnW, y1:chBtnY+chBtnH};
+
+  // Listeners field (Right of portrait)
+  var lX=px+pSz+30, lW=mw-28-lX;
+  tL(gr, 'MONTHLY LISTENERS OR BADGE', FONT.eyebrow, COL.text3, lX, py, lW, 16);
+
+  var lBoxY=py+22, lBoxH=38;
+  var isLFoc=(m.activeField==='listeners');
+  var lHot=hv(lX, lBoxY, lX+lW, lBoxY+lBoxH);
+  gr.FillRoundRect(lX, lBoxY, lW, lBoxH, 6, 6, RGB(34, 34, 34));
+  strokeRound(gr, lX, lBoxY, lW, lBoxH, 6, 1, isLFoc ? COL.green : (lHot ? RGBA(255, 255, 255, 50) : RGBA(255, 255, 255, 20)));
+
+  var lTxt=m.listeners||'e.g. 24,500,000 or Local Legend';
+  var lCol=m.listeners?COL.text:COL.text3;
+  tL(gr, lTxt, FONT.pl, lCol, lX+12, lBoxY+8, lW-24, 22);
+  if(isLFoc && caretOn){
+    var cX=lX+12+Math.min(lW-30, Math.round(gr.CalcTextWidth(m.listeners, FONT.pl)));
+    gr.FillSolidRect(cX, lBoxY+9, 2, 20, COL.green);
+  }
+  ARTIST_STUDIO_HB.listenersField={x0:lX, y0:lBoxY, x1:lX+lW, y1:lBoxY+lBoxH};
+
+  // Section 2: Biography Text Area
+  var bioAreaY=py+pSz+46;
+  var bioAreaW=mw-56;
+  var bioAreaH=170;
+  tL(gr, 'ARTIST BIOGRAPHY', FONT.eyebrow, COL.text3, mx+28, bioAreaY, bioAreaW, 16);
+
+  var bBoxY=bioAreaY+22;
+  var isBFoc=(m.activeField==='bio');
+  var bHot=hv(mx+28, bBoxY, mx+28+bioAreaW, bBoxY+bioAreaH);
+  gr.FillRoundRect(mx+28, bBoxY, bioAreaW, bioAreaH, 8, 8, RGB(34, 34, 34));
+  strokeRound(gr, mx+28, bBoxY, bioAreaW, bioAreaH, 8, 1, isBFoc ? COL.green : (bHot ? RGBA(255, 255, 255, 50) : RGBA(255, 255, 255, 20)));
+
+  // Wrapped bio lines inside editor
+  var bWrapW=bioAreaW-24;
+  var bioDisplay=m.bio||'Write a custom bio or summary for this artist...';
+  var bCol=m.bio?COL.text:COL.text3;
+  var bLines=wrapText(gr, bioDisplay, FONT.pl, bWrapW, 7);
+  for(var bi=0; bi<bLines.length; bi++){
+    tL(gr, bLines[bi], FONT.pl, bCol, mx+40, bBoxY+12+bi*22, bWrapW, 20);
+  }
+  if(isBFoc && caretOn && bLines.length>0){
+    var lastLine=bLines[bLines.length-1];
+    var lastW=Math.round(gr.CalcTextWidth(lastLine, FONT.pl));
+    var caretX=mx+40+Math.min(bWrapW-4, lastW);
+    var caretY=bBoxY+12+(bLines.length-1)*22;
+    gr.FillSolidRect(caretX, caretY+1, 2, 18, COL.green);
+  }
+  ARTIST_STUDIO_HB.bioField={x0:mx+28, y0:bBoxY, x1:mx+28+bioAreaW, y1:bBoxY+bioAreaH};
+
+  // Bottom Buttons: Reset, Cancel, Save
+  var btnH=38;
+  var btnY=my+mh-btnH-24;
+
+  // Restore Official / Clear
+  var resW=140, resX=mx+28;
+  var resHot=hv(resX, btnY, resX+resW, btnY+btnH);
+  if(resHot) gr.FillRoundRect(resX, btnY, resW, btnH, btnH/2, btnH/2, RGBA(255, 255, 255, 14));
+  strokeRound(gr, resX, btnY, resW, btnH, btnH/2, 1, resHot ? COL.white : RGBA(255, 255, 255, 30));
+  tC(gr, 'Clear / Reset', FONT.plSub, resHot ? COL.white : COL.text2, resX, btnY, resW, btnH);
+  ARTIST_STUDIO_HB.resetBtn={x0:resX, y0:btnY, x1:resX+resW, y1:btnY+btnH};
+
+  // Save Button
+  var saveW=120, saveX=mx+mw-28-saveW;
+  var saveHot=hv(saveX, btnY, saveX+saveW, btnY+btnH);
+  gr.FillRoundRect(saveX, btnY, saveW, btnH, btnH/2, btnH/2, saveHot ? RGB(45, 230, 115) : COL.green);
+  tC(gr, 'Save Profile', FONT.pl, COL.black, saveX, btnY, saveW, btnH);
+  ARTIST_STUDIO_HB.saveBtn={x0:saveX, y0:btnY, x1:saveX+saveW, y1:btnY+btnH};
+
+  // Cancel Button
+  var canW=90, canX=saveX-14-canW;
+  var canHot=hv(canX, btnY, canX+canW, btnY+btnH);
+  if(canHot) gr.FillRoundRect(canX, btnY, canW, btnH, btnH/2, btnH/2, RGBA(255, 255, 255, 14));
+  strokeRound(gr, canX, btnY, canW, btnH, btnH/2, 1, canHot ? COL.white : RGBA(255, 255, 255, 30));
+  tC(gr, 'Cancel', FONT.plSub, canHot ? COL.white : COL.text2, canX, btnY, canW, btnH);
+  ARTIST_STUDIO_HB.cancelBtn={x0:canX, y0:btnY, x1:canX+canW, y1:btnY+btnH};
 }

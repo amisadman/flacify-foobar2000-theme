@@ -329,26 +329,37 @@ foreach ($art in $artistNames) {
 
     $hasJpg = Test-Path $jpgPath
     $hasMeta = Test-Path $metaPath
+    $isCustom = $false
+    if ($hasMeta) {
+        try {
+            $mContent = Get-Content $metaPath -Raw -Encoding UTF8 | ConvertFrom-Json
+            if ($mContent -and $mContent.isCustom) {
+                $isCustom = $true
+            }
+        } catch {}
+    }
 
-    if ($Mode -eq "missing" -and $hasJpg -and $hasMeta) {
+    if ($isCustom -or ($Mode -eq "missing" -and $hasJpg -and $hasMeta)) {
         $skipped++
         $processed++
         # Ensure it is recorded in index
         if (-not $indexData.artists.ContainsKey($art)) {
             try {
-                $mContent = Get-Content $metaPath -Raw -Encoding UTF8 | ConvertFrom-Json
+                if (-not $mContent) {
+                    $mContent = Get-Content $metaPath -Raw -Encoding UTF8 | ConvertFrom-Json
+                }
                 $indexData.artists[$art] = @{
                     status = "cached"
-                    hasImage = $true
+                    hasImage = (Test-Path $jpgPath)
                     hasMeta = $true
                     fans = $mContent.fans
                     fansFormatted = $mContent.fansFormatted
-                    source = $(if ($mContent.imageSource) { $mContent.imageSource } else { "Cached" })
+                    source = $(if ($mContent.imageSource) { $mContent.imageSource } else { "Custom Studio" })
                     timestamp = (Get-Date).ToString("yyyy-MM-dd")
                 }
             } catch {}
         }
-        Update-Progress $art "Cached: $art" $true
+        Update-Progress $art ($(if ($isCustom) { "Custom: $art" } else { "Cached: $art" })) $true
         continue
     }
 

@@ -1,7 +1,8 @@
 param(
   [string]$PlaylistName,
   [string]$CacheDir,
-  [string]$Action = "pick"
+  [string]$Action = "pick",
+  [string]$DialogTitle = ""
 )
 
 if ([string]::IsNullOrWhiteSpace($PlaylistName) -or [string]::IsNullOrWhiteSpace($CacheDir)) {
@@ -26,7 +27,7 @@ Add-Type -AssemblyName System.Drawing
 
 $dialog = New-Object System.Windows.Forms.OpenFileDialog
 $dialog.Filter = "Image Files (*.jpg;*.jpeg;*.png;*.webp)|*.jpg;*.jpeg;*.png;*.webp|All Files (*.*)|*.*"
-$dialog.Title = "Choose Playlist Cover Photo - $PlaylistName"
+$dialog.Title = $(if ($DialogTitle) { $DialogTitle } else { "Choose Cover Photo - $PlaylistName" })
 $dialog.Multiselect = $false
 
 $form = New-Object System.Windows.Forms.Form

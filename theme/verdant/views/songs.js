@@ -17,8 +17,11 @@ function drawSongs(gr,r){
   drawLibCover(gr,lx,ay,art,8);
   // header text stops short of the pill column so the two can never collide on a narrow panel
   var gpW=232, pgap=8, nzW=Math.max(196,Math.round(gr.CalcTextWidth('Normalize volume',FONT.pl))+72);
-  var clW=nzW+pgap+gpW, clX=Math.max(lx+art+24,rx-clW), gpX=clX+nzW+pgap;
-  var tx=lx+art+24, tw=Math.max(120,clX-12-tx);
+  var fltBtnSz=38, fltGap=8;
+  var clW=nzW+pgap+gpW+fltGap+fltBtnSz;
+  var fltBtnX=Math.max(lx+art+24,rx-clW);
+  var clX=fltBtnX+fltBtnSz+fltGap, gpX=clX+nzW+pgap;
+  var tx=lx+art+24, tw=Math.max(120,fltBtnX-12-tx);
   tL(gr,'LIBRARY',FONT.eyebrow,COL.text,tx,ay+6,tw,18);
   tL(gr,'All Songs',FONT.title,COL.text,tx,ay+28,tw,84);
   var sCntStr=fmtNum(songsTracks.length);
@@ -33,11 +36,12 @@ function drawSongs(gr,r){
     var dotSep=' '+CH_DOT+' ';
     var dotSepW=Math.round(gr.CalcTextWidth(dotSep, FONT.meta));
     tL(gr, dotSep, FONT.meta, COL.text2, sRestX, ay+150, dotSepW, 22);
-    sRestX+=dotSepW;
+    pRestX+=dotSepW;
     var durStr=fmtDur(songsTotalSec);
     var durW=Math.round(gr.CalcTextWidth(durStr, FONT.meta));
     tL(gr, durStr, FONT.meta, COL.white, sRestX, ay+150, durW, 22);
   }
+  drawFilterButton(gr,fltBtnX,ay+142,fltBtnSz);
   HB_RGNORM=drawNormalizePill(gr,clX,ay+142,nzW,38);
   HB_SG=drawDropPill(gr,gpX,ay+142,gpW,38,'Group: '+labelOf(SONGS_GROUPS,songsGroup,'No grouping'),sgMenuOpen);
   // one line of truth under the pill: what normalizing has left to do, or what it's currently doing
@@ -67,15 +71,44 @@ function drawSongs(gr,r){
   var titleW=(colW?colX:rx-durW)-cgap-titleX;
 
   var listTop=r.y+SHEAD+8;
+  var filterActive=(typeof inlineFilterOpen!=='undefined'&&inlineFilterOpen)||(typeof inlineFilterText!=='undefined'&&inlineFilterText.length>0);
+  if(filterActive){
+    drawInlineFilterBar(gr,lx,listTop,rx-lx,32,0,songsTracks.length);
+    listTop+=40;
+  }
+
+  var displaySongsRows=songsRows;
+  var isQueryActive=(typeof inlineFilterText!=='undefined'&&inlineFilterText.length>0);
+  if(isQueryActive){
+    var sfq=inlineFilterText.toLowerCase();
+    displaySongsRows=[];
+    for(var si=0; si<songsRows.length; si++){
+      var sRow=songsRows[si];
+      if(sRow.k==='t'){
+        var stTitle=(sRow.t.title||'').toLowerCase();
+        var stArtist=(sRow.t.artist||'').toLowerCase();
+        var stAlbum=(sRow.t.album||'').toLowerCase();
+        if(stTitle.indexOf(sfq)!==-1 || stArtist.indexOf(sfq)!==-1 || stAlbum.indexOf(sfq)!==-1){
+          displaySongsRows.push(sRow);
+        }
+      }
+    }
+    drawInlineFilterBar(gr,lx,listTop-40,rx-lx,32,displaySongsRows.length,songsTracks.length);
+  }
+
   var rowsTop=listTop+34, cropY=r.y+r.h, viewH=cropY-rowsTop;
-  var contentH=songsContentH, maxPx=Math.max(0,contentH-viewH);
+  var contentH=isQueryActive ? displaySongsRows.length*M.rowH : songsContentH;
+  var maxPx=Math.max(0,contentH-viewH);
   SONGS_MAXPX=maxPx;
   songsScroll=clampPx(songsScroll,maxPx); songsScrollT=clampPx(songsScrollT,maxPx);
-  var j0=songsFirstAt(songsScroll);
-  // Nested mode: a rail runs from each artist banner past all of its albums, so the owning
-  // artist stays visible. Drawn before the rows so hover fills paint over it, and started from
-  // the group owning the first visible row -- the banner itself is often scrolled away.
-  if(g==='both' && j0<songsRows.length){
+
+  if(displaySongsRows.length===0 && songsTracks.length>0){
+    tC(gr,'No tracks match "'+inlineFilterText+'"',FONT.sect,COL.text2,r.x,rowsTop+40,r.w,24);
+    tC(gr,'Press Escape to clear the filter',FONT.meta,COL.text3,r.x,rowsTop+70,r.w,20);
+  }
+
+  var j0 = isQueryActive ? Math.floor(songsScroll/M.rowH) : songsFirstAt(songsScroll);
+  if(!isQueryActive && g==='both' && j0<songsRows.length){
     var q0=(songsRows[j0].g1i!==undefined)?songsRows[j0].g1i:j0;
     for(var q=q0;q<songsRows.length;q++){
       var gq=songsRows[q]; if(gq.k!=='g1') continue;
@@ -85,8 +118,10 @@ function drawSongs(gr,r){
       if(t1>t0) gr.FillSolidRect(lx+SG_IND/2-1,t0,2,t1-t0,RGBA(255,255,255,30));   // centred in the indent gutter
     }
   }
-  for(var j=j0; j<songsRows.length; j++){
-    var row=songsRows[j], ry=rowsTop+row.y-songsScroll, gh=row.h;
+  for(var j=j0; j<displaySongsRows.length; j++){
+    var row=displaySongsRows[j];
+    var ry = isQueryActive ? (rowsTop+j*M.rowH-songsScroll) : (rowsTop+row.y-songsScroll);
+    var gh = isQueryActive ? M.rowH : row.h;
     if(ry>=cropY) break;
     var vy0=Math.max(ry,rowsTop), vy1=Math.min(ry+gh,cropY);   // visible band: rows scrolled
     if(vy1<=vy0) continue;                                     // under the sticky header don't take the mouse

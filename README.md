@@ -68,10 +68,23 @@ If you build your local high-resolution lossless music library using **[SpotiFLA
 * **Recently Played Shelf**: Interactive horizontal shelf right on the Home screen with instant one-click hover play buttons.
 * **Dedicated History Page**: Full chronological replay log with relative timestamps (*"Just now"*, *"15m ago"*, *"Yesterday"*), inline cover art, and song details.
 
-### 🎙️ Rich Artist Profiles & Cloud Sync
+### 🎙️ Rich Artist Profiles & Artist Studio
 * **Verified Artist Profiles**: Displays official Spotify photography, verified monthly listeners, formatted biographies, top 5 popular tracks table with relative play count meter bars, and categorized discography shelves (Albums, Singles & EPs).
 * **Multi-Artist Parsing**: Splits collaborating artists into individual clickable links.
+* **Artist Profile Studio**: Hover over any artist avatar to reveal the **[ Change photo ]** button or click **[ Edit Profile ]** to launch the in-theme Studio modal. Customize artist portraits with high-res file picker cropping, update monthly listener badges, and edit artist biographies. Customizations are permanently protected with `"isCustom": true` against background sync overwrites.
 * **Artist Cloud Sync**: Built-in background sync manager powered by Spotify Web Scraper GraphQL and Deezer HD APIs. Downloads official high-res portraits and bio summaries directly to your local cache with zero API keys. 100% offline once downloaded.
+
+### 🔍 Inline Tracklist Quick Filter (`Ctrl+F`)
+* **Live In-Place Row Filtering**: Press `Ctrl+F` (or click the magnifying glass icon) in any Playlist, Album, or All Songs view to reveal a Spotify-style filter bar.
+* **Instant Substring Search**: Type to filter visible tracks in real time by title, artist, or album name.
+* **Match Count Badge**: Live counter displays matching count (e.g. `12 of 84 tracks`).
+* **Quick Dismissal**: Press `Escape` to clear text or close the filter bar.
+
+### ⏱️ Smart Sleep Timer with Smooth Volume Fade
+* **Sleep Timer Control**: Discreet `timer` / `moon` icon in the playback bar.
+* **Flexible Durations**: Choose between **15 minutes**, **30 minutes**, **45 minutes**, **1 hour**, or **End of current track**.
+* **Live Countdown Badge**: Active countdown is displayed as an ambient glowing green badge (e.g. `🌙 28m` or `🌙 Track end`).
+* **Gentle Volume Fade-Out**: Attenuates volume smoothly over 5 seconds before pausing playback, preserving your volume setting for your next listen.
 
 ### 🔊 Intuitive Audio Controls
 * **Speaker Click-to-Mute**: Click the speaker icon to instantly mute playback; click again to restore your exact previous volume.
@@ -134,7 +147,7 @@ If you build your local high-resolution lossless music library using **[SpotiFLA
 ### Method 1: Fresh Portable Install (Recommended)
 
 1. Download and run the **foobar2000 v2 (64-bit)** installer from the [official website](https://www.foobar2000.org/download). During installation, choose **Portable mode** and select a folder (e.g. `C:\Music\foobar2000` or `D:\foobar2000`).
-2. Download **`FLACify-v1.2.0.zip`** from the **[latest release](https://github.com/amisadman/flacify-foobar2000-theme/releases/latest)**.
+2. Download **`FLACify-v1.3.0.zip`** from the **[latest release](https://github.com/amisadman/flacify-foobar2000-theme/releases/latest)**.
 3. Extract the **`profile`** folder from the zip directly into your foobar2000 directory (the folder where `foobar2000.exe` resides).
 4. Launch foobar2000. Under **Preferences → Media Library**, add your music folder (e.g. your SpotiFLAC downloads).
 
@@ -143,7 +156,7 @@ If you build your local high-resolution lossless music library using **[SpotiFLA
 ### Method 2: Existing foobar2000 Setup
 
 1. Close foobar2000.
-2. Download and extract **`FLACify-v1.2.0.zip`**.
+2. Download and extract **`FLACify-v1.3.0.zip`**.
 3. Double-click **`install.bat`** in the repository/extracted folder. The installer automatically backs up your previous configuration to `<profile>\verdant-backup\<date>\` before applying FLACify.
 4. Launch foobar2000.
 
