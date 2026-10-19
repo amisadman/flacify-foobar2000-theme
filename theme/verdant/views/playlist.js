@@ -68,10 +68,11 @@ function drawPlaylist(gr,r){
   var lx=r.x+M.cpad, rx=r.x+r.w-M.cpad;
   var listTop=r.y+M.headH+8;
   var filterActive=(typeof inlineFilterOpen!=='undefined'&&inlineFilterOpen)||(typeof inlineFilterText!=='undefined'&&inlineFilterText.length>0);
-  if(filterActive){
-    drawInlineFilterBar(gr,lx,listTop,rx-lx,32,0,p.count);
-    listTop+=40;
-  }
+  var filterH=34;
+  var filterY=listTop;
+  var colTop=filterActive ? (listTop+filterH+10) : listTop;
+  var rowsTop=colTop+34;
+
   var numW=30, durW=54, heartW=28, cgap=16;
   var albumW=Math.round((rx-lx-numW-durW-heartW-cgap*4)*0.34);
   var titleX=lx+numW+cgap, titleW=(rx-lx-numW-durW-heartW-albumW-cgap*4);
@@ -93,10 +94,9 @@ function drawPlaylist(gr,r){
         displayOrder.push(oj);
       }
     }
-    drawInlineFilterBar(gr,lx,listTop-40,rx-lx,32,displayOrder.length,p.count);
   }
   var displayCount=displayOrder.length;
-  var rowsTop=listTop+34, rh=M.rowH, cropY=r.y+r.h, viewH=cropY-rowsTop;
+  var rh=M.rowH, cropY=r.y+r.h, viewH=cropY-rowsTop;
   var contentH=displayCount*rh, maxPx=Math.max(0,contentH-viewH);   // firstRow is a PIXEL offset
   PL_MAXPX=maxPx;
   firstRow=clampPx(firstRow,maxPx); firstRowT=clampPx(firstRowT,maxPx);
@@ -129,17 +129,24 @@ function drawPlaylist(gr,r){
   }
   // crop the partial rows top & bottom, then draw the sticky column header on top
   gr.FillSolidRect(r.x,rowsTop-rh,r.w,rh,COL.base);
+  if(filterActive) gr.FillSolidRect(r.x,filterY-4,r.w,rowsTop-filterY+4,COL.base);
   gr.FillSolidRect(r.x,cropY,r.w,M.pad+2,COL.black);   // gutter below the panel
   if(p.count===0){ drawPlEmpty(gr,r,rowsTop-rh,cropY); drawSortMenu(gr); return; }   // no column headings over a void
   if(displayCount===0 && p.count>0){
     tC(gr,'No tracks match "'+inlineFilterText+'"',FONT.sect,COL.text2,r.x,rowsTop+40,r.w,24);
     tC(gr,'Press Escape to clear the filter',FONT.meta,COL.text3,r.x,rowsTop+70,r.w,20);
   }
-  tL(gr,'#',FONT.head,COL.text2,lx,listTop,numW,20);
-  tL(gr,'TITLE',FONT.head,COL.text2,titleX,listTop,titleW,20);
-  tL(gr,'ALBUM',FONT.head,COL.text2,albumX,listTop,albumW,20);
-  drawIcon(gr,'clock',COL.text2,rx-16,listTop,16,20,15);
-  gr.DrawLine(lx,listTop+26,rx,listTop+26,1,COL.line);
+
+  // Draw sticky filter bar (if active)
+  if(filterActive){
+    drawInlineFilterBar(gr,lx,filterY,rx-lx,filterH,displayOrder.length,p.count);
+  }
+
+  tL(gr,'#',FONT.head,COL.text2,lx,colTop,numW,20);
+  tL(gr,'TITLE',FONT.head,COL.text2,titleX,colTop,titleW,20);
+  tL(gr,'ALBUM',FONT.head,COL.text2,albumX,colTop,albumW,20);
+  drawIcon(gr,'clock',COL.text2,rx-16,colTop,16,20,15);
+  gr.DrawLine(lx,colTop+26,rx,colTop+26,1,COL.line);
   drawScrollbar(gr,rx+8,rowsTop,viewH,firstRow,maxPx,viewH,contentH,hv(r.x,r.y,r.x+r.w,cropY)||drag==='scroll');
   // the empty-state zone isn't on screen here, so outline the list itself as the target
   if(plDropHover){

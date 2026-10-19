@@ -36,7 +36,7 @@ function drawSongs(gr,r){
     var dotSep=' '+CH_DOT+' ';
     var dotSepW=Math.round(gr.CalcTextWidth(dotSep, FONT.meta));
     tL(gr, dotSep, FONT.meta, COL.text2, sRestX, ay+150, dotSepW, 22);
-    pRestX+=dotSepW;
+    sRestX+=dotSepW;
     var durStr=fmtDur(songsTotalSec);
     var durW=Math.round(gr.CalcTextWidth(durStr, FONT.meta));
     tL(gr, durStr, FONT.meta, COL.white, sRestX, ay+150, durW, 22);
@@ -72,10 +72,10 @@ function drawSongs(gr,r){
 
   var listTop=r.y+SHEAD+8;
   var filterActive=(typeof inlineFilterOpen!=='undefined'&&inlineFilterOpen)||(typeof inlineFilterText!=='undefined'&&inlineFilterText.length>0);
-  if(filterActive){
-    drawInlineFilterBar(gr,lx,listTop,rx-lx,32,0,songsTracks.length);
-    listTop+=40;
-  }
+  var filterH=34;
+  var filterY=listTop;
+  var colTop=filterActive ? (listTop+filterH+10) : listTop;
+  var rowsTop=colTop+34, cropY=r.y+r.h, viewH=cropY-rowsTop;
 
   var displaySongsRows=songsRows;
   var isQueryActive=(typeof inlineFilterText!=='undefined'&&inlineFilterText.length>0);
@@ -93,10 +93,8 @@ function drawSongs(gr,r){
         }
       }
     }
-    drawInlineFilterBar(gr,lx,listTop-40,rx-lx,32,displaySongsRows.length,songsTracks.length);
   }
 
-  var rowsTop=listTop+34, cropY=r.y+r.h, viewH=cropY-rowsTop;
   var contentH=isQueryActive ? displaySongsRows.length*M.rowH : songsContentH;
   var maxPx=Math.max(0,contentH-viewH);
   SONGS_MAXPX=maxPx;
@@ -173,13 +171,19 @@ function drawSongs(gr,r){
   }
   // crop the partial rows top & bottom (tallest row is a group header), then the sticky column header
   gr.FillSolidRect(r.x,rowsTop-SG_CROP,r.w,SG_CROP,COL.base);
+  if(filterActive) gr.FillSolidRect(r.x,filterY-4,r.w,rowsTop-filterY+4,COL.base);
   gr.FillSolidRect(r.x,cropY,r.w,M.pad+2,COL.black);   // gutter below the panel
-  tR(gr,'#',FONT.head,COL.text2,numX,listTop,numW-8,20);
-  tL(gr,'TITLE',FONT.head,COL.text2,titleX,listTop,titleW,20);
-  if(showAlbum) tL(gr,'ALBUM',FONT.head,COL.text2,colX,listTop,colW,20);
-  else if(showArtist) tL(gr,'ARTIST',FONT.head,COL.text2,colX,listTop,colW,20);
-  drawIcon(gr,'clock',COL.text2,rx-16,listTop,16,20,15);
-  gr.DrawLine(lx,listTop+26,rx,listTop+26,1,COL.line);
+
+  if(filterActive){
+    drawInlineFilterBar(gr,lx,filterY,rx-lx,filterH,displaySongsRows.length,songsTracks.length);
+  }
+
+  tR(gr,'#',FONT.head,COL.text2,numX,colTop,numW-8,20);
+  tL(gr,'TITLE',FONT.head,COL.text2,titleX,colTop,titleW,20);
+  if(showAlbum) tL(gr,'ALBUM',FONT.head,COL.text2,colX,colTop,colW,20);
+  else if(showArtist) tL(gr,'ARTIST',FONT.head,COL.text2,colX,colTop,colW,20);
+  drawIcon(gr,'clock',COL.text2,rx-16,colTop,16,20,15);
+  gr.DrawLine(lx,colTop+26,rx,colTop+26,1,COL.line);
   drawScrollbar(gr,rx+8,rowsTop,viewH,songsScroll,maxPx,viewH,contentH,hv(r.x,r.y,r.x+r.w,cropY)||drag==='scroll');
   drawGroupMenu(gr);
 }

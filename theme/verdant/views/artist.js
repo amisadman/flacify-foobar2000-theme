@@ -660,7 +660,7 @@ function drawArtistStudioModal(gr){
   ARTIST_STUDIO_HB.changePhoto={x0:chBtnX, y0:chBtnY, x1:chBtnX+chBtnW, y1:chBtnY+chBtnH};
 
   // Listeners field (Right of portrait)
-  var lX=px+pSz+30, lW=mw-28-lX;
+  var lX=px+pSz+30, lW=Math.max(100, (mx+mw-28)-lX);
   tL(gr, 'MONTHLY LISTENERS OR BADGE', FONT.eyebrow, COL.text3, lX, py, lW, 16);
 
   var lBoxY=py+22, lBoxH=38;
