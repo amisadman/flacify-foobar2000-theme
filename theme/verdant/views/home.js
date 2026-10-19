@@ -62,15 +62,17 @@ function drawHome(gr,r){
       if(py+pcardH<=gy) continue;
 
       var it=recPlays[pi];
-      var pHov=hv(px,Math.max(py,gy),px+pcardW,Math.min(py+pcardH,cropY));
+      var pHov=hv(px-6,Math.max(py-6,gy),px+pcardW+6,Math.min(py+pcardH+6,cropY));
 
       if(pHov) gr.FillRoundRect(px-6,py-6,pcardW+12,pcardH+12,8,8,COL.rowHover);
 
-      drawCover(gr,px,py,pcardW,6,null,it.album||it.title);
+      var h=it.handle||(typeof getHandleByPath==='function'?getHandleByPath(it.path):null);
+      if(h && !it.handle) it.handle=h;
+      drawRounded(gr,px,py,pcardW,6,h,it.album||it.title);
 
       // Play button on hover
+      var pb=40, pbx=px+pcardW-pb-8, pby=py+pcardW-pb-8;
       if(pHov){
-        var pb=40, pbx=px+pcardW-pb-8, pby=py+pcardW-pb-8;
         gr.FillEllipse(pbx,pby,pb,pb,COL.green);
         drawIcon(gr,'play',COL.black,pbx,pby,pb,pb,18);
       }
@@ -85,9 +87,9 @@ function drawHome(gr,r){
       gr.FillRoundRect(px,pTagY,pTagW,pTagH,4,4,RGBA(255,255,255,14));
       tC(gr,fmtRelativeTime(it.time),FONT.eyebrow,COL.text2,px,pTagY,pTagW,pTagH);
 
-      var vpy0=Math.max(py,gy), vpy1=Math.min(py+pcardH,cropY);
+      var vpy0=Math.max(py-6,gy), vpy1=Math.min(py+pcardH+6,cropY);
       if(vpy1>vpy0){
-        HB_CARD.push({x0:px-6,y0:vpy0,x1:px+pcardW+6,y1:vpy1,kind:'recent_play',item:it,px:px,py:py,pcardW:pcardW,pcardH:pcardH});
+        HB_CARD.push({x0:px-6,y0:vpy0,x1:px+pcardW+6,y1:vpy1,kind:'recent_play',item:it,px:px,py:py,pcardW:pcardW,pcardH:pcardH,pbx:pbx,pby:pby,pb:pb});
       }
     }
     cy+=playSecH;
@@ -106,17 +108,17 @@ function drawHome(gr,r){
       if(ry+rcardH<=gy) continue;
 
       var tr=recSongs[ri];
-      var rHov=hv(rx,Math.max(ry,gy),rx+rcardW,Math.min(ry+rcardH,cropY));
+      var rHov=hv(rx-6,Math.max(ry-6,gy),rx+rcardW+6,Math.min(ry+rcardH+6,cropY));
 
       if(rHov) gr.FillRoundRect(rx-6,ry-6,rcardW+12,rcardH+12,8,8,COL.rowHover);
 
       drawRounded(gr,rx,ry,rcardW,6,tr.handle,tr.title);
 
       // Play button on hover
+      var rpb=40, rpbx=rx+rcardW-rpb-8, rpby=ry+rcardW-rpb-8;
       if(rHov){
-        var pb=40, pbx=rx+rcardW-pb-8, pby=ry+rcardW-pb-8;
-        gr.FillEllipse(pbx,pby,pb,pb,COL.green);
-        drawIcon(gr,'play',COL.black,pbx,pby,pb,pb,18);
+        gr.FillEllipse(rpbx,rpby,rpb,rpb,COL.green);
+        drawIcon(gr,'play',COL.black,rpbx,rpby,rpb,rpb,18);
       }
 
       // Title & Artist
@@ -129,9 +131,9 @@ function drawHome(gr,r){
       gr.FillRoundRect(rx,tagY,tagW,tagH,4,4,RGBA(30,215,96,28));
       tC(gr,'ALBUM',FONT.eyebrow,COL.green,rx,tagY,tagW,tagH);
 
-      var vry0=Math.max(ry,gy), vry1=Math.min(ry+rcardH,cropY);
+      var vry0=Math.max(ry-6,gy), vry1=Math.min(ry+rcardH+6,cropY);
       if(vry1>vry0){
-        HB_CARD.push({x0:rx-6,y0:vry0,x1:rx+rcardW+6,y1:vry1,kind:'recent_song',track:tr,rx:rx,ry:ry,rcardW:rcardW,rcardH:rcardH});
+        HB_CARD.push({x0:rx-6,y0:vry0,x1:rx+rcardW+6,y1:vry1,kind:'recent_song',track:tr,rx:rx,ry:ry,rcardW:rcardW,rcardH:rcardH,pbx:rpbx,pby:rpby,pb:rpb});
       }
     }
     cy+=recSecH;

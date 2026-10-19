@@ -26,7 +26,18 @@ function saveHistory(){
     var cacheDir = fb.ProfilePath + 'verdant\\cache';
     if(utils.CreateFolder) utils.CreateFolder(cacheDir);
     if(utils.WriteTextFile){
-      var slice = historyList.slice(0, 500);
+      var slice = [];
+      for(var i=0; i<Math.min(500, historyList.length); i++){
+        var item = historyList[i];
+        slice.push({
+          path: item.path,
+          title: item.title,
+          artist: item.artist,
+          album: item.album,
+          dur: item.dur,
+          time: item.time
+        });
+      }
       utils.WriteTextFile(HISTORY_FILE, JSON.stringify(slice));
     }
   } catch(e){}
@@ -68,6 +79,7 @@ function logHistoryTrack(metadb){
     var first = historyList[0];
     if(first && first.path === p && (now - first.time) < 180000){
       first.time = now;
+      first.handle = metadb;
       saveHistory();
       return;
     }
@@ -79,7 +91,8 @@ function logHistoryTrack(metadb){
     artist: artist,
     album: album,
     dur: dur,
-    time: now
+    time: now,
+    handle: metadb
   });
 
   if(historyList.length > 500) historyList.length = 500;
@@ -109,6 +122,7 @@ function getRecentlyPlayedDistinct(limit){
     var key = (it.album && it.artist) ? (it.album + ' - ' + it.artist) : it.path;
     if(!seen[key]){
       seen[key] = true;
+      if(!it.handle && typeof getHandleByPath === 'function') it.handle = getHandleByPath(it.path);
       out.push(it);
     }
   }

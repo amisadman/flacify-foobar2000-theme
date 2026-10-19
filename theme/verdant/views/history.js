@@ -69,7 +69,7 @@ function drawHistory(gr, r){
     if(!it) continue;
 
     var isPlaying = (NP && NP.Path === it.path);
-    var isHover = hv(r.x, ry, r.x + r.w, ry + rh);
+    var isHover = hv(lx - 8, ry, rx + 8, ry + rh);
 
     if(isHover) gr.FillRoundRect(lx - 8, ry, rx - lx + 16, rh, 4, 4, COL.rowHover);
 
@@ -84,9 +84,9 @@ function drawHistory(gr, r){
 
     // Cover art
     var cs = 40, cy = ry + (rh - cs) / 2;
-    var dummyHandle = null;
-    try { dummyHandle = fb.GetLibraryItems ? null : null; } catch(e){}
-    drawCover(gr, titleX, cy, cs, 3, null, it.album || it.title);
+    var h = it.handle || (typeof getHandleByPath === 'function' ? getHandleByPath(it.path) : null);
+    if(h && !it.handle) it.handle = h;
+    drawRounded(gr, titleX, cy, cs, 3, h, it.album || it.title);
 
     // Title & Artist
     var ttx = titleX + cs + 12, ttw = titleW - cs - 12;

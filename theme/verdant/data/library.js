@@ -33,6 +33,37 @@ function libTF(field){
   libTFCache[field]=out; return out;
 }
 
+var libPathMap=null;
+function getHandleByPath(p){
+  if(!p) return null;
+  if(!libPathMap){
+    libPathMap={};
+    var lib=libItems();
+    if(lib && lib.Count){
+      for(var i=0; i<lib.Count; i++){
+        var lh=lib[i];
+        if(lh && lh.Path) libPathMap[lh.Path]=lh;
+      }
+    }
+  }
+  if(libPathMap.hasOwnProperty(p)) return libPathMap[p];
+  if(NP && NP.Path===p) return NP;
+  try {
+    for(var pi=0; pi<plman.PlaylistCount; pi++){
+      var it=getItems(pi);
+      if(it && it.Count){
+        for(var j=0; j<it.Count; j++){
+          if(it[j] && it[j].Path===p){
+            libPathMap[p]=it[j];
+            return it[j];
+          }
+        }
+      }
+    }
+  } catch(e){}
+  return null;
+}
+
 /* ------------------------- library-backed artist list ------------------------- */
 function splitArtists(str){
   if(!str) return [];

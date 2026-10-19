@@ -302,11 +302,23 @@ function on_mouse_rbtn_up(x,y){
       else if(t.songs && songsTracks && songsTracks[t.ti]) h=songsTracks[t.ti].h;
       else if(t.srch && searchTrks && searchTrks[t.idx]) h=searchTrks[t.idx].h;
       else if(t.lib && artistAlbums[t.block] && artistAlbums[t.block].tracks[t.idx]) h=artistAlbums[t.block].tracks[t.idx].handle;
+      else if(t.historyRow && t.path) h = typeof getHandleByPath==='function' ? getHandleByPath(t.path) : null;
       if(h) return openGenericTrackMenu(h,x,y);
     }
   }
   for(i=0;i<HB_PL.length;i++){ if(inRect(x,y,HB_PL[i])){ openPlaylistMenu(HB_PL[i].i,x,y); return true; } }
-  for(i=0;i<HB_CARD.length;i++){ if(inRect(x,y,HB_CARD[i]) && HB_CARD[i].kind==='pl'){ openPlaylistMenu(HB_CARD[i].id,x,y); return true; } }
+  for(i=0;i<HB_CARD.length;i++){
+    if(inRect(x,y,HB_CARD[i])){
+      if(HB_CARD[i].kind==='pl'){ openPlaylistMenu(HB_CARD[i].id,x,y); return true; }
+      else if(HB_CARD[i].kind==='recent_play' && HB_CARD[i].item){
+        var rh = HB_CARD[i].item.handle || (typeof getHandleByPath==='function'?getHandleByPath(HB_CARD[i].item.path):null);
+        if(rh){ openGenericTrackMenu(rh,x,y); return true; }
+      }
+      else if(HB_CARD[i].kind==='recent_song' && HB_CARD[i].track && HB_CARD[i].track.handle){
+        openGenericTrackMenu(HB_CARD[i].track.handle,x,y); return true;
+      }
+    }
+  }
   return false;   // elsewhere: let JSplitter's own panel menu through (Reload / Configure / Properties)
 }
 function playHandleList(handles,idx){
@@ -763,9 +775,16 @@ function on_mouse_lbtn_up(x,y){
     else if(t.kind==='artist'){ loadArtist(t.id); artistScroll=artistScrollT=0; pushNav('artist',{artist:t.id}); view='artist'; }
     else if(t.kind==='album'){ loadAlbum(t.name, t.artist); albumScroll=albumScrollT=0; pushNav('album',{album:t.name,artist:t.artist}); view='album'; }
     else if(t.kind==='recent_song'){
+      if(t.pbx!==undefined && x>=t.pbx && x<t.pbx+t.pb && y>=t.pby && y<t.pby+t.pb){
+        if(t.track && t.track.handle){ playHandleList([t.track.handle],0); repaintAll(); return; }
+      }
       loadAlbum(t.track.album, t.track.artist); albumScroll=albumScrollT=0; pushNav('album',{album:t.track.album,artist:t.track.artist}); view='album';
     }
     else if(t.kind==='recent_play'){
+      if(t.pbx!==undefined && x>=t.pbx && x<t.pbx+t.pb && y>=t.pby && y<t.pby+t.pb){
+        var ph=t.item.handle || (typeof getHandleByPath==='function'?getHandleByPath(t.item.path):null);
+        if(ph){ playHandleList([ph],0); repaintAll(); return; }
+      }
       if(t.item){
         if(t.item.album){ loadAlbum(t.item.album, t.item.artist); albumScroll=albumScrollT=0; pushNav('album',{album:t.item.album,artist:t.item.artist}); view='album'; }
         else if(t.item.artist){ loadArtist(t.item.artist); artistScroll=artistScrollT=0; pushNav('artist',{artist:t.item.artist}); view='artist'; }
@@ -788,20 +807,15 @@ function on_mouse_lbtn_up(x,y){
       else if(t.lib && artistAlbums[t.block] && artistAlbums[t.block].tracks[t.idx]) hh=artistAlbums[t.block].tracks[t.idx].handle;
       else if(t.pl!==undefined && t.item!==undefined){ var it=getItems(t.pl); if(it) hh=it[t.item]; }
       else if(t.historyRow && t.path){
-        try {
-          var hl=fb.GetLibraryItems();
-          for(var hi=0; hi<hl.Count; hi++){ if(hl[hi].Path===t.path){ hh=hl[hi]; break; } }
-        } catch(e){}
+        hh = typeof getHandleByPath==='function' ? getHandleByPath(t.path) : null;
       }
       if(hh) toggleLike(hh);
       return;
     }
     if(t.pgx1!==undefined && x>=t.pgx0 && x<t.pgx1){
       if(t.historyRow && t.path){
-        try {
-          var hl2=fb.GetLibraryItems();
-          for(var hi2=0; hi2<hl2.Count; hi2++){ if(hl2[hi2].Path===t.path){ playHandleList([hl2[hi2]],0); break; } }
-        } catch(e){}
+        var hlh = typeof getHandleByPath==='function' ? getHandleByPath(t.path) : null;
+        if(hlh) playHandleList([hlh],0);
         return;
       }
       playRow(t);
@@ -814,10 +828,7 @@ function on_mouse_lbtn_up(x,y){
       else if(t.lib && artistAlbums[t.block] && artistAlbums[t.block].tracks[t.idx]) h=artistAlbums[t.block].tracks[t.idx].handle;
       else if(t.pl!==undefined && t.item!==undefined){ var it2=getItems(t.pl); if(it2) h=it2[t.item]; }
       else if(t.historyRow && t.path){
-        try {
-          var hl3=fb.GetLibraryItems();
-          for(var hi3=0; hi3<hl3.Count; hi3++){ if(hl3[hi3].Path===t.path){ h=hl3[hi3]; break; } }
-        } catch(e){}
+        h = typeof getHandleByPath==='function' ? getHandleByPath(t.path) : null;
       }
       if(h) openSongDetails(h);
     }
@@ -1093,7 +1104,7 @@ function invalidateLibrary(){
   artistList=null; artistTracksMap=null; artistCandCache={}; coverPickCache={}; warmed={}; searchIdx=null; searchQ2=null;
   albumList=null; albumMap={}; recentTracksList=null; currentAlbum=null;
   songsIdx=null; songsRows=null; songsTracks=null; libCovCache=null; libCount_=-1;
-  libItems_=null; libTFCache={};   // everything above is derived from these
+  libItems_=null; libTFCache={}; libPathMap=null;   // everything above is derived from these
   rgStat=null; rgScanFailed=false;
   warmJob=null; jobs={};           // anything in flight refers to the old library
   gates={}; rowGate={}; shelfHandles=null; artsGating=false;   // every section re-gates
