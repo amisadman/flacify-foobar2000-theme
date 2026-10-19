@@ -34,6 +34,7 @@ if (-not (Test-Path $src)) { throw "theme source not found: $src" }
 #   3. a portable install found via the registry
 #   4. %APPDATA%\foobar2000-v2
 if (-not $FoobarProfile) { $FoobarProfile = $env:FLACIFY_PROFILE }
+if (-not $FoobarProfile -and (Test-Path 'D:\Music\foobar2000\profile')) { $FoobarProfile = 'D:\Music\foobar2000\profile' }
 if (-not $FoobarProfile) {
     foreach ($key in 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\foobar2000',
                      'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\foobar2000') {
