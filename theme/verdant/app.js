@@ -91,7 +91,7 @@ var navRevealPl=-1;
 function revealPlaylist(i){ navRevealPl=i; }
 var plDropHover=false, HB_PLADD_FILES=null, HB_PLADD_FOLDER=null;   // empty-playlist "add songs" zone
 // playlist edit: context menu, inline rename, delete confirm
-var HB_DOTS=[], ctxMenu=null, CTX_HB=[], renameEdit=null, confirmDel=null, CONF_HB=null, RENAME_HB=null;
+var HB_DOTS=[], ctxMenu=null, CTX_HB=[], renameEdit=null, confirmDel=null, CONF_HB=null, RENAME_HB=null, HB_PL_COVER=null;
 
 var rightTab='queue';
 var view='home', homeScroll=0, artScroll=0;
@@ -253,7 +253,7 @@ function on_paint(gr){
 }
 
 function drawMain(gr){
-  HB_CARD=[]; HB_TR=[]; SB=null; SBH=null; HB_BACK_BTN=null;   // clear stale click targets from previous views
+  HB_CARD=[]; HB_TR=[]; SB=null; SBH=null; HB_BACK_BTN=null; HB_PL_COVER=null;   // clear stale click targets from previous views
   HB_ALBUM_PLAY=null; HB_ALBUM_SHUFFLE=null; HB_ALBUM_ARTIST=null; HB_ALBUM_ARTISTS=[]; HB_ALBUM_CTA=null; HB_ALBUM_OTHER=[];
   HB_ARTIST_PLAY=null; HB_ARTIST_SHUFFLE=null; HB_ARTIST_FOLLOW=null; HB_ARTIST_SEE_MORE=null; HB_ARTIST_LATEST=null; HB_ARTIST_ALBUMS=[]; HB_ARTIST_SINGLES=[]; HB_ARTIST_APPEARS=[];
   HB_ARTISTS_SYNC_BTN=null;
@@ -367,6 +367,7 @@ function doCtrl(act){
   else if(act==='fullscreen'){ enterFullscreen(); return; }
   else if(act==='like'){ if(NP) toggleLike(NP); return; }
   else if(act==='details'){ if(NP){ openSongDetails(NP); } return; }
+  else if(act==='add_to_pl'){ if(NP){ openAddToPlaylistMenu(NP, Math.max(16, Math.min(mx-80, W-260)), Math.min(my-140, H-260)); } return; }
   repaintAll();
 }
 function on_mouse_lbtn_up(x,y){
@@ -412,6 +413,63 @@ function on_mouse_lbtn_up(x,y){
         }
         ctxMenu=null;
         if(dh) openSongDetails(dh);
+        return;
+      }
+      if(act==='custom_cover'){
+        ctxMenu=null; repaintAll();
+        choosePlaylistCover(nm);
+        return;
+      }
+      if(act==='remove_custom_cover'){
+        ctxMenu=null; repaintAll();
+        removePlaylistCover(nm);
+        return;
+      }
+      if(act==='add_to_pl'){
+        var targetH=ctxMenu.handle;
+        if(!targetH && ctxMenu.pl!==undefined && ctxMenu.item!==undefined){
+          var dit2=getItems(ctxMenu.pl); if(dit2) targetH=dit2[ctxMenu.item];
+        }
+        var cmx=ctxMenu.x, cmy=ctxMenu.y;
+        ctxMenu=null; repaintAll();
+        if(targetH) openAddToPlaylistMenu(targetH, Math.max(16, Math.min(cmx, W-260)), Math.min(cmy, H-260));
+        return;
+      }
+      if(act==='toggle_like'){
+        var targetH2=ctxMenu.handle;
+        if(!targetH2 && ctxMenu.pl!==undefined && ctxMenu.item!==undefined){
+          var dit3=getItems(ctxMenu.pl); if(dit3) targetH2=dit3[ctxMenu.item];
+        }
+        ctxMenu=null; repaintAll();
+        if(targetH2) toggleLike(targetH2);
+        return;
+      }
+      if(act==='toggle_like_item'){
+        var th=t.handle || ctxMenu.handle;
+        var cmx2=ctxMenu.x, cmy2=ctxMenu.y;
+        if(th) toggleLike(th);
+        if(th) openAddToPlaylistMenu(th, cmx2, cmy2);
+        return;
+      }
+      if(act==='toggle_pl_item'){
+        var th2=t.handle || ctxMenu.handle;
+        var plIdx=t.plIdx;
+        var cmx3=ctxMenu.x, cmy3=ctxMenu.y;
+        if(th2 && plIdx!==undefined) toggleTrackInPlaylist(th2, plIdx);
+        if(th2) openAddToPlaylistMenu(th2, cmx3, cmy3);
+        return;
+      }
+      if(act==='add_to_new_pl'){
+        var th3=t.handle || ctxMenu.handle;
+        ctxMenu=null; repaintAll();
+        if(th3){
+          var npl=createNewPlaylist();
+          toggleTrackInPlaylist(th3, npl);
+          plman.ActivePlaylist=npl;
+          pushNav('playlist',{pl:npl});
+          view='playlist';
+          repaintAll();
+        }
         return;
       }
       if(act==='trkremove'){ ctxMenu=null; removeTrackFromPl(pl,itm); return; }
@@ -693,6 +751,10 @@ function on_mouse_lbtn_up(x,y){
     }
   }
 
+  if(view==='playlist' && HB_PL_COVER && inRect(x,y,HB_PL_COVER)){
+    choosePlaylistCover(HB_PL_COVER.name);
+    return;
+  }
   if(HB_ADDPL && inRect(x,y,HB_ADDPL)){ var np=createNewPlaylist(); plman.ActivePlaylist=np; revealPlaylist(np); firstRow=firstRowT=0; pushNav('playlist',{pl:np}); view='playlist'; repaintAll(); return; }
   if(HB_PLADD_FILES && inRect(x,y,HB_PLADD_FILES)){ addFilesToPl(plman.ActivePlaylist); return; }
   if(HB_PLADD_FOLDER && inRect(x,y,HB_PLADD_FOLDER)){ addFolderToPl(plman.ActivePlaylist); return; }
@@ -817,6 +879,7 @@ function hoverSig(x,y){
   if(HB_ADDPL && inRect(x,y,HB_ADDPL)) return 'addpl';
   if(HB_PLADD_FILES && inRect(x,y,HB_PLADD_FILES)) return 'pladdf';
   if(HB_PLADD_FOLDER && inRect(x,y,HB_PLADD_FOLDER)) return 'pladdd';
+  if(HB_PL_COVER && inRect(x,y,HB_PL_COVER)) return 'plcov';
   if(HB_ALLSONGS && inRect(x,y,HB_ALLSONGS)) return 'als';
   if(HB_ALBUMS && inRect(x,y,HB_ALBUMS)) return 'albs';
   if(HB_ARTISTS && inRect(x,y,HB_ARTISTS)) return 'arts';

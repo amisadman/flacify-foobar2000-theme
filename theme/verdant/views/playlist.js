@@ -17,7 +17,22 @@ function drawPlaylist(gr,r){
   gr.FillGradRect(r.x,r.y,r.w,M.headH,90,blend(headHue,COL.base,0.42),COL.base,1.0);
   var ax=r.x+M.cpad, ay=r.y+44, art=M.artSz;
   if(isLikedPl) drawLikedCover(gr,ax,ay,art,8);
-  else drawPlCover(gr,ax,ay,art,8,p.i,p.name);
+  else {
+    drawPlCover(gr,ax,ay,art,8,p.i,p.name);
+    var covHot=hv(ax,ay,ax+art,ay+art);
+    if(covHot){
+      gr.FillRoundRect(ax,ay,art,art,8,8,RGBA(0,0,0,150));
+      var isz=40, icx=ax+(art-isz)/2, icy=ay+(art-isz)/2-12;
+      drawIcon(gr,'album',COL.white,icx,icy,isz,isz,32);
+      var lbl=(typeof hasCustomPlCover==='function'&&hasCustomPlCover(p.name))?'Change photo':'Choose photo';
+      var lblW=Math.round(gr.CalcTextWidth(lbl,FONT.plSub))+24, lblH=26;
+      var lblX=ax+(art-lblW)/2, lblY=icy+isz+8;
+      gr.FillRoundRect(lblX,lblY,lblW,lblH,lblH/2,lblH/2,RGBA(255,255,255,24));
+      gr.DrawRoundRect(lblX,lblY,lblW,lblH,lblH/2,lblH/2,1,RGBA(255,255,255,140));
+      gr.GdiDrawText(lbl,FONT.plSub,COL.white,lblX,lblY,lblW,lblH,DT_C);
+    }
+    HB_PL_COVER={x0:ax,y0:ay,x1:ax+art,y1:ay+art,pl:p.i,name:p.name};
+  }
   // sort pill + asc/desc button, right-aligned like the All Songs group pill; header text
   // stops short of this column so the two can never collide on a narrow panel
   var rx0=r.x+r.w-M.cpad, sortDirW=38, sortPillW=200, sortGap=8, sortTotalW=sortPillW+sortGap+sortDirW;

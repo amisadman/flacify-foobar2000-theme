@@ -519,7 +519,61 @@ function mosaicImg(handles,seed,size,rad){
   }catch(e){ res=null; }
   mosaicCache[key]=res; return res;
 }
+var customPlCoverCache = {};
+
+function safePlCoverName(name){
+  return (name || '').replace(/[\/\\:\*\?"<>\|]/g, '_').replace(/^\s+|\s+$/g, '');
+}
+
+function hasCustomPlCover(name){
+  if(!name) return false;
+  var safe = safePlCoverName(name);
+  var path = fb.ProfilePath + 'verdant\\cache\\playlist_covers\\' + safe + '.jpg';
+  try { return !!(utils.FileTest && utils.FileTest(path, 'e')); } catch(e){ return false; }
+}
+
+function getCustomPlCover(name, size, rad){
+  if(!name) return null;
+  var safe = safePlCoverName(name);
+  var key = safe + '|' + size + '|' + (rad || 0);
+  if(customPlCoverCache.hasOwnProperty(key)) return customPlCoverCache[key];
+
+  var path = fb.ProfilePath + 'verdant\\cache\\playlist_covers\\' + safe + '.jpg';
+  var exists = false;
+  try { exists = utils.FileTest && utils.FileTest(path, 'e'); } catch(e){}
+  if(!exists){
+    customPlCoverCache[key] = null;
+    return null;
+  }
+  var img = null;
+  try {
+    img = gdi.Image(path);
+    if(img){
+      var rz = img.Resize(size, size);
+      if(rad > 0) rz.ApplyMask(roundMask(size, rad));
+      customPlCoverCache[key] = rz;
+      return rz;
+    }
+  } catch(e){}
+  customPlCoverCache[key] = null;
+  return null;
+}
+
+function clearCustomPlCover(name){
+  if(!name){ customPlCoverCache = {}; return; }
+  var safe = safePlCoverName(name);
+  for(var k in customPlCoverCache){
+    if(k.indexOf(safe + '|') === 0) delete customPlCoverCache[k];
+  }
+}
+
 function drawPlCover(gr,x,y,size,rad,pi,seed){
+  var nm = seed || (pi >= 0 ? plName(pi) : '');
+  var custom = getCustomPlCover(nm, size, rad);
+  if(custom){
+    gr.DrawImage(custom, x, y, size, size, 0, 0, custom.Width, custom.Height);
+    return;
+  }
   var c=plChoice(pi);
   if(c.list.length>=4){ var mi=mosaicImg(c.list,seed,size,rad); if(mi){ gr.DrawImage(mi,x,y,size,size,0,0,mi.Width,mi.Height,0,255); return; } }
   drawRounded(gr,x,y,size,rad,c.single,seed);
@@ -532,6 +586,8 @@ function drawPlCover(gr,x,y,size,rad,pi,seed){
    maskedArt and mosaicImg use, without which a card would keep its placeholder forever. */
 var plCardCache={};
 function plCoverReady(pi){
+  var nm = plName(pi);
+  if(hasCustomPlCover(nm)) return true;
   var c=plChoice(pi), i, h;
   if(c.wait) return false;                  // still choosing -> a baked card would keep the placeholder
   for(i=0;i<c.list.length;i++){ h=c.list[i]; if(h && !artLoaded(albKey(h))) return false; }

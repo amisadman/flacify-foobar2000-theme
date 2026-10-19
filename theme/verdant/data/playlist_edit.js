@@ -4,22 +4,135 @@
 
 function openPlaylistMenu(pl,x,y){
   var items=[];
-  if(!plman.IsPlaylistLocked(pl)) items.push({label:'Add files...',act:'addfiles'},{label:'Add folder...',act:'addfolder'});
+  var nm=plman.GetPlaylistName(pl);
+  if(!plman.IsPlaylistLocked(pl)){
+    items.push({label:'Change cover photo...', act:'custom_cover'});
+    if(typeof hasCustomPlCover==='function' && hasCustomPlCover(nm)){
+      items.push({label:'Remove custom cover', act:'remove_custom_cover'});
+    }
+    items.push({label:'Add files...',act:'addfiles'},{label:'Add folder...',act:'addfolder'});
+  }
   items.push({label:'Rename',act:'rename'},{label:'Delete',act:'delete',danger:true});
-  ctxMenu={kind:'pl', pl:pl, name:plman.GetPlaylistName(pl), x:x, y:y, items:items};
+  ctxMenu={kind:'pl', pl:pl, name:nm, x:x, y:y, items:items};
   repaintAll();
 }
 function openTrackMenu(pl,item,x,y){
   var it=getItems(pl), h=(it&&item<it.Count)?it[item]:null;
-  var items=[{label:'Song details / Credits',act:'details'}];
+  var items=[
+    {label:'Add to playlist...', act:'add_to_pl'},
+    {label:(h&&isLiked(h))?'Remove from Liked Songs':'Save to Liked Songs', act:'toggle_like'},
+    {label:'Song details / Credits',act:'details'}
+  ];
   if(canEditPl(pl)) items.push({label:'Remove from this playlist',act:'trkremove',danger:true});
   ctxMenu={kind:'track', pl:pl, item:item, handle:h, x:x, y:y, items:items};
   repaintAll(); return true;
 }
 function openGenericTrackMenu(h,x,y){
   if(!h) return false;
-  ctxMenu={kind:'track', handle:h, x:x, y:y, items:[{label:'Song details / Credits',act:'details'}]};
+  var items=[
+    {label:'Add to playlist...', act:'add_to_pl'},
+    {label:isLiked(h)?'Remove from Liked Songs':'Save to Liked Songs', act:'toggle_like'},
+    {label:'Song details / Credits',act:'details'}
+  ];
+  ctxMenu={kind:'track', handle:h, x:x, y:y, items:items};
   repaintAll(); return true;
+}
+
+function choosePlaylistCover(plName){
+  if(!plName) return;
+  var script=fb.ProfilePath + 'verdant\\tools\\pick_cover.ps1';
+  var cacheDir=fb.ProfilePath + 'verdant\\cache\\playlist_covers';
+  try{
+    var sh=new ActiveXObject('WScript.Shell');
+    var cmd='powershell.exe -WindowStyle Hidden -ExecutionPolicy Bypass -File "' + script + '" -PlaylistName "' + plName.replace(/"/g, '`"') + '" -CacheDir "' + cacheDir + '" -Action pick';
+    sh.Run(cmd, 0, true);
+    if(typeof clearCustomPlCover==='function') clearCustomPlCover(plName);
+    plCardCache={};
+    invalidateItems();
+    repaintAll();
+  }catch(e){}
+}
+
+function removePlaylistCover(plName){
+  if(!plName) return;
+  var script=fb.ProfilePath + 'verdant\\tools\\pick_cover.ps1';
+  var cacheDir=fb.ProfilePath + 'verdant\\cache\\playlist_covers';
+  try{
+    var sh=new ActiveXObject('WScript.Shell');
+    var cmd='powershell.exe -WindowStyle Hidden -ExecutionPolicy Bypass -File "' + script + '" -PlaylistName "' + plName.replace(/"/g, '`"') + '" -CacheDir "' + cacheDir + '" -Action remove';
+    sh.Run(cmd, 0, true);
+    if(typeof clearCustomPlCover==='function') clearCustomPlCover(plName);
+    plCardCache={};
+    invalidateItems();
+    repaintAll();
+  }catch(e){}
+}
+
+function openAddToPlaylistMenu(h, x, y){
+  if(!h) return;
+  var items=[
+    {label:'[+] New playlist', act:'add_to_new_pl', handle:h}
+  ];
+  // Liked Songs
+  items.push({
+    label:(isLiked(h)?'✔ ':'+ ')+'Liked Songs',
+    act:'toggle_like_item',
+    handle:h
+  });
+  // User playlists
+  var pls=visiblePlaylists();
+  for(var i=0; i<pls.length; i++){
+    var pi=pls[i];
+    var nm=plName(pi);
+    var inPl=isTrackInPlaylist(h, pi);
+    items.push({
+      label:(inPl?'✔ ':'+ ')+nm,
+      act:'toggle_pl_item',
+      plIdx:pi,
+      handle:h,
+      inPl:inPl
+    });
+  }
+  ctxMenu={kind:'add_to_pl', handle:h, x:x, y:y, items:items};
+  repaintAll();
+}
+
+function isTrackInPlaylist(h, targetPl){
+  if(!h || targetPl<0 || targetPl>=plman.PlaylistCount) return false;
+  var items=getItems(targetPl);
+  if(!items || !items.Count) return false;
+  for(var i=0; i<items.Count; i++){
+    if(sameHandle(items[i], h)) return true;
+  }
+  return false;
+}
+
+function toggleTrackInPlaylist(h, targetPl){
+  if(!h || targetPl<0 || targetPl>=plman.PlaylistCount) return;
+  if(plman.IsPlaylistLocked(targetPl)) return;
+  if(isTrackInPlaylist(h, targetPl)){
+    var items=getItems(targetPl);
+    if(items && items.Count){
+      try{
+        plman.UndoBackup(targetPl);
+        plman.ClearPlaylistSelection(targetPl);
+        for(var i=0; i<items.Count; i++){
+          if(sameHandle(items[i], h)) plman.SetPlaylistSelectionSingle(targetPl, i, true);
+        }
+        plman.RemovePlaylistSelection(targetPl, false);
+        plman.ClearPlaylistSelection(targetPl);
+      }catch(e){}
+    }
+  } else {
+    var list=fb.CreateHandleList();
+    list.Add(h);
+    try{
+      plman.UndoBackup(targetPl);
+      plman.InsertPlaylistItems(targetPl, plman.PlaylistItemCount(targetPl), list);
+    }catch(e){}
+  }
+  invalidateItems();
+  repaintAll();
 }
 function canEditPl(pl){
   if(pl<0) return false;

@@ -153,8 +153,9 @@ function drawOverlays(gr){
     for(i=0;i<ctxMenu.items.length;i++){
       var iy=mny+pad+i*ih; it=ctxMenu.items[i];
       if(hv(mnx,iy,mnx+iw,iy+ih)) gr.FillRoundRect(mnx+4,iy,iw-8,ih,5,5,RGBA(255,255,255,20));
-      tL(gr,it.label,FONT.pl,it.danger?RGB(240,96,96):COL.text,mnx+16,iy,iw-24,ih);
-      CTX_HB.push({x0:mnx,y0:iy,x1:mnx+iw,y1:iy+ih,act:it.act});
+      var itemCol=it.danger?RGB(240,96,96):(it.inPl?COL.green:COL.text);
+      tL(gr,it.label,FONT.pl,itemCol,mnx+16,iy,iw-24,ih);
+      CTX_HB.push({x0:mnx,y0:iy,x1:mnx+iw,y1:iy+ih,act:it.act,plIdx:it.plIdx,handle:it.handle,inPl:it.inPl});
     }
   }
   if(confirmDel){

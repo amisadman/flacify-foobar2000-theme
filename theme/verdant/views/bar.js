@@ -67,8 +67,8 @@ function drawBar(gr){
   var maxLeftW=Math.max(180, Math.min(340, cxC-130-tx));
 
   if(NP){
-    // 1. Title line with Heart button
-    var maxTitleW=Math.max(60, maxLeftW-36);
+    // 1. Title line with Heart button & Plus (+) button
+    var maxTitleW=Math.max(60, maxLeftW-64);
     var tw=Math.min(maxTitleW, Math.max(40, Math.round(gr.CalcTextWidth(npTitleStr, FONT.npTitle))));
     tL(gr, npTitleStr, FONT.npTitle, COL.text, tx, by+24, tw, 22);
 
@@ -78,6 +78,11 @@ function drawBar(gr){
     var hCol=liked?COL.green:(hHot?COL.text:COL.text2);
     drawIcon(gr, liked?'heartFilled':'heart', hCol, hx, hy, hs, hs, 18);
     HB_CTRL.push({x0:hx-6, y0:hy-4, x1:hx+hs+6, y1:hy+hs+4, act:'like'});
+
+    var px=hx+hs+8, py=by+23, ps=22;
+    var pHot=hv(px-4, py-2, px+ps+4, py+ps+2);
+    drawIcon(gr, 'add', pHot?COL.text:COL.text2, px, py, ps, ps, 18);
+    HB_CTRL.push({x0:px-6, y0:py-4, x1:px+ps+6, y1:py+ps+4, act:'add_to_pl'});
 
     // 2. Artist line with Quality Badge
     var badge=getAudioBadge(NP);
