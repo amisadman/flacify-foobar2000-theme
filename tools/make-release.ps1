@@ -1,7 +1,7 @@
 <#
     make-release.ps1 -- assemble the release zip.
 
-    Version comes from the theme itself (window.DefineScript in theme\verdant\main.js), so
+    Version comes from the theme itself (window.DefineScript in theme\flacify\main.js), so
     there is one place to bump and no way for the zip name and the panel to disagree.
 
     Usage:
@@ -17,35 +17,29 @@ $repo = Split-Path -Parent $PSScriptRoot
 if (-not $OutDir) { $OutDir = Join-Path $repo 'dist' }
 
 # ---- version ----------------------------------------------------------------
-$mainJs = Get-Content (Join-Path $repo 'theme\verdant\main.js') -Raw
-if ($mainJs -notmatch "version\s*:\s*'([^']+)'") { throw "couldn't read version from theme\verdant\main.js" }
+$mainJs = Get-Content (Join-Path $repo 'theme\flacify\main.js') -Raw
+if ($mainJs -notmatch "version\s*:\s*'([^']+)'") { throw "couldn't read version from theme\flacify\main.js" }
 $version = $Matches[1]
-Write-Host "Verdant v$version"
+Write-Host "FLACify v$version"
 
 # ---- required inputs --------------------------------------------------------
 $need = @{
-    'theme'      = Join-Path $repo 'theme\verdant'
+    'theme'      = Join-Path $repo 'theme\flacify'
     'components' = Join-Path $repo 'components'
     'layout cfg' = Join-Path $repo 'dist-config\foo_ui_columns.dll.cfg'
     'core cfg'   = Join-Path $repo 'dist-config\config.sqlite'
-    'fcl'        = Join-Path $repo 'dist-config\verdant-layout.fcl'
+    'fcl'        = Join-Path $repo 'dist-config\flacify-layout.fcl'
     'installer'  = Join-Path $repo 'tools\install.ps1'
 }
 foreach ($k in $need.Keys) { if (-not (Test-Path $need[$k])) { throw "missing $k : $($need[$k])" } }
 
 # ---- stage ------------------------------------------------------------------
-$stage = Join-Path $env:TEMP ("verdant-release-" + [guid]::NewGuid().ToString('N').Substring(0,8))
+$stage = Join-Path $env:TEMP ("flacify-release-" + [guid]::NewGuid().ToString('N').Substring(0,8))
 New-Item -ItemType Directory -Force -Path $stage | Out-Null
 
 # profile\ : a COMPLETE drop-in. Extracting this over a fresh portable install is the whole
 # installation -- theme, components, layout and the core setting that selects Columns UI.
-# That is the convention in this ecosystem (Georgia-ReBORN ships the same shape) and it is
-# what makes the four-step install possible.
-#
-# It does mean extracting over an ALREADY-CONFIGURED profile replaces that profile's Columns UI
-# layout and core settings. A zip cannot make that judgement, so the docs lead with "fresh
-# portable install" and point anyone with an existing setup at install.bat, which checks first.
-$null = robocopy $need['theme'] (Join-Path $stage 'profile\verdant') /E /NFL /NDL /NJH /NJS /NP
+$null = robocopy $need['theme'] (Join-Path $stage 'profile\flacify') /E /NFL /NDL /NJH /NJS /NP
 if ($LASTEXITCODE -ge 8) { throw 'staging theme failed' }
 $null = robocopy $need['components'] (Join-Path $stage 'profile\user-components-x64') /E /NFL /NDL /NJH /NJS /NP
 if ($LASTEXITCODE -ge 8) { throw 'staging components failed' }
@@ -61,14 +55,11 @@ Copy-Item $need['core cfg'] (Join-Path $stage 'profile\config.sqlite') -Force
 # extras\ : the layout on its own, for people who already run Columns UI and want only the
 # panel layout replaced -- via install.bat, or by importing it themselves.
 New-Item -ItemType Directory -Force -Path (Join-Path $stage 'extras') | Out-Null
-Copy-Item $need['fcl'] (Join-Path $stage 'extras\verdant-layout.fcl') -Force
+Copy-Item $need['fcl'] (Join-Path $stage 'extras\flacify-layout.fcl') -Force
 
 Copy-Item (Join-Path $repo 'tools\install.ps1') $stage -Force
 Copy-Item (Join-Path $repo 'tools\install.bat') $stage -Force
 
-# Licences travel with the binaries: the bundle redistributes three third-party components,
-# and LGPL-3.0 (Columns UI) requires the licence text to be conveyed with them. Their own
-# licence files already sit inside components\ and so ride along with the copy above.
 Copy-Item (Join-Path $repo 'LICENSE') $stage -Force
 Copy-Item (Join-Path $repo 'THIRD-PARTY-NOTICES.md') $stage -Force
 
@@ -100,9 +91,9 @@ ALREADY HAVE A FOOBAR2000 YOU HAVE SET UP?
   are missing, and if you already use Columns UI it replaces ONLY the panel layout,
   leaving your colours, fonts, playlist columns and other settings alone. It backs
   up whatever it touches and writes an uninstall script beside the backup, in
-      <profile>\verdant-backup\<date>\uninstall.ps1
+      <profile>\flacify-backup\<date>\uninstall.ps1
 
-  extras\verdant-layout.fcl is the layout on its own, if you would rather import it
+  extras\flacify-layout.fcl is the layout on its own, if you would rather import it
   yourself: Preferences > Display > Columns UI > Import, ticking Main Layout and
   Toolbar Layout.
 
@@ -124,7 +115,7 @@ TUNING
 
 UNINSTALL
   Run uninstall.ps1 from the backup folder printed at the end of the install,
-  then delete <profile>\verdant\.
+  then delete <profile>\flacify\.
 
 NOTES
   FLACify restyles your local lossless library. It does not connect to Spotify's streaming service.
@@ -137,8 +128,6 @@ $zip = Join-Path $OutDir "FLACify-v$version.zip"
 if (Test-Path $zip) { [System.IO.File]::Delete($zip) }
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 [System.IO.Compression.ZipFile]::CreateFromDirectory($stage, $zip, [System.IO.Compression.CompressionLevel]::Optimal, $false)
-$vZip = Join-Path $OutDir "Verdant-v$version.zip"
-Copy-Item $zip $vZip -Force
 [System.IO.Directory]::Delete($stage, $true)
 
 $mb = [math]::Round((Get-Item $zip).Length/1MB, 1)

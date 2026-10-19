@@ -157,7 +157,7 @@ If you build your local high-resolution lossless music library using **[SpotiFLA
 
 1. Close foobar2000.
 2. Download and extract **`FLACify-v1.3.0.zip`**.
-3. Double-click **`install.bat`** in the repository/extracted folder. The installer automatically backs up your previous configuration to `<profile>\verdant-backup\<date>\` before applying FLACify.
+3. Double-click **`install.bat`** in the repository/extracted folder. The installer automatically backs up your previous configuration to `<profile>\flacify-backup\<date>\` before applying FLACify.
 4. Launch foobar2000.
 
 ---

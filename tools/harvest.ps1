@@ -4,7 +4,7 @@
     The dev profile cannot produce these: it started life as a Georgia-ReBORN drop-in, so its
     Columns UI config carries another theme's presets, cached lyrics and absolute D:\ paths.
     The rig at D:\sandbox\fb2k-vanilla is a throwaway portable foobar whose profile contains
-    nothing but the three components and Verdant.
+    nothing but the three components and FLACify.
 
     Run this with the rig's foobar CLOSED -- foobar only flushes its configuration on exit,
     so harvesting a running instance captures stale files.
@@ -38,7 +38,7 @@ New-Item -ItemType Directory -Force -Path $dest | Out-Null
 # window geometry in it, which means harvesting it would ship the rig machine's screen size to
 # everyone. That is exactly the kind of leak the audit below now looks for.
 $wanted = @(
-    @{ From = 'configuration\foo_ui_columns.dll.cfg';   Why = 'the layout: one full-window JSplitter panel bound to verdant\main.js' }
+    @{ From = 'configuration\foo_ui_columns.dll.cfg';   Why = 'the layout: one full-window JSplitter panel bound to flacify\main.js' }
     @{ From = 'configuration\foo_uie_jsplitter.dll.cfg';Why = 'JSplitter component settings' }
     @{ From = 'config.sqlite';                          Why = 'core settings incl. the active UI = Columns UI (never-run profiles only)' }
 )
@@ -88,10 +88,10 @@ else { Write-Host ("  {0} finding(s) -- review before shipping" -f $leaks) -Fore
 $cui = Join-Path $dest 'foo_ui_columns.dll.cfg'
 if (Test-Path $cui) {
     $txt = [System.Text.Encoding]::ASCII.GetString([System.IO.File]::ReadAllBytes($cui))
-    if ($txt -match 'verdant\\\\main\.js' -or $txt -match 'verdant\\main\.js') {
-        Write-Host '  layout OK: panel is bound to verdant\main.js' -ForegroundColor Green
+    if ($txt -match 'flacify\\\\main\.js' -or $txt -match 'flacify\\main\.js') {
+        Write-Host '  layout OK: panel is bound to flacify\main.js' -ForegroundColor Green
     } else {
-        Write-Warning '  layout does NOT reference verdant\main.js -- is the panel still on an inline script?'
+        Write-Warning '  layout does NOT reference flacify\main.js -- is the panel still on an inline script?'
     }
 }
 

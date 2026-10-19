@@ -1,10 +1,10 @@
 # Third-party notices
 
-Verdant itself is MIT licensed (see [LICENSE](LICENSE)). That licence covers Verdant's own work:
+FLACify itself is MIT licensed (see [LICENSE](LICENSE)). That licence covers FLACify's own work:
 everything under `theme/`, `tools/`, `dist-config/` and `docs/`.
 
 To make the theme install in one step, the repository and the release zip also **redistribute three
-foobar2000 components, unmodified**. Those components are not Verdant's work and keep their own
+foobar2000 components, unmodified**. Those components are not FLACify's work and keep their own
 licences and copyright.
 
 They are shipped under `components/` in this repository and under
@@ -37,22 +37,22 @@ Redistributed as an unmodified binary.
 
 - **Copyright** © LUR
 - **Licence:** not stated by the author. The component is distributed publicly by its author via the
-  Hydrogenaudio forums, and is redistributed here **unmodified** purely so that Verdant installs in
+  Hydrogenaudio forums, and is redistributed here **unmodified** purely so that FLACify installs in
   one step.
 - Includes **SpiderMonkey** (`mozjs-lur-102.dll`), the Mozilla JavaScript engine, licensed under the
   **Mozilla Public License 2.0** — https://www.mozilla.org/MPL/2.0/
 
 If you are the author and would prefer this component not be redistributed here, please open an issue
-and it will be removed from the bundle; Verdant will then link to your download instead.
+and it will be removed from the bundle; FLACify will then link to your download instead.
 
 ---
 
 ## Fonts
 
-None are bundled or installed. Verdant uses **Segoe UI** and **Segoe MDL2 Assets**, which ship with
+None are bundled or installed. FLACify uses **Segoe UI** and **Segoe MDL2 Assets**, which ship with
 Windows 10 and 11 and remain licensed by Microsoft as part of Windows.
 
 ## Trademarks
 
-Not affiliated with or endorsed by Spotify. "Spotify" is a trademark of Spotify AB. Verdant is a
+Not affiliated with or endorsed by Spotify. "Spotify" is a trademark of Spotify AB. FLACify is a
 fan-made visual theme for a local music player and does not connect to Spotify's service.

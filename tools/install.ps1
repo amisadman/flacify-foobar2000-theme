@@ -1,6 +1,6 @@
 <#
-    Verdant -- installer for foobar2000
-    A modern Spotify-style theme. https://github.com/superziper/verdant-foobar2000-theme
+    FLACify -- installer for foobar2000
+    A modern Spotify-style lossless music player theme.
 
     Usage
         double-click install.bat
@@ -11,7 +11,7 @@
     What it does
         - finds your foobar2000 (portable or standard)
         - backs up anything it replaces, and writes an uninstall script beside the backup
-        - copies the theme into <profile>\verdant\
+        - copies the theme into <profile>\flacify\
         - installs any of the three required components you don't already have
         - applies the layout, by whichever of two routes suits your setup
 
@@ -64,15 +64,15 @@ function Warn   ($m) { Write-Host "  $m" -ForegroundColor Yellow }
 #    the same payload, but checks each piece against what is already there first.
 $repoRoot = Split-Path -Parent $ScriptDir
 $layouts = @(
-    [pscustomobject]@{ Theme=(Join-Path $ScriptDir 'profile\verdant');    Comp=(Join-Path $ScriptDir 'profile\user-components-x64'); Cfg=(Join-Path $ScriptDir 'profile\configuration'); Fcl=(Join-Path $ScriptDir 'extras\verdant-layout.fcl'); Sqlite=(Join-Path $ScriptDir 'profile\config.sqlite') }
-    [pscustomobject]@{ Theme=(Join-Path $repoRoot  'theme\verdant');      Comp=(Join-Path $repoRoot  'components');                 Cfg=(Join-Path $repoRoot  'dist-config');          Fcl=(Join-Path $repoRoot  'dist-config\verdant-layout.fcl'); Sqlite=(Join-Path $repoRoot 'dist-config\config.sqlite') }
+    [pscustomobject]@{ Theme=(Join-Path $ScriptDir 'profile\flacify');    Comp=(Join-Path $ScriptDir 'profile\user-components-x64'); Cfg=(Join-Path $ScriptDir 'profile\configuration'); Fcl=(Join-Path $ScriptDir 'extras\flacify-layout.fcl'); Sqlite=(Join-Path $ScriptDir 'profile\config.sqlite') }
+    [pscustomobject]@{ Theme=(Join-Path $repoRoot  'theme\flacify');      Comp=(Join-Path $repoRoot  'components');                 Cfg=(Join-Path $repoRoot  'dist-config');          Fcl=(Join-Path $repoRoot  'dist-config\flacify-layout.fcl'); Sqlite=(Join-Path $repoRoot 'dist-config\config.sqlite') }
 )
 $P = $layouts | Where-Object { Test-Path $_.Theme } | Select-Object -First 1
 if (-not $P) { throw "can't find the theme payload next to this script -- is the zip fully extracted?" }
 
 Say ""
-Say "  Verdant -- a modern Spotify-style theme for foobar2000"
-Say "  by superziper"
+Say "  FLACify -- a modern Spotify-style theme for foobar2000"
+Say "  Lossless Audio Experience"
 Say ""
 
 # ---------------------------------------------------------------------------
@@ -164,7 +164,7 @@ Ok 'closed'
 # ---------------------------------------------------------------------------
 Step '[3/6] Backing up'
 $stamp     = Get-Date -Format 'yyyy-MM-dd_HHmmss'
-$backupDir = Join-Path $fb.Profile "verdant-backup\$stamp"
+$backupDir = Join-Path $fb.Profile "flacify-backup\$stamp"
 New-Item -ItemType Directory -Force -Path $backupDir | Out-Null
 $restored = New-Object System.Collections.ArrayList   # files we overwrote  (restore on uninstall)
 $added    = New-Object System.Collections.ArrayList   # paths we created    (delete on uninstall)
@@ -183,8 +183,8 @@ function Save-Existing($path) {
 # 4. the theme itself -- always ours, always replaced
 # ---------------------------------------------------------------------------
 Step '[4/6] Installing the theme'
-$themeDest = Join-Path $fb.Profile 'verdant'
-if (Test-Path $themeDest) { Note 'replacing an existing verdant\ folder'; [void]$restored.Add($themeDest); Copy-Item $themeDest -Destination (Join-Path $backupDir 'verdant') -Recurse -Force }
+$themeDest = Join-Path $fb.Profile 'flacify'
+if (Test-Path $themeDest) { Note 'replacing an existing flacify\ folder'; [void]$restored.Add($themeDest); Copy-Item $themeDest -Destination (Join-Path $backupDir 'flacify') -Recurse -Force }
 else { [void]$added.Add($themeDest) }
 Copy-Tree $P.Theme $themeDest $true
 Ok ("theme -> {0}" -f $themeDest)
@@ -262,13 +262,13 @@ if ($hasCui) {
 # uninstall script
 # ---------------------------------------------------------------------------
 $un = @()
-$un += "# Undo the Verdant install of $stamp. Close foobar2000 first."
+$un += "# Undo the FLACify install of $stamp. Close foobar2000 first."
 $un += '$ErrorActionPreference = ''Stop'''
 $un += 'if (Get-Process -Name foobar2000 -ErrorAction SilentlyContinue) { Write-Host "close foobar2000 first"; exit 1 }'
 $un += '$backup = Split-Path -Parent $MyInvocation.MyCommand.Path'
 foreach ($a in $added)    { $un += ('if (Test-Path "{0}") {{ Remove-Item -Recurse -Force "{0}"; Write-Host "removed {0}" }}' -f $a) }
 foreach ($r in $restored) { $un += ('Copy-Item (Join-Path $backup "{0}") -Destination "{1}" -Recurse -Force; Write-Host "restored {1}"' -f (Split-Path -Leaf $r), $r) }
-$un += 'Write-Host "Verdant uninstalled."'
+$un += 'Write-Host "FLACify uninstalled."'
 $un -join "`r`n" | Set-Content -Path (Join-Path $backupDir 'uninstall.ps1') -Encoding utf8
 
 # ---------------------------------------------------------------------------
@@ -276,7 +276,7 @@ $un -join "`r`n" | Set-Content -Path (Join-Path $backupDir 'uninstall.ps1') -Enc
 # ---------------------------------------------------------------------------
 Say ''
 Say '  ------------------------------------------------------------'
-Ok  'Verdant installed.'
+Ok  'FLACify installed.'
 Say ''
 if ($manualSteps.Count) {
     Warn 'One step left for you:'
@@ -286,6 +286,6 @@ if ($manualSteps.Count) {
 Say  '  Start foobar2000 to see it.'
 Note ('backup + uninstall.ps1: {0}' -f $backupDir)
 Say  ''
-Note 'Verdant reads your Media Library: if Home and All Songs look empty, add a'
+Note 'FLACify reads your Media Library: if Home and All Songs look empty, add a'
 Note 'music folder under Preferences > Media Library.'
 Say  ''
