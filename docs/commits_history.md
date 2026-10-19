@@ -433,6 +433,28 @@ git commit -m "refactor(ui): distribute artist sync table columns evenly and mak
 # Commit 19: Scope View Hitboxes & Clear Stale Click Targets to Prevent Artist Navigation Corruption
 git add theme/verdant/app.js theme/verdant/views/artists.js docs/commits_history.md
 git commit -m "fix(navigation): scope view hitboxes and clear stale click targets to prevent artist navigation corruption"
+
+# Commit 20: Spotify Web Scraper GraphQL Integration for Avatars & Listeners
+git add theme/verdant/tools/sync_artists.ps1 dist/Verdant-v1.2.0.zip docs/commits_history.md
+git commit -m "feat(sync): integrate Spotify Web Scraper GraphQL API for official artist avatars and monthly listeners"
 ```
+
+---
+
+### Commit 20: Spotify Web Scraper GraphQL Integration
+- **Commit Title**: `feat(sync): integrate Spotify Web Scraper GraphQL API for official artist avatars and monthly listeners`
+- **Scope**: Sync engine & metadata retrieval
+- **Modified Files**:
+  - `theme/verdant/tools/sync_artists.ps1`
+  - `dist/Verdant-v1.2.0.zip`
+  - `docs/commits_history.md`
+- **Key Changes**:
+  - Implemented reverse-engineered anonymous token bootstrap from Spotify Web Player / Embed endpoints without requiring Spotify Premium, API keys, or user login.
+  - Added Spotify Pathfinder GraphQL queries: `searchDesktop` for official artist avatar extraction (640x640) and `queryArtistOverview` for genuine monthly listeners and bio text.
+  - Placed Spotify as the primary #1 metadata provider, retaining Deezer HD and Wikipedia as robust fallbacks.
+  - Reinforced zero-resync offline-first cache guard ensuring cached artists are never re-queried over the network.
+  - Updated release distribution package.
+- **Rationale**: Delivers genuine Spotify artist photos and verified listener statistics directly inside the foobar2000 theme with zero setup overhead for users.
+
 
 
