@@ -85,12 +85,12 @@ function drawHome(gr,r){
       if(mHov) gr.FillRoundRect(mx - 6, my - 6, mcardW + 12, mcardH + 12, 8, 8, COL.rowHover);
 
       // Artwork: 2x2 Mosaic or Single cover
-      if(mix.cands && mix.cands.length >= 4 && typeof mosaicImg === 'function'){
-        var miBmp = mosaicImg(mix.cands, 'mix' + mix.id, mcardW, 6);
-        if(miBmp) gr.DrawImage(miBmp, mx, my, mcardW, mcardW, 0, 0, miBmp.Width, miBmp.Height, 0, 255);
-        else drawRounded(gr, mx, my, mcardW, 6, mix.single, mix.title);
+      var miBmp = (mix.cands && mix.cands.length >= 4 && typeof mosaicImg === 'function') ? mosaicImg(mix.cands, 'mix' + mix.id, mcardW, 6) : null;
+      if(miBmp){
+        gr.DrawImage(miBmp, mx, my, mcardW, mcardW, 0, 0, miBmp.Width, miBmp.Height, 0, 255);
       } else {
-        drawRounded(gr, mx, my, mcardW, 6, mix.single, mix.title);
+        var sH = (mix.single && typeof mix.single === 'object' && mix.single.Path) ? mix.single : (mix.handles && mix.handles.length ? mix.handles[0] : null);
+        drawRounded(gr, mx, my, mcardW, 6, sH, mix.title);
       }
 
       // Bottom gradient on art

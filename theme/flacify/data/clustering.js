@@ -67,6 +67,26 @@ function loadDailyMixesFromDisk(){
               if(h) m.handles.push(h);
             }
           }
+          // Hydrate candidate album handles for mosaic artwork
+          m.cands = [];
+          var candPaths = m.cands || [];
+          for(var ci = 0; ci < candPaths.length; ci++){
+            var cp = candPaths[ci];
+            var ch = (typeof cp === 'string') ? getHandleByPath(cp) : cp;
+            if(ch && typeof ch === 'object' && ch.Path) m.cands.push(ch);
+          }
+          if(m.cands.length < 4 && m.handles.length >= 4){
+            var seen = {};
+            for(var sc = 0; sc < m.cands.length; sc++) seen[m.cands[sc].Path] = true;
+            for(var hi = 0; hi < m.handles.length && m.cands.length < 4; hi++){
+              var candH = m.handles[hi];
+              if(candH && candH.Path && !seen[candH.Path]){
+                seen[candH.Path] = true;
+                m.cands.push(candH);
+              }
+            }
+          }
+          m.single = m.cands.length ? m.cands[0] : (m.handles.length ? m.handles[0] : null);
           if(m.handles.length > 0) validCount++;
         }
         if(validCount >= 2){

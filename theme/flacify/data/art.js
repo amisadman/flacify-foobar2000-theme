@@ -6,7 +6,18 @@
    art off the paint thread; arrival caches it and repaints (coalesced). warmArt() pre-requests. */
 var artCache={}, albKeyCache={}, thumbCache={}, artPending={}, artRepaintPending=false;
 
-function albKey(h){ if(!h) return ''; var p=h.Path; if(albKeyCache.hasOwnProperty(p)) return albKeyCache[p]; var k=TF.albkey.EvalWithMetadb(h); albKeyCache[p]=k; return k; }
+function albKey(h){
+  if(!h || typeof h !== 'object' || !h.Path) return '';
+  var p=h.Path;
+  if(albKeyCache.hasOwnProperty(p)) return albKeyCache[p];
+  try{
+    var k=TF.albkey.EvalWithMetadb(h);
+    albKeyCache[p]=k;
+    return k;
+  }catch(e){
+    return '';
+  }
+}
 /* Art arrival used to trigger a full repaintAll every 60ms. With cold caches a full paint costs
    30-90ms, so one queued every 60ms leaves the single script thread with nothing spare -- the app
    drew its content and then sat unresponsive until the art finished. Two changes: repaint only
@@ -119,7 +130,7 @@ function getArtK(h,key){                        // cached image, or null (not-lo
   return null;
 }
 function artLoaded(key){ return artCache.hasOwnProperty(key); }   // vs. still-loading (don't cache derivatives yet)
-function getArt(h){ return h?getArtK(h,albKey(h)):null; }
+function getArt(h){ return (h && typeof h === 'object' && h.Path) ? getArtK(h, albKey(h)) : null; }
 var warmed={};   // guards one-time warm passes per view; reset when items change
 // bulk warm-up is low priority: it must not push what's currently on screen to the back of the queue
 function warmArt(handles){ if(!handles) return; var n=(handles.length!==undefined)?handles.length:handles.Count; for(var i=0;i<n;i++){ var h=handles[i]; if(h) requestArt(h,albKey(h),true); } }
@@ -658,10 +669,18 @@ function plCovers(pi){
 }
 function plChoice(pi){ return coverChoice('pl|'+pi,plCovers(pi)); }
 function mosaicImg(handles,seed,size,rad){
+  if(!handles || !handles.length) return null;
   var key=(seed||'')+'|'+size+'|m'+rad;
   if(mosaicCache.hasOwnProperty(key)) return mosaicCache[key];
-  var i, ready=true;
-  for(i=0;i<4;i++){ getArt(handles[i]); if(!artLoaded(albKey(handles[i]))) ready=false; }   // request all; wait for all
+  var i, ready=true, validHandles=[];
+  for(i=0;i<4;i++){
+    var h=handles[i];
+    if(typeof h==='string' && typeof getHandleByPath==='function') h=getHandleByPath(h);
+    if(!h || typeof h!=='object' || !h.Path){ ready=false; break; }
+    validHandles.push(h);
+  }
+  if(!ready || validHandles.length<4) return null;
+  for(i=0;i<4;i++){ getArt(validHandles[i]); if(!artLoaded(albKey(validHandles[i]))) ready=false; }
   if(!ready) return null;                     // still loading -> placeholder single cover; don't cache a half mosaic
   var res=null;
   try{
@@ -669,7 +688,7 @@ function mosaicImg(handles,seed,size,rad){
     var h1=Math.floor(size/2), h2=size-h1;
     var cells=[[0,0,h1,h1],[h1,0,h2,h1],[0,h1,h1,h2],[h1,h1,h2,h2]];
     for(i=0;i<4;i++){
-      var art=getArt(handles[i]), c=cells[i];
+      var art=getArt(validHandles[i]), c=cells[i];
       if(art){ var rz=art.Resize(c[2],c[3]); g.DrawImage(rz,c[0],c[1],c[2],c[3],0,0,rz.Width,rz.Height); }
       else g.FillSolidRect(c[0],c[1],c[2],c[3],coverCol((seed||'')+i));
     }
