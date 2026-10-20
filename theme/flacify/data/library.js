@@ -343,7 +343,7 @@ function loadArtist(name){
    the library. Rows: {k:'g1'|'g2'|'t'}; headers also carry kind:'artist'|'album'. */
 var songsIdx=null, songsRows=null, songsTracks=null, songsContentH=0, songsTotalSec=0;
 var songsGroup='none', songsScroll=0, songsScrollT=0, SONGS_MAXPX=0;
-var sgMenuOpen=false, SG_HB=[], HB_SG=null, HB_ALLSONGS=null, HB_RGNORM=null;
+var sgMenuOpen=false, SG_HB=[], HB_SG=null, HB_ALLSONGS=null;
 var SONGS_GROUPS=[['No grouping','none'],['By artist','artist'],['By album','album'],['By artist & album','both']];
 /* ---- group-list metrics: one indent step per nesting level (SG_IND) and one shared vertical
    rhythm per header -- GAP above (the divider sits at its top), artwork, PADB below. Header

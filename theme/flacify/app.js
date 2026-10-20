@@ -231,7 +231,7 @@ function on_paint(gr){
   // A partial paint skips drawOverlays, so a modal's dim backdrop would not be reapplied over the
   // region it redraws (the bar's 1 Hz repaint would flash back to full brightness). While an
   // overlay owns the screen, every paint takes the full path.
-  var modal=renameEdit||ctxMenu||confirmDel||dupPrompt||rgPrompt||songDetails||(typeof artistStudioModal!=='undefined'&&artistStudioModal)||(typeof drModal!=='undefined'&&drModal)||(typeof eqModal!=='undefined'&&eqModal);
+  var modal=renameEdit||ctxMenu||confirmDel||dupPrompt||songDetails||(typeof artistStudioModal!=='undefined'&&artistStudioModal)||(typeof eqModal!=='undefined'&&eqModal);
   if(dirtyAll || !anyPartial || modal || stale){ // full paint, or an OS/stale paint we can't scope
     clearDirty();
     HB_DOTS=[];
@@ -264,7 +264,7 @@ function drawMain(gr){
   HB_ARTISTS_SYNC_BTN=null;
   HB_SYNC_FETCH_MISSING=null; HB_SYNC_FETCH_ALL=null; HB_SYNC_STOP=null; HB_SYNC_OPEN_DIR=null; HB_SYNC_ROWS=[];
   HB_ANALYTICS_EXPORT=null; HB_PODIUM=[];
-  if(view!=='songs'){ HB_SG=null; SG_HB=[]; HB_RGNORM=null; }
+  if(view!=='songs'){ HB_SG=null; SG_HB=[]; }
   if(view!=='playlist'){ HB_PLSORT=null; HB_PLSORTDIR=null; PL_SORT_HB=[]; }
   applyKeyMode();
   if(view==='search') startCaret(); else stopCaret();
@@ -297,7 +297,7 @@ function on_mouse_lbtn_down(x,y){
     if(SONG_DET_SB && inRect(x,y,SONG_DET_SB)){ drag='songDetScroll'; setSongDetScroll(y); return; }
     return;
   }
-  if(ctxMenu||confirmDel||renameEdit||sgMenuOpen||plSortMenuOpen||vizMenuOpen||dupPrompt||rgPrompt||(typeof artistStudioModal!=='undefined'&&artistStudioModal)) return;   // overlays are modal; dismissal/actions handled on button-up
+  if(ctxMenu||confirmDel||renameEdit||sgMenuOpen||plSortMenuOpen||vizMenuOpen||dupPrompt||(typeof artistStudioModal!=='undefined'&&artistStudioModal)) return;   // overlays are modal; dismissal/actions handled on button-up
   if(HB_SEEK && inRect(x,y,HB_SEEK)){ drag='seek'; dragFrac=seekFrac(x); repaintBar(); return; }
   if(HB_VOL && inRect(x,y,HB_VOL)){ drag='vol'; applyVol(x); return; }
   if(SBH && inRect(x,y,SBH)){ drag='scrollh'; setScrollH(x); return; }
@@ -305,7 +305,7 @@ function on_mouse_lbtn_down(x,y){
   if(SB && inRect(x,y,SB)){ drag='scroll'; setScroll(y); return; }
 }
 function on_mouse_rbtn_up(x,y){
-  if(ctxMenu||confirmDel||renameEdit||dupPrompt||rgPrompt||songDetails||(typeof artistStudioModal!=='undefined'&&artistStudioModal)||(typeof drModal!=='undefined'&&drModal)||(typeof eqModal!=='undefined'&&eqModal)) return true;   // a modal is open: swallow
+  if(ctxMenu||confirmDel||renameEdit||dupPrompt||songDetails||(typeof artistStudioModal!=='undefined'&&artistStudioModal)||(typeof eqModal!=='undefined'&&eqModal)) return true;   // a modal is open: swallow
   var i;
   for(i=0;i<HB_TR.length;i++){
     if(inRect(x,y,HB_TR[i])){
@@ -394,7 +394,6 @@ function doCtrl(act){
   else if(act==='mute'){ toggleMute(); return; }
   else if(act==='like'){ if(NP) toggleLike(NP); return; }
   else if(act==='details'){ if(NP){ openSongDetails(NP); } return; }
-  else if(act==='dr_modal'){ if(NP){ openDrModal(NP); } return; }
   else if(act==='device_picker'){ openAudioDeviceMenu(Math.max(16, Math.min(mx-100, W-320)), Math.max(16, my-160)); return; }
   else if(act==='eq_modal'){ openEqModal(); return; }
   else if(act==='add_to_pl'){ if(NP){ openAddToPlaylistMenu(NP, Math.max(16, Math.min(mx-80, W-260)), Math.min(my-140, H-260)); } return; }
@@ -460,19 +459,7 @@ function on_mouse_lbtn_up(x,y){
     } else closeSongDetails();
     return;
   }
-  if(typeof drModal!=='undefined' && drModal){
-    if(DR_MODAL_HB){
-      if(DR_MODAL_HB.scan && inRect(x,y,DR_MODAL_HB.scan)){
-        var mh=drModal.handle;
-        closeDrModal();
-        if(mh) rgRunScan([mh]);
-        return;
-      }
-      if(DR_MODAL_HB.close && inRect(x,y,DR_MODAL_HB.close)){ closeDrModal(); return; }
-    }
-    closeDrModal();
-    return;
-  }
+
   if(typeof eqModal!=='undefined' && eqModal){
     if(EQ_MODAL_HB){
       if(EQ_MODAL_HB.presets && EQ_MODAL_HB.presets.length){
@@ -490,10 +477,7 @@ function on_mouse_lbtn_up(x,y){
     if(DUP_HB && inRect(x,y,DUP_HB.skip)) dupSkip(); else dupKeep();   // "Add anyway"/outside: leave as-is
     return;
   }
-  if(rgPrompt){
-    if(RG_HB && inRect(x,y,RG_HB.scan)){ rgConfirmScan(); return; }
-    rgPrompt=null; repaintAll(); return;      // cancel / click outside
-  }
+
   if(confirmDel){
     if(CONF_HB && inRect(x,y,CONF_HB.del)){ doDeletePlaylist(confirmDel.pl); return; }
     confirmDel=null; repaintAll(); return;   // cancel / click outside
@@ -603,7 +587,6 @@ function on_mouse_lbtn_up(x,y){
     sgMenuOpen=false; repaintAll(); return;
   }
   if(HB_SG && inRect(x,y,HB_SG)){ sgMenuOpen=true; repaintAll(); return; }
-  if(HB_RGNORM && inRect(x,y,HB_RGNORM)){ rgToggle(); return; }
   if(plSortMenuOpen){
     if((t=hit(PL_SORT_HB,x,y))){ setPlSort(t.v); return; }
     plSortMenuOpen=false; repaintAll(); return;
@@ -1028,7 +1011,7 @@ function hoverSig(x,y){
   }
   if(dupPrompt){ if(DUP_HB){ if(inRect(x,y,DUP_HB.skip)) return 'dps'; if(inRect(x,y,DUP_HB.keep)) return 'dpk'; } return 'dp'; }
   if(renameEdit){ if(RENAME_HB){ if(inRect(x,y,RENAME_HB.save)) return 'rns'; if(inRect(x,y,RENAME_HB.cancel)) return 'rnc'; } return 'rn'; }
-  if(rgPrompt){ if(RG_HB){ if(inRect(x,y,RG_HB.scan)) return 'rgs'; if(inRect(x,y,RG_HB.cancel)) return 'rgc'; } return 'rg'; }
+
   if(confirmDel){ if(CONF_HB && inRect(x,y,CONF_HB.del)) return 'cfd'; if(CONF_HB && inRect(x,y,CONF_HB.cancel)) return 'cfc'; return 'cf'; }
   if(ctxMenu){ i=hitIdx(CTX_HB,x,y); return (i<0)?'cx':('cx'+i); }
   if(sgMenuOpen){ i=hitIdx(SG_HB,x,y); return (i<0)?'sg':('sg'+i); }
@@ -1111,7 +1094,6 @@ function hoverSig(x,y){
     }
   }
   if(HB_SG && inRect(x,y,HB_SG)) return 'sgb';
-  if(HB_RGNORM && inRect(x,y,HB_RGNORM)) return 'nzb';
   if(HB_PLSORT && inRect(x,y,HB_PLSORT)) return 'psb';
   if(HB_PLSORTDIR && inRect(x,y,HB_PLSORTDIR)) return 'psd';
   if(SB && inRect(x,y,SB)) return 'sb';
@@ -1381,10 +1363,12 @@ function on_volume_change(){
   repaintBar();
   if(fsMode) repaintAll();
 }
-// ReplayGain can also be switched from foobar's own Playback menu -- keep the pill honest
-function on_replaygain_mode_changed(){ repaintMain(); }
-// rgStat included: a ReplayGain scan lands as a tag write, so this is how the pill learns it finished
-function on_metadb_changed(handles,fromhook){ if(fromhook) return; invalidateItems(); albKeyCache={}; hueCache={}; artistCandCache={}; coverPickCache={}; songsIdx=null; songsRows=null; songsTracks=null; rgStat=null; drInfoCache={}; updateNP(); repaintAll(); }
+// Keep ReplayGain disabled so playback volume is bit-perfect and never attenuated
+function on_replaygain_mode_changed(){
+  try{ if(fb.ReplaygainMode !== 0) fb.ReplaygainMode = 0; }catch(e){}
+  repaintMain();
+}
+function on_metadb_changed(handles,fromhook){ if(fromhook) return; invalidateItems(); albKeyCache={}; hueCache={}; artistCandCache={}; coverPickCache={}; songsIdx=null; songsRows=null; songsTracks=null; updateNP(); repaintAll(); }
 /* A switch changes which playlist is ACTIVE, not what any playlist contains -- and every cache
    invalidateItems() drops is keyed by playlist index, so none of them went stale here. Dropping
    them meant each switch re-derived covers and re-ran the art gates against an artCache that had

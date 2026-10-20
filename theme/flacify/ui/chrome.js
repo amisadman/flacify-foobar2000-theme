@@ -210,10 +210,8 @@ function drawOverlays(gr){
     };
   }
   if(dupPrompt) drawDupPrompt(gr);
-  if(rgPrompt) drawRgPrompt(gr);
   if(songDetails) drawSongDetails(gr);
   if(artistStudioModal) drawArtistStudioModal(gr);
-  if(typeof drModal!=='undefined' && drModal) drawDrModal(gr);
   if(typeof eqModal!=='undefined' && eqModal) drawEqModal(gr);
 }
 // wrapped paragraph; returns the y just past the last line drawn

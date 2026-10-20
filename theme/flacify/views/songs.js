@@ -4,7 +4,7 @@
 
 /* ---- All Songs: header + group-by pill + grouped/flat track list ---- */
 function drawSongs(gr,r){
-  HB_TR=[]; HB_CARD=[]; HB_SG=null; HB_RGNORM=null;
+  HB_TR=[]; HB_CARD=[]; HB_SG=null;
   var songsOk=ensureBuilt('songs',songsReady,songsSteps);
   if(!songsOk || !gateReady('songsart',rowHandlesSongs(),0,ROW_GATE_MS)){   // 0 = the default cap
     if(songsOk || skelVisible('songs')) drawViewSkeleton(gr,r);
@@ -15,12 +15,11 @@ function drawSongs(gr,r){
   gr.FillGradRect(r.x,r.y,r.w,SHEAD,90,blend(artHue(cov.single,'__lib__'),COL.base,0.42),COL.base,1.0);
   var rx=r.x+r.w-M.cpad, lx=r.x+M.cpad, ay=r.y+44, art=M.artSz;
   drawLibCover(gr,lx,ay,art,8);
-  // header text stops short of the pill column so the two can never collide on a narrow panel
-  var gpW=232, pgap=8, nzW=Math.max(196,Math.round(gr.CalcTextWidth('Normalize volume',FONT.pl))+72);
-  var fltBtnSz=38, fltGap=8;
-  var clW=nzW+pgap+gpW+fltGap+fltBtnSz;
+  // header text stops short of the dropdown column so the two can never collide on a narrow panel
+  var gpW=232, fltBtnSz=38, fltGap=12;
+  var clW=gpW+fltGap+fltBtnSz;
   var fltBtnX=Math.max(lx+art+24,rx-clW);
-  var clX=fltBtnX+fltBtnSz+fltGap, gpX=clX+nzW+pgap;
+  var gpX=fltBtnX+fltBtnSz+fltGap;
   var tx=lx+art+24, tw=Math.max(120,fltBtnX-12-tx);
   tL(gr,'LIBRARY',FONT.eyebrow,COL.text,tx,ay+6,tw,18);
   tL(gr,'All Songs',FONT.title,COL.text,tx,ay+28,tw,84);
@@ -43,15 +42,7 @@ function drawSongs(gr,r){
     tL(gr, durStr, FONT.meta, COL.white, sRestX, ay+150, durW, 22);
   }
   drawFilterButton(gr,fltBtnX,ay+142,fltBtnSz);
-  HB_RGNORM=drawNormalizePill(gr,clX,ay+142,nzW,38);
   HB_SG=drawDropPill(gr,gpX,ay+142,gpW,38,'Group: '+labelOf(SONGS_GROUPS,songsGroup,'No grouping'),sgMenuOpen);
-  // one line of truth under the pill: what normalizing has left to do, or what it's currently doing
-  if(rgStat && rgStat.total>0){
-    var nzCap=rgScanFailed ? "Couldn't start foobar's ReplayGain scanner"
-            : (rgStat.missing.length ? (fmtNum(rgStat.scanned)+' of '+fmtNum(rgStat.total)+' tracks scanned')
-            : ('All tracks scanned  '+CH_DOT+'  normalizing '+(rgModeOn()?'on':'off')));
-    tL(gr,nzCap,FONT.plSub,rgScanFailed?RGB(240,96,96):COL.text3,clX+2,ay+186,Math.min(clW,rx-clX)-4,18);
-  }
 
   if(!songsRows.length){
     tC(gr,'Nothing in your library yet',FONT.sect,COL.text2,r.x,r.y+SHEAD+40,r.w,24);

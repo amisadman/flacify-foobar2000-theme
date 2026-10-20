@@ -11,256 +11,26 @@
    The scan itself is foobar's: it owns the progress window and the "update file tags" confirmation.
    That is why nothing here tracks progress. Tags landing fires on_metadb_changed, which drops
    rgStat, so the pill recomputes on the next paint whether the user finished or cancelled. */
+// Ensure ReplayGain volume reduction/attenuation is permanently disabled for 100% bit-perfect volume
+try { if(fb.ReplaygainMode !== 0) fb.ReplaygainMode = 0; } catch(e){}
+
 var rgStat=null, rgScanFailed=false, rgPrompt=null, RG_HB=null;
-/* One title-format pass over the library, same shape (and cost) as the libTF fields -- so it runs
-   as a sliced step of the All Songs build rather than inline in a paint. Holds the missing handles
-   rather than just a count: they are exactly what the scan gets handed. */
-function rgCompute(){
-  var lib=libItems(), total=lib?lib.Count:0, flags=[], miss=[], i;
-  if(total){ try{ flags=TF.rg.EvalWithMetadbs(lib); }catch(e){ flags=[]; } }
-  for(i=0;i<flags.length;i++) if(flags[i]!=='1') miss.push(lib[i]);
-  rgStat={total:total, missing:miss, scanned:total-miss.length};
-  return rgStat;
-}
-function rgState(){ return rgStat||rgCompute(); }
-function rgModeOn(){ try{ return fb.ReplaygainMode!==0; }catch(e){ return false; } }
-function rgSetMode(on){ try{ fb.ReplaygainMode=on?1:0; }catch(e){} }   // 1 = track gain: every track to the same loudness
-function rgActive(){ var s=rgState(); return s.total>0 && !s.missing.length && rgModeOn(); }
-/* The scanner's context command has sat under different parents across foobar versions, so try the
-   known paths and promote whichever answers. flag 8 (flag_view_full) runs the item even if the user
-   has hidden it under Preferences > Display > Context Menu. */
-var RG_SCAN_CMDS=['ReplayGain/Scan per-file track gain',
-                  'Utilities/ReplayGain/Scan per-file track gain',
-                  'Tagging/ReplayGain/Scan per-file track gain'];
-function rgRunScan(handles){
-  if(!handles.length) return true;
-  var hl=fb.CreateHandleList(), i;
-  for(i=0;i<handles.length;i++) hl.Add(handles[i]);
-  for(i=0;i<RG_SCAN_CMDS.length;i++){
-    var ok=false;
-    try{ ok=fb.RunContextCommandWithMetadb(RG_SCAN_CMDS[i],hl,8); }catch(e){ ok=false; }
-    if(ok){ RG_SCAN_CMDS.unshift(RG_SCAN_CMDS.splice(i,1)[0]); return true; }   // remember what worked
-  }
-  return false;
-}
-// One button, three situations: already normalizing -> switch off; tags all present -> switch on
-// instantly; tags missing -> confirm first, because scanning WRITES to the user's files.
-function rgToggle(){
-  var s=rgState();
-  if(!s.total) return;
-  rgScanFailed=false;
-  if(rgActive()){ rgSetMode(false); repaintAll(); return; }
-  if(!s.missing.length){ rgSetMode(true); repaintAll(); return; }
-  rgPrompt={n:s.missing.length, total:s.total}; repaintAll();
-}
-function rgConfirmScan(){
-  var miss=rgState().missing;
-  rgPrompt=null;
-  rgSetMode(true);                 // so the tags take effect the moment they land
-  rgScanFailed=!rgRunScan(miss);
-  rgStat=null;                     // recount on the next paint; the scan is foobar's from here
-  repaintAll();
-}
+function rgCompute(){ return {total:0, missing:[], scanned:0}; }
+function rgState(){ return {total:0, missing:[], scanned:0}; }
+function rgModeOn(){ return false; }
+function rgSetMode(on){ try{ fb.ReplaygainMode=0; }catch(e){} }
+function rgActive(){ return false; }
+function rgRunScan(handles){ return true; }
+function rgToggle(){}
+function rgConfirmScan(){}
+function drawRgPrompt(gr){}
+function drawNormalizePill(gr,x,y,w,h){ return null; }
 
-/* Scanning WRITES ReplayGain tags into the user's audio files, so it is confirmed rather than run
-   off a single click -- and the copy says so plainly. Height follows the wrapped body so the text
-   can never overrun the panel at a different UISCALE. */
-var RG_BODY='foobar2000 will scan them and write ReplayGain tags into the files, then play every '+
-            'track at the same loudness. Its own progress window runs the scan, and nothing is deleted.';
-function drawRgPrompt(gr){
-  var cw=Math.min(470,W-40), pw=cw-56, lh=24;
-  var nl=Math.max(1,gr.EstimateLineWrap(RG_BODY,FONT.pl,pw).length/2);
-  var ch=138+nl*lh+PILL_H;
-  var cy=Math.max(10,Math.round((H-ch)/2)), cx=modalPanel(gr,cw,ch,cy);
-  var px=cx+28, y=cy+26;
-  tL(gr,'Normalize volume?',FONT.sect,COL.text,px,y,pw,26); y+=38;
-  tL(gr,fmtNum(rgPrompt.n)+' of '+fmtNum(rgPrompt.total)+' tracks still need a loudness scan.',FONT.pl,COL.text2,px,y,pw,22); y+=32;
-  tPara(gr,RG_BODY,FONT.pl,COL.text2,px,y,pw,lh);
-  var w2=pillW(gr,'Scan & normalize'), w1=pillW(gr,'Cancel'), gap=12;
-  var by=cy+ch-22-PILL_H, x2=cx+cw-28-w2, x1=x2-gap-w1;
-  RG_HB={ cancel:drawPill(gr,x1,by,w1,'Cancel',false), scan:drawPill(gr,x2,by,w2,'Scan & normalize',true) };
-}
-
-/* Normalize-volume pill: the same capsule as the group-by dropdown, but a state toggle rather than
-   a menu -- filled green only when normalizing is genuinely in effect (tags present AND playback
-   applying them), so it can never claim to be on while doing nothing. */
-function drawNormalizePill(gr,x,y,w,h){
-  var on=rgActive(), hot=hv(x,y,x+w,y+h);
-  gr.FillRoundRect(x,y,w,h,h/2,h/2,on?(hot?RGB(45,215,110):COL.green):(hot?RGB(58,58,58):RGBA(0,0,0,90)));
-  var col=on?COL.black:COL.text;
-  drawIcon(gr,'equalizer',col,x+14,y+(h-20)/2,20,20,18);
-  tL(gr,'Normalize volume',FONT.pl,col,x+42,y,w-56,h);
-  return {x0:x,y0:y,x1:x+w,y1:y+h};
-}
-
-/* ------------------------- Live TT Dynamic Range (DR) Meter ------------------------- */
 var drInfoCache={};
-
-function parseDb(valStr){
-  if(!valStr) return NaN;
-  var clean=String(valStr).replace(/dB/i,'').replace(/^\s+|\s+$/g,'');
-  return parseFloat(clean);
-}
-
-function getDynamicRange(h){
-  if(!h) return null;
-  var p=h.Path;
-  if(drInfoCache.hasOwnProperty(p) && drInfoCache[p] && drInfoCache[p].hasTags) return drInfoCache[p];
-
-  var drTagStr=TF.drTag.EvalWithMetadb(h);
-  var drVal=parseInt(drTagStr,10);
-
-  var gainStr=TF.rgTrackGain.EvalWithMetadb(h);
-  var peakStr=TF.rgTrackPeak.EvalWithMetadb(h);
-  var gain=parseDb(gainStr);
-  var peak=parseFloat(peakStr);
-
-  var albGainStr=TF.rgAlbumGain.EvalWithMetadb(h);
-  var albPeakStr=TF.rgAlbumPeak.EvalWithMetadb(h);
-
-  // If explicit DR tag is absent, compute mathematically via the TT DR formula
-  if(isNaN(drVal) || drVal<=0){
-    if(!isNaN(gain) && !isNaN(peak) && peak>0){
-      var peakDb=20*(Math.log(peak)/Math.LN10);
-      drVal=Math.round(peakDb-gain);
-    }
-  }
-
-  if(isNaN(drVal) || drVal<=0){
-    return {
-      score:0,
-      label:'DR --',
-      rating:'unscanned',
-      ratingLabel:'Loudness unscanned',
-      col:COL.text3,
-      bg:RGBA(255,255,255,8),
-      border:RGBA(255,255,255,28),
-      trackGain:gainStr||'None',
-      trackPeak:(!isNaN(peak)&&peak>0?(20*Math.log(peak)/Math.LN10).toFixed(2)+' dBFS':(peakStr||'None')),
-      albumGain:albGainStr||'None',
-      hasTags:false
-    };
-  }
-
-  drVal=Math.max(1,Math.min(30,drVal));
-
-  var rating='standard';
-  var ratingLabel='Typical Dynamic Range';
-  var col=RGB(245,158,11); // Amber
-  var bg=RGBA(245,158,11,26);
-  var border=RGBA(245,158,11,140);
-
-  if(drVal>=12){
-    rating='master';
-    ratingLabel='Audiophile Master Quality (Uncompressed Transients)';
-    col=RGB(16,185,129); // Emerald Green
-    bg=RGBA(16,185,129,26);
-    border=RGBA(16,185,129,150);
-  } else if(drVal<8){
-    rating='compressed';
-    ratingLabel='Heavy Dynamic Compression (Loudness War Master)';
-    col=RGB(239,68,68); // Crimson Red
-    bg=RGBA(239,68,68,26);
-    border=RGBA(239,68,68,150);
-  }
-
-  var peakDbStr=(!isNaN(peak)&&peak>0)?(20*Math.log(peak)/Math.LN10).toFixed(2)+' dBFS':(peakStr||'None');
-
-  var info={
-    score:drVal,
-    label:'DR'+drVal,
-    rating:rating,
-    ratingLabel:ratingLabel,
-    col:col,
-    bg:bg,
-    border:border,
-    trackGain:gainStr||'None',
-    trackPeak:peakDbStr,
-    albumGain:albGainStr||'None',
-    hasTags:true
-  };
-  drInfoCache[p]=info;
-  return info;
-}
-
-/* ------------------------- Interactive DR Popover Modal ------------------------- */
-var drModal=null, DR_MODAL_HB=null;
-
-function openDrModal(h){
-  if(!h) return;
-  drModal={ handle:h, info:getDynamicRange(h) };
-  repaintAll();
-}
-
-function closeDrModal(){
-  drModal=null;
-  DR_MODAL_HB=null;
-  repaintAll();
-}
-
-function drawDrModal(gr){
-  if(!drModal) return;
-  var info=drModal.info;
-  var cw=Math.min(520,W-40), ch=340;
-  var cy=Math.max(10,Math.round((H-ch)/2)), cx=modalPanel(gr,cw,ch,cy);
-  var px=cx+28, y=cy+24, pw=cw-56;
-
-  // Header with DR Score Pill
-  var drPillW=Math.round(gr.CalcTextWidth(info.label,FONT.tab))+24;
-  gr.FillRoundRect(px,y,drPillW,30,6,6,info.bg);
-  gr.DrawRoundRect(px,y,drPillW,30,6,6,1,info.border);
-  tC(gr,info.label,FONT.tab,info.col,px,y,drPillW,30);
-
-  tL(gr,'TT Dynamic Range Analysis',FONT.sect,COL.text,px+drPillW+14,y,pw-drPillW-14,30);
-  y+=44;
-
-  // Mastering Classification Subtitle
-  tL(gr,info.ratingLabel,FONT.pl,info.col,px,y,pw,22);
-  y+=30;
-
-  // Technical Loudness Metrics Grid (Glassmorphism card)
-  var gh=106, gy=y;
-  gr.FillRoundRect(px,gy,pw,gh,8,8,RGBA(255,255,255,8));
-  gr.DrawRoundRect(px,gy,pw,gh,8,8,1,RGBA(255,255,255,22));
-
-  var colW=Math.floor(pw/2);
-  var my=gy+14;
-  tL(gr,'Track Peak Level:',FONT.plSub,COL.text2,px+16,my,colW-20,18);
-  tL(gr,info.trackPeak,FONT.pl,COL.text,px+16,my+18,colW-20,20);
-
-  tL(gr,'ReplayGain Track Offset:',FONT.plSub,COL.text2,px+colW,my,colW-20,18);
-  tL(gr,info.trackGain,FONT.pl,COL.text,px+colW,my+18,colW-20,20);
-
-  my+=46;
-  tL(gr,'ReplayGain Album Offset:',FONT.plSub,COL.text2,px+16,my,colW-20,18);
-  tL(gr,info.albumGain,FONT.pl,COL.text,px+16,my+18,colW-20,20);
-
-  var qualText=(info.score>=12?'Pristine (Master Quality)':(info.score>=8?'Normal (Commercial)':'Hyper-compressed'));
-  tL(gr,'Dynamic Classification:',FONT.plSub,COL.text2,px+colW,my,colW-20,18);
-  tL(gr,qualText,FONT.pl,info.col,px+colW,my+18,colW-20,20);
-
-  y=gy+gh+18;
-
-  // Explanation note
-  var note=info.hasTags?
-    'Scores DR12+ denote audiophile dynamic contrast without artificial brickwall limiting. Scores below DR8 indicate heavy compression.':
-    'This track does not have ReplayGain tags. Scan the album or track to compute its exact Dynamic Range.';
-  tPara(gr,note,FONT.plSub,COL.text3,px,y,pw,18);
-
-  // Buttons at bottom
-  var by=cy+ch-22-PILL_H;
-  var wClose=pillW(gr,'Close');
-  var xClose=cx+cw-28-wClose;
-  DR_MODAL_HB={
-    close:drawPill(gr,xClose,by,wClose,'Close',true)
-  };
-
-  if(!info.hasTags){
-    var wScan=pillW(gr,'Scan Track Loudness');
-    var xScan=xClose-12-wScan;
-    DR_MODAL_HB.scan=drawPill(gr,xScan,by,wScan,'Scan Track Loudness',false);
-  }
-}
+function getDynamicRange(h){ return null; }
+function openDrModal(h){}
+function closeDrModal(){}
+function drawDrModal(gr){}
 
 /* ------------------------- Audio Output Device Quick-Switcher ------------------------- */
 function openAudioDeviceMenu(x,y){
@@ -268,14 +38,13 @@ function openAudioDeviceMenu(x,y){
     var m=window.CreatePopupMenu();
     m.AppendMenuItem(0, 1, 'Audio Output Device (Preferences)...');
     m.AppendMenuItem(0, 2, 'Parametric Equalizer Presets...');
-    m.AppendMenuItem(0, 3, 'TT Dynamic Range (DR) Inspector...');
     m.AppendMenuSeparator();
-    m.AppendMenuItem(0, 4, 'Windows Sound Control Panel...');
+    m.AppendMenuItem(0, 3, 'Windows Sound Control Panel...');
     m.AppendMenuSeparator();
-    m.AppendMenuItem(0, 5, 'foobar2000 Preferences...');
+    m.AppendMenuItem(0, 4, 'foobar2000 Preferences...');
 
     var id=m.TrackPopupMenu(x,y);
-    if(id===1 || id===5){
+    if(id===1 || id===4){
       try{
         fb.ShowPreferences('{65D8B383-1463-48EC-AB9E-7C4D789B880A}');
       }catch(e1){
@@ -284,8 +53,6 @@ function openAudioDeviceMenu(x,y){
     }else if(id===2){
       if(typeof openEqModal==='function') openEqModal();
     }else if(id===3){
-      if(typeof openDrModal==='function') openDrModal(fb.GetNowPlaying());
-    }else if(id===4){
       try{
         var sh=new ActiveXObject('WScript.Shell');
         sh.Run('control mmsys.cpl sounds');

@@ -122,7 +122,7 @@ function exportWrappedCard(){
     var footY = H - 140;
     gr.DrawLine(startX, footY, W - startX, footY, 1, RGB(40, 40, 45));
     tL(gr, 'FLACify for foobar2000 - Pure Bit-Perfect Audio', fLabel, RGB(120, 120, 130), startX, footY + 30, 600, 30);
-    tR(gr, 'TT Dynamic Range: DR' + summary.avgDr, fLabel, RGB(16, 185, 129), startX, footY + 30, W - startX * 2, 30);
+    tR(gr, 'Bit-Perfect Lossless Playback', fLabel, RGB(16, 185, 129), startX, footY + 30, W - startX * 2, 30);
 
     bmp.ReleaseGraphics(gr);
 
@@ -198,7 +198,7 @@ function drawAnalytics(gr, r){
     { label: 'HOURS STREAMED', val: summary.totalHours + ' hrs', sub: summary.totalTracks + ' tracks played', icon: 'clock', col: COL.green },
     { label: 'ARTISTS DISCOVERED', val: '' + summary.uniqueArtists, sub: 'in local library', icon: 'artist', col: RGB(6, 182, 212) },
     { label: 'LOSSLESS PURITY', val: (summary.fidelity.hiresPct + summary.fidelity.cdPct) + '%', sub: summary.fidelity.hiresPct + '% Studio Master', icon: 'sparkle', col: RGB(139, 92, 246) },
-    { label: 'AVG DYNAMIC RANGE', val: 'DR ' + summary.avgDr, sub: (summary.avgDr >= 12 ? 'Audiophile Grade' : 'Standard Master'), icon: 'headphones', col: RGB(245, 158, 11) }
+    { label: 'HI-RES AUDIO SHARE', val: summary.fidelity.hiresPct + '%', sub: summary.fidelity.hiresCount + ' studio master tracks', icon: 'sparkle', col: RGB(245, 158, 11) }
   ];
 
   for(var ti = 0; ti < tileCols && ti < tiles.length; ti++){
