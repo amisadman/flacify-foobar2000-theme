@@ -54,9 +54,13 @@ function startSleepTimer(minutes, mode){
 }
 
 function triggerSleepTimerStop(){
-  fb.Pause();
+  try{
+    if(fb.IsPlaying && !fb.IsPaused) fb.Pause();
+  }catch(e){
+    try{ fb.Stop(); }catch(e2){}
+  }
   if(sleepTimer.startVol !== undefined){
-    fb.Volume = sleepTimer.startVol;
+    try{ fb.Volume = sleepTimer.startVol; }catch(ev){}
   }
   stopSleepTimer();
   repaintAll();

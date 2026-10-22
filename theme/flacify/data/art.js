@@ -478,7 +478,15 @@ function clearArtistCache(artistName){
   extArtistImgCache={};
   extArtistCardCache={};
   artistMetaCache={};
-  artCardMap={};
+  if(typeof artCardCache !== 'undefined'){
+    for(var k in artCardCache){
+      if(artCardCache[k] && artCardCache[k].img && artCardCache[k].img.Dispose){
+        try{ artCardCache[k].img.Dispose(); }catch(e){}
+      }
+    }
+    artCardCache={};
+    if(typeof artCardN !== 'undefined') artCardN = 0;
+  }
 }
 
 function chooseArtistPhoto(artistName){

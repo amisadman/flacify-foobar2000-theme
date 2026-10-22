@@ -710,11 +710,15 @@ function drawArtistStudioModal(gr){
   for(var bi=0; bi<bLines.length; bi++){
     tL(gr, bLines[bi], FONT.pl, bCol, mx+40, bBoxY+12+bi*22, bWrapW, 20);
   }
-  if(isBFoc && caretOn && bLines.length>0){
-    var lastLine=bLines[bLines.length-1];
-    var lastW=Math.round(gr.CalcTextWidth(lastLine, FONT.pl));
-    var caretX=mx+40+Math.min(bWrapW-4, lastW);
-    var caretY=bBoxY+12+(bLines.length-1)*22;
+  if(isBFoc && caretOn){
+    var caretX=mx+40;
+    var caretY=bBoxY+12;
+    if(m.bio && bLines.length>0){
+      var lastLine=bLines[bLines.length-1];
+      var lastW=Math.round(gr.CalcTextWidth(lastLine, FONT.pl));
+      caretX=mx+40+Math.min(bWrapW-4, lastW);
+      caretY=bBoxY+12+(bLines.length-1)*22;
+    }
     gr.FillSolidRect(caretX, caretY+1, 2, 18, COL.green);
   }
   ARTIST_STUDIO_HB.bioField={x0:mx+28, y0:bBoxY, x1:mx+28+bioAreaW, y1:bBoxY+bioAreaH};

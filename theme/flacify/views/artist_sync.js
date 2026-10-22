@@ -113,12 +113,8 @@ function drawArtistSync(gr, r){
   var cachedCount=0;
   for(var i=0; i<list.length; i++){
     var aName=list[i].name;
-    var safe=aName.replace(/[\\/:*?"<>|]/g, '_');
-    var hasJpg=false, hasMeta=false;
-    var cDir=(typeof getArtistCacheDir==='function')?getArtistCacheDir():(fb.ProfilePath+'flacify\\cache\\artists\\');
-    try{ hasJpg=utils.FileTest && utils.FileTest(cDir+safe+'.jpg', 'e'); }catch(e){}
-    try{ hasMeta=utils.FileTest && utils.FileTest(cDir+safe+'_meta.json', 'e'); }catch(e){}
-    if(hasJpg || hasMeta) cachedCount++;
+    var idxEntry=index ? index[aName] : null;
+    if(idxEntry && (idxEntry.hasImage || idxEntry.hasMeta || idxEntry.status==='cached')) cachedCount++;
   }
   var missingCount=Math.max(0, totalArt-cachedCount);
 
@@ -277,11 +273,15 @@ function drawArtistSync(gr, r){
     tL(gr, sCnt, FONT.meta, COL.white, trkX, ary, sCntW, rowH);
     tL(gr, ' tracks', FONT.meta, COL.text2, trkX+sCntW, ary, trkW-sCntW, rowH);
 
-    // Cache existence test
-    var cDir=(typeof getArtistCacheDir==='function')?getArtistCacheDir():(fb.ProfilePath+'flacify\\cache\\artists\\');
-    var hasJpg=false, hasMeta=false;
-    try{ hasJpg=utils.FileTest && utils.FileTest(cDir+safe+'.jpg', 'e'); }catch(e){}
-    try{ hasMeta=utils.FileTest && utils.FileTest(cDir+safe+'_meta.json', 'e'); }catch(e){}
+    // Cache existence test (fast in-memory index lookup)
+    var idxEntry=index ? index[aName] : null;
+    var hasJpg=idxEntry ? !!idxEntry.hasImage : false;
+    var hasMeta=idxEntry ? !!idxEntry.hasMeta : false;
+    if(!idxEntry){
+      var cDir=(typeof getArtistCacheDir==='function')?getArtistCacheDir():(fb.ProfilePath+'flacify\\cache\\artists\\');
+      try{ hasJpg=utils.FileTest && utils.FileTest(cDir+safe+'.jpg', 'e'); }catch(e){}
+      try{ hasMeta=utils.FileTest && utils.FileTest(cDir+safe+'_meta.json', 'e'); }catch(e){}
+    }
 
     // Image Source Indicator
     var mData=getArtistMeta(aName);

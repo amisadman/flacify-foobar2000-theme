@@ -178,25 +178,7 @@ function drawAlbum(gr, r){
     drawFilterButton(gr, fltBtnX, fltBtnY, fltBtnSz);
   }
 
-  // 4. Tracklist Column Headers & Inline Filter
-  var filterActive=(typeof inlineFilterOpen!=='undefined'&&inlineFilterOpen)||(typeof inlineFilterText!=='undefined'&&inlineFilterText.length>0);
-  var listTop=playRowY+pb+24;
-  if(filterActive){
-    if(listTop+34>r.y && listTop<cropY) drawInlineFilterBar(gr, x0, listTop, w, 32, 0, alb.trackRows.length);
-    listTop+=42;
-  }
-  var numW=34, durW=60;
-  var titleX=x0+numW+16, titleW=w-numW-durW-32;
-  var durX=x0+w-durW;
-
-  if(listTop+24>r.y && listTop<cropY){
-    tL(gr, '#', FONT.head, COL.text2, x0, listTop, numW, 20);
-    tL(gr, 'TITLE', FONT.head, COL.text2, titleX, listTop, titleW, 20);
-    drawIcon(gr, 'clock', COL.text2, durX+durW-18, listTop, 16, 20, 15);
-    gr.FillSolidRect(x0, listTop+26, w, 1, COL.line);
-  }
-
-  // 5. Track Rows
+  // 4. Compute Filtered Track Rows
   var displayTracks=alb.trackRows;
   if(typeof inlineFilterText!=='undefined' && inlineFilterText.length>0){
     var afq=inlineFilterText.toLowerCase();
@@ -209,9 +191,24 @@ function drawAlbum(gr, r){
         displayTracks.push(atr);
       }
     }
-    if(filterActive && listTop-42+34>r.y && listTop-42<cropY){
-      drawInlineFilterBar(gr, x0, listTop-42, w, 32, displayTracks.length, alb.trackRows.length);
-    }
+  }
+
+  // Tracklist Column Headers & Inline Filter
+  var filterActive=(typeof inlineFilterOpen!=='undefined'&&inlineFilterOpen)||(typeof inlineFilterText!=='undefined'&&inlineFilterText.length>0);
+  var listTop=playRowY+pb+24;
+  if(filterActive){
+    if(listTop+34>r.y && listTop<cropY) drawInlineFilterBar(gr, x0, listTop, w, 32, displayTracks.length, alb.trackRows.length);
+    listTop+=42;
+  }
+  var numW=34, durW=60;
+  var titleX=x0+numW+16, titleW=w-numW-durW-32;
+  var durX=x0+w-durW;
+
+  if(listTop+24>r.y && listTop<cropY){
+    tL(gr, '#', FONT.head, COL.text2, x0, listTop, numW, 20);
+    tL(gr, 'TITLE', FONT.head, COL.text2, titleX, listTop, titleW, 20);
+    drawIcon(gr, 'clock', COL.text2, durX+durW-18, listTop, 16, 20, 15);
+    gr.FillSolidRect(x0, listTop+26, w, 1, COL.line);
   }
 
   var rowsTop=listTop+34;

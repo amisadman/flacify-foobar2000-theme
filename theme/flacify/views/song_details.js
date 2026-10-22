@@ -398,7 +398,8 @@ function drawSongDetails(gr){
   curY+=8;
   var codeToDraw = d.barcode || d.isrc;
   if(!codeToDraw && d.title){
-    codeToDraw = '506' + String(Math.abs(hash(d.title + (d.album||'')))).slice(0,9);
+    var hStr = ('000000000' + Math.abs(hash(d.title + (d.album||'')))).slice(-9);
+    codeToDraw = '506' + hStr;
   }
   if(codeToDraw){
     if(curY>=viewTop && curY+44<=cropY){

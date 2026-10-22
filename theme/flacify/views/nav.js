@@ -78,7 +78,7 @@ function drawNav(gr){
   var pinY5=pinY4+pinH+pinGap;                         // pinned "Artist Sync" row
   var pinY6=pinY5+pinH+pinGap;                         // pinned "Analytics" row
   // scrollable playlist list (continuous pixel scroll), cropped just above the footer
-  var listTop=pinY6+pinH+8, rh=50, cropY=footTop-6, viewH=cropY-listTop;
+  var listTop=pinY6+pinH+8, rh=50, cropY=footTop-6, viewH=Math.max(0,cropY-listTop);
   var contentH=pls.length*rh, maxPx=Math.max(0,contentH-viewH);
   NAV_MAX=maxPx;
   navScroll=clampPx(navScroll,maxPx); navScrollT=clampPx(navScrollT,maxPx);
@@ -86,7 +86,7 @@ function drawNav(gr){
   if(navRevealPl>=0){
     var rk=-1, ri; for(ri=0;ri<pls.length;ri++){ if(pls[ri]===navRevealPl){ rk=ri; break; } }
     navRevealPl=-1;
-    if(rk>=0){
+    if(rk>=0 && viewH>0){
       var rt=rk*rh, want=navScrollT;
       if(rt<want) want=rt;                                 // above the viewport: bring it to the top edge
       else if(rt+rh>want+viewH) want=rt+rh-viewH;          // below it: bring it to the bottom edge
@@ -94,16 +94,18 @@ function drawNav(gr){
       if(want!==navScrollT){ navScrollT=want; startScrollAnim(); }   // eased, same as wheel scrolling
     }
   }
-  for(var k=Math.floor(navScroll/rh); k<pls.length; k++){
-    var ry=listTop+k*rh-navScroll; if(ry>=cropY) break;
-    var i2=pls[k], nm=plName(i2);
-    // clamp hover + click targets to the visible band: a row scrolled under the pinned
-    // header is painted over, so it must not answer the mouse there either
-    var hy0=Math.max(ry,listTop), hy1=Math.min(ry+rh,cropY);
-    var rowHov=(hy1>hy0) && hv(R.navLib.x,hy0,R.navLib.x+R.navLib.w,hy1);
-    drawNavRow(gr,ry,rh,view==='playlist'&&i2===active,rowHov,i2,nm,plCount(i2)+' songs');
-    if(rowHov && ry>=listTop) drawDots(gr,R.navLib.x+R.navLib.w-32,ry+(rh-24)/2,i2);
-    if(hy1>hy0) HB_PL.push({x0:R.navLib.x,y0:hy0,x1:R.navLib.x+R.navLib.w,y1:hy1,i:i2});
+  if(viewH>0){
+    for(var k=Math.floor(navScroll/rh); k<pls.length; k++){
+      var ry=listTop+k*rh-navScroll; if(ry>=cropY) break;
+      var i2=pls[k], nm=plName(i2);
+      // clamp hover + click targets to the visible band: a row scrolled under the pinned
+      // header is painted over, so it must not answer the mouse there either
+      var hy0=Math.max(ry,listTop), hy1=Math.min(ry+rh,cropY);
+      var rowHov=(hy1>hy0) && hv(R.navLib.x,hy0,R.navLib.x+R.navLib.w,hy1);
+      drawNavRow(gr,ry,rh,view==='playlist'&&i2===active,rowHov,i2,nm,plCount(i2)+' songs');
+      if(rowHov && ry>=listTop) drawDots(gr,R.navLib.x+R.navLib.w-32,ry+(rh-24)/2,i2);
+      if(hy1>hy0) HB_PL.push({x0:R.navLib.x,y0:hy0,x1:R.navLib.x+R.navLib.w,y1:hy1,i:i2});
+    }
   }
   // crop partial rows top & bottom, redraw the sticky header block, then the scrollbar
   gr.FillSolidRect(R.navLib.x,R.navLib.y+M.radius+2,R.navLib.w,listTop-R.navLib.y-M.radius-2,COL.base);

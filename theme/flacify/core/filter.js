@@ -27,6 +27,7 @@ function closeInlineFilter(){
   inlineFilterOpen = false;
   inlineFilterText = '';
   HB_INLINE_FILTER = null;
+  stopCaret();
   applyKeyMode();
   repaintAll();
 }

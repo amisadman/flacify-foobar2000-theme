@@ -42,7 +42,13 @@ function evictArtCards(){
   for(k in artCardCache) keys.push(k);
   keys.sort(function(p,q){ return artCardCache[p].t-artCardCache[q].t; });
   var n=Math.floor(keys.length/2);
-  for(i=0;i<n;i++) delete artCardCache[keys[i]];
+  for(i=0;i<n;i++){
+    var entry = artCardCache[keys[i]];
+    if(entry && entry.img && entry.img.Dispose){
+      try{ entry.img.Dispose(); }catch(e){}
+    }
+    delete artCardCache[keys[i]];
+  }
   artCardN=keys.length-n;
 }
 function artCardImg(a,w){

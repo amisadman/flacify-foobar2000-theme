@@ -124,7 +124,7 @@ function drawBar(gr){
     tL(gr, 'Ready to play lossless music', FONT.npArtist, COL.text3, tx, by+50, 260, 18);
   }
   // center: transport row + seekbar
-  var cxC=Math.round(W/2);
+  cxC=Math.round(W/2);
   var pcy=by+34, pb=hv(cxC-27,by+7,cxC+27,by+61)?52:48, pbx=cxC-pb/2, pby=pcy-pb/2;
   ctrlBtn(gr,'shuffle',cxC-108,pcy,pbShuffle,'shuffle',22,26);
   ctrlBtn(gr,'prev',cxC-58,pcy,false,'prev',22,26);

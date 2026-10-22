@@ -48,8 +48,8 @@ function drawArtists(gr, r){
     drawCircle(gr,ax,ay,cardW,art.handle,art.name);
 
     // Play icon on card hover
+    var pb=42, pbx=ax+cardW-pb-6, pby=ay+cardW-pb-6;
     if(hov){
-      var pb=42, pbx=ax+cardW-pb-6, pby=ay+cardW-pb-6;
       gr.FillEllipse(pbx,pby,pb,pb,COL.green);
       drawIcon(gr,'play',COL.black,pbx,pby,pb,pb,20);
     }
@@ -60,7 +60,7 @@ function drawArtists(gr, r){
     tL(gr,'Artist',FONT.plSub,COL.text2,ax,ty+22,cardW,18);
 
     var cy0=Math.max(ay,gy), cy1=Math.min(ay+cardH,cropY);
-    if(cy1>cy0) HB_CARD.push({x0:ax-6,y0:cy0,x1:ax+cardW+6,y1:cy1,kind:'artist',id:art.name});
+    if(cy1>cy0) HB_CARD.push({x0:ax-6,y0:cy0,x1:ax+cardW+6,y1:cy1,kind:'artist',id:art.name,pbx:pbx,pby:pby,pb:pb});
   }
 
   // Sticky header mask

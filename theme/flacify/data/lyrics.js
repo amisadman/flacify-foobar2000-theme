@@ -97,6 +97,7 @@ var caretOn=true, caretTimer=null;
 function caretTick(){
   if(renameEdit){ caretOn=!caretOn; repaintAll(); return; }              // caret sits in a playlist row/card
   if(view==='search'){ caretOn=!caretOn; markDirty(); dirtySearch=true; var b=searchBoxRect(); window.RepaintRect(b.x,b.y,b.w,b.h); return; }
+  if(typeof inlineFilterOpen!=='undefined' && inlineFilterOpen){ caretOn=!caretOn; repaintMain(); return; }
   stopCaret();
 }
 function startCaret(){ if(!caretTimer){ caretOn=true; caretTimer=window.SetInterval(caretTick,530); } }

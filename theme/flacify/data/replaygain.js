@@ -27,7 +27,46 @@ function drawRgPrompt(gr){}
 function drawNormalizePill(gr,x,y,w,h){ return null; }
 
 var drInfoCache={};
-function getDynamicRange(h){ return null; }
+function getDynamicRange(h){
+  if(!h) return null;
+  var p = h.Path;
+  if(drInfoCache[p]) return drInfoCache[p];
+
+  var tag = (TF.drTag ? TF.drTag.EvalWithMetadb(h) : '') || '';
+  var score = parseInt(tag.replace(/[^0-9]/g, ''), 10) || 0;
+  var peakStr = (TF.rgTrackPeak ? TF.rgTrackPeak.EvalWithMetadb(h) : '') || '';
+  var gainStr = (TF.rgTrackGain ? TF.rgTrackGain.EvalWithMetadb(h) : '') || '';
+  var albGainStr = (TF.rgAlbumGain ? TF.rgAlbumGain.EvalWithMetadb(h) : '') || '';
+  var albPeakStr = (TF.rgAlbumPeak ? TF.rgAlbumPeak.EvalWithMetadb(h) : '') || '';
+
+  if(!score && peakStr && gainStr){
+    var peak = parseFloat(peakStr) || 0;
+    var gain = parseFloat(gainStr) || 0;
+    if(peak > 0){
+      score = Math.round(20 * (Math.log(peak) / Math.LN10) - gain);
+      if(score < 1) score = 1;
+      if(score > 30) score = 30;
+    }
+  }
+
+  if(!score) return null;
+  var rating = score >= 14 ? 'Exceptional Dynamic Range' :
+               (score >= 11 ? 'Very Good Dynamic Range' :
+               (score >= 8 ? 'Typical Modern Dynamics' : 'Compressed / Loudness War'));
+
+  var res = {
+    score: score,
+    dr: score,
+    label: 'DR' + score,
+    ratingLabel: rating,
+    trackGain: gainStr || 'None',
+    trackPeak: peakStr || 'None',
+    albumGain: albGainStr || 'None',
+    albumPeak: albPeakStr || 'None'
+  };
+  drInfoCache[p] = res;
+  return res;
+}
 function openDrModal(h){}
 function closeDrModal(){}
 function drawDrModal(gr){}
