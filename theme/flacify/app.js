@@ -193,19 +193,23 @@ function layout(){
 // bitmaps are keyed by geometry; and the panel's surface is rebuilt, so the next paint must be full
 function on_size(w,h){ W=w; H=h; layout(); plCardCache={}; artCardCache={}; artCardN=0; skelImgs={}; dirtyAll=true; }
 
-// name/count come from the per-playlist caches, not fresh interop: this runs on every paint of the playlist view
+// name/count for active playlist use live interop so shifting indices never desync
 function activePl(){
   var i=plman.ActivePlaylist;
-  if(i<0 || isHiddenPl(plName(i))){
+  var curName = (i>=0 && i<plman.PlaylistCount) ? plman.GetPlaylistName(i) : '';
+  if(i<0 || isHiddenPl(curName)){
     var cur = (typeof navHistory!=='undefined' && typeof navHistIdx!=='undefined') ? navHistory[navHistIdx] : null;
-    if(cur && cur.view==='playlist' && cur.pl!==undefined && cur.pl>=0 && cur.pl<plman.PlaylistCount && !isHiddenPl(plName(cur.pl))){
+    var curPlName = (cur && cur.view==='playlist' && cur.pl!==undefined && cur.pl>=0 && cur.pl<plman.PlaylistCount) ? plman.GetPlaylistName(cur.pl) : '';
+    if(curPlName && !isHiddenPl(curPlName)){
       i = cur.pl;
+      curName = curPlName;
     } else {
       var vis = (typeof visiblePlaylists==='function') ? visiblePlaylists() : [];
       i = (vis && vis.length) ? vis[0] : 0;
+      curName = (i>=0 && i<plman.PlaylistCount) ? plman.GetPlaylistName(i) : '';
     }
   }
-  return {i:i, name:i>=0?plName(i):'', count:i>=0?plCount(i):0};
+  return {i:i, name:curName, count:i>=0?plCount(i):0};
 }
 function updateNP(){
   var m=(fb.IsPlaying||fb.IsPaused)?fb.GetNowPlaying():null;

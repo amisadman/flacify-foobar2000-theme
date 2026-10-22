@@ -278,6 +278,7 @@ function playHiResVault(startPlayback){
   try { plman.ClearPlaylist(pi); } catch(e){}
   plman.InsertPlaylistItems(pi, 0, hl, false);
   plman.ActivePlaylist = pi;
+  if(typeof invalidateItems === 'function') invalidateItems();
   firstRow = firstRowT = 0;
   pushNav('playlist', { pl: pi });
   view = 'playlist';
@@ -291,16 +292,59 @@ function playForgottenGems(startPlayback){
   var lib = libItems();
   if(!lib || !lib.Count) return;
 
-  var hl = fb.CreateHandleList();
-  for(var i = 0; i < lib.Count; i++){
-    var h = lib[i];
-    if(isLiked(h)){
-      hl.Add(h);
+  var hist = (typeof getHistoryList === 'function') ? getHistoryList() : [];
+  var recentMap = {};
+  var favArtists = {};
+  for(var hi = 0; hi < Math.min(100, hist.length); hi++){
+    if(hist[hi] && hist[hi].path){
+      if(hi < 40) recentMap[hist[hi].path] = true;
+      if(hist[hi].artist) favArtists[hist[hi].artist.toLowerCase()] = true;
     }
   }
 
+  var likedCandidates = [];
+  var artistCandidates = [];
+  var otherCandidates = [];
+
+  for(var i = 0; i < lib.Count; i++){
+    var h = lib[i];
+    if(!h || !h.Path) continue;
+    if(recentMap[h.Path]) continue; // Exclude recently played songs
+
+    if(isLiked(h)){
+      likedCandidates.push(h);
+    } else {
+      var art = (TF.artist.EvalWithMetadb(h) || '').toLowerCase();
+      if(art && favArtists[art]){
+        artistCandidates.push(h);
+      } else {
+        otherCandidates.push(h);
+      }
+    }
+  }
+
+  if(typeof shuffleArr === 'function'){
+    shuffleArr(likedCandidates);
+    shuffleArr(artistCandidates);
+    shuffleArr(otherCandidates);
+  }
+
+  var hl = fb.CreateHandleList();
+  // Take up to 20 unplayed liked tracks
+  for(var li = 0; li < likedCandidates.length && hl.Count < 20; li++){
+    hl.Add(likedCandidates[li]);
+  }
+  // Fill with favorite artist tracks you haven't heard recently
+  for(var ai = 0; ai < artistCandidates.length && hl.Count < 40; ai++){
+    hl.Add(artistCandidates[ai]);
+  }
+  // Fill with other unplayed library gems
+  for(var oi = 0; oi < otherCandidates.length && hl.Count < 45; oi++){
+    hl.Add(otherCandidates[oi]);
+  }
+
+  // Fallback if needed
   if(!hl.Count){
-    // Fallback: tracks from library
     for(var j = 0; j < Math.min(40, lib.Count); j++) hl.Add(lib[j]);
   }
 
@@ -308,6 +352,8 @@ function playForgottenGems(startPlayback){
   try { plman.ClearPlaylist(pi); } catch(e){}
   plman.InsertPlaylistItems(pi, 0, hl, false);
   plman.ActivePlaylist = pi;
+  if(typeof invalidateItems === 'function') invalidateItems();
+
   firstRow = firstRowT = 0;
   pushNav('playlist', { pl: pi });
   view = 'playlist';
@@ -344,6 +390,8 @@ function playHeavyRotation(startPlayback){
   try { plman.ClearPlaylist(pi); } catch(e){}
   plman.InsertPlaylistItems(pi, 0, hl, false);
   plman.ActivePlaylist = pi;
+  if(typeof invalidateItems === 'function') invalidateItems();
+
   firstRow = firstRowT = 0;
   pushNav('playlist', { pl: pi });
   view = 'playlist';
@@ -356,7 +404,7 @@ function playHeavyRotation(startPlayback){
 /* ------------------------- Auto-Clean Mojibake Playlists ------------------------- */
 function cleanupMojibakePlaylists(){
   try {
-    var foundForgotten = false, foundHiRes = false, foundRotation = false;
+    var foundForgotten = false, foundHiRes = false, foundRotation = false, changed = false;
     for(var i = plman.PlaylistCount - 1; i >= 0; i--){
       var name = plman.GetPlaylistName(i);
       if(!name) continue;
@@ -367,9 +415,9 @@ function cleanupMojibakePlaylists(){
         if(name === 'Forgotten Gems' && !foundForgotten){
           foundForgotten = true;
         } else if(foundForgotten){
-          try { plman.RemovePlaylist(i); } catch(e){}
+          try { plman.RemovePlaylist(i); changed = true; } catch(e){}
         } else {
-          try { plman.RenamePlaylist(i, 'Forgotten Gems'); } catch(e){}
+          try { plman.RenamePlaylist(i, 'Forgotten Gems'); changed = true; } catch(e){}
           foundForgotten = true;
         }
         continue;
@@ -380,9 +428,9 @@ function cleanupMojibakePlaylists(){
         if(name === 'Heavy Rotation' && !foundRotation){
           foundRotation = true;
         } else if(foundRotation){
-          try { plman.RemovePlaylist(i); } catch(e){}
+          try { plman.RemovePlaylist(i); changed = true; } catch(e){}
         } else {
-          try { plman.RenamePlaylist(i, 'Heavy Rotation'); } catch(e){}
+          try { plman.RenamePlaylist(i, 'Heavy Rotation'); changed = true; } catch(e){}
           foundRotation = true;
         }
         continue;
@@ -393,9 +441,9 @@ function cleanupMojibakePlaylists(){
         if(name === '24-bit Hi-Res Vault' && !foundHiRes){
           foundHiRes = true;
         } else if(foundHiRes){
-          try { plman.RemovePlaylist(i); } catch(e){}
+          try { plman.RemovePlaylist(i); changed = true; } catch(e){}
         } else {
-          try { plman.RenamePlaylist(i, '24-bit Hi-Res Vault'); } catch(e){}
+          try { plman.RenamePlaylist(i, '24-bit Hi-Res Vault'); changed = true; } catch(e){}
           foundHiRes = true;
         }
         continue;
@@ -414,10 +462,11 @@ function cleanupMojibakePlaylists(){
           .replace(/^[\s\/\-\u2022\u2013\u2014]+|[\s\/\-\u2022\u2013\u2014]+$/g, '')
           .replace(/\s+/g, ' ');
         if(clean && clean !== name){
-          try { plman.RenamePlaylist(i, clean); } catch(e){}
+          try { plman.RenamePlaylist(i, clean); changed = true; } catch(e){}
         }
       }
     }
+    if(changed && typeof invalidateItems === 'function') invalidateItems();
   } catch(e){}
 }
 cleanupMojibakePlaylists();
