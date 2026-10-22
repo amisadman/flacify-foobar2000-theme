@@ -5,34 +5,43 @@
 var HB_ALBUMS=null, HB_ARTISTS=null, HB_ARTIST_SYNC=null, HB_LIKED=null, HB_HISTORY=null, HB_ANALYTICS=null;
 // one sidebar row: cover + name + subtitle. pi<0 draws the library mosaic instead of a playlist cover.
 function drawNavRow(gr,y,h,on,hov,pi,name,sub){
-  if(on||hov) gr.FillRoundRect(R.navLib.x+8,y,R.navLib.w-16,h-4,6,6,on?COL.rowActive:COL.rowHover);
-  var cs=38, cx=R.navLib.x+16, cy=y+(h-cs)/2;
+  var rx=R.navLib.x+8, rw=R.navLib.w-16;
+  var ry=y+2, rh=h-4;
+  if(on||hov){
+    gr.FillRoundRect(rx,ry,rw,rh,6,6,on?COL.rowActive:COL.rowHover);
+    if(on){
+      gr.FillRoundRect(rx+2,ry+Math.round(rh*0.2),3,Math.round(rh*0.6),2,2,COL.green);
+    }
+  }
+  var cs=(h<=48)?30:36;
+  var cx=R.navLib.x+16, cy=y+Math.round((h-cs)/2);
   if(pi>=0) drawPlCover(gr,cx,cy,cs,4,pi,name);
   else if(pi===-1) drawLibCover(gr,cx,cy,cs,4);
   else if(pi===-2){
-    gr.FillRoundRect(cx,cy,cs,cs,4,4,RGBA(255,255,255,16));
-    drawIcon(gr,'album',on?COL.green:COL.text2,cx,cy,cs,cs,20);
+    gr.FillRoundRect(cx,cy,cs,cs,6,6,RGBA(255,255,255,16));
+    drawIcon(gr,'album',on?COL.green:COL.text2,cx,cy,cs,cs,cs<=30?16:20);
   } else if(pi===-3){
     gr.FillEllipse(cx,cy,cs,cs,RGBA(255,255,255,16));
-    drawIcon(gr,'artist',on?COL.green:COL.text2,cx,cy,cs,cs,18);
+    drawIcon(gr,'artist',on?COL.green:COL.text2,cx,cy,cs,cs,cs<=30?16:18);
   } else if(pi===-4){
     gr.FillEllipse(cx,cy,cs,cs,RGBA(255,255,255,16));
-    drawIcon(gr,'sync',on?COL.green:COL.text2,cx,cy,cs,cs,18);
+    drawIcon(gr,'sync',on?COL.green:COL.text2,cx,cy,cs,cs,cs<=30?16:18);
   } else if(pi===-5){
     drawLikedCover(gr,cx,cy,cs,4);
   } else if(pi===-6){
-    gr.FillRoundRect(cx,cy,cs,cs,4,4,RGBA(255,255,255,16));
-    drawIcon(gr,'clock',on?COL.green:COL.text2,cx,cy,cs,cs,18);
+    gr.FillRoundRect(cx,cy,cs,cs,6,6,RGBA(255,255,255,16));
+    drawIcon(gr,'clock',on?COL.green:COL.text2,cx,cy,cs,cs,cs<=30?16:18);
   } else if(pi===-7){
-    gr.FillRoundRect(cx,cy,cs,cs,4,4,RGBA(255,255,255,16));
-    drawIcon(gr,'chart',on?COL.green:COL.text2,cx,cy,cs,cs,18);
+    gr.FillRoundRect(cx,cy,cs,cs,6,6,RGBA(255,255,255,16));
+    drawIcon(gr,'chart',on?COL.green:COL.text2,cx,cy,cs,cs,cs<=30?16:18);
   } else {
     gr.FillEllipse(cx,cy,cs,cs,RGBA(255,255,255,16));
-    drawIcon(gr,'home',on?COL.green:COL.text2,cx,cy,cs,cs,18);
+    drawIcon(gr,'home',on?COL.green:COL.text2,cx,cy,cs,cs,cs<=30?16:18);
   }
   var tx=cx+cs+12, tw=R.navLib.x+R.navLib.w-16-tx-((hov&&pi>=0)?26:0);   // leave room for the "..." button
-  tL(gr,name,FONT.pl,on?COL.green:COL.text,tx,y+6,tw,20);
-  tL(gr,sub,FONT.plSub,COL.text2,tx,y+26,tw,16);
+  var ty=y+Math.round((h-32)/2);
+  tL(gr,name,FONT.pl,on?COL.green:(hov?COL.white:COL.text),tx,ty-1,tw,18);
+  tL(gr,sub,FONT.plSub,COL.text2,tx,ty+17,tw,14);
 }
 function drawNav(gr){
   HB_PL=[];
@@ -60,15 +69,16 @@ function drawNav(gr){
   var ap=activePl();
   var active=ap.i, pls=visiblePlaylists();
   var footH=72, footTop=R.navLib.y+R.navLib.h-footH;   // pinned "add playlist" footer, always visible
-  var pinY0=R.navLib.y+44, pinH=38;                    // pinned "Liked Songs" row
-  var pinY1=pinY0+pinH+2;                              // pinned "All Songs" row
-  var pinY2=pinY1+pinH+2;                              // pinned "Albums" row
-  var pinY3=pinY2+pinH+2;                              // pinned "Artists" row
-  var pinY4=pinY3+pinH+2;                              // pinned "History" row
-  var pinY5=pinY4+pinH+2;                              // pinned "Artist Sync" row
-  var pinY6=pinY5+pinH+2;                              // pinned "Analytics" row
+  var pinH=46, pinGap=2;
+  var pinY0=R.navLib.y+44;                             // pinned "Liked Songs" row
+  var pinY1=pinY0+pinH+pinGap;                         // pinned "All Songs" row
+  var pinY2=pinY1+pinH+pinGap;                         // pinned "Albums" row
+  var pinY3=pinY2+pinH+pinGap;                         // pinned "Artists" row
+  var pinY4=pinY3+pinH+pinGap;                         // pinned "History" row
+  var pinY5=pinY4+pinH+pinGap;                         // pinned "Artist Sync" row
+  var pinY6=pinY5+pinH+pinGap;                         // pinned "Analytics" row
   // scrollable playlist list (continuous pixel scroll), cropped just above the footer
-  var listTop=pinY6+pinH+8, rh=54, cropY=footTop-6, viewH=cropY-listTop;
+  var listTop=pinY6+pinH+8, rh=50, cropY=footTop-6, viewH=cropY-listTop;
   var contentH=pls.length*rh, maxPx=Math.max(0,contentH-viewH);
   NAV_MAX=maxPx;
   navScroll=clampPx(navScroll,maxPx); navScrollT=clampPx(navScrollT,maxPx);

@@ -1124,6 +1124,8 @@ function hoverSig(x,y){
   if(HB_HISTORY && inRect(x,y,HB_HISTORY)) return 'histnav';
   if(HB_HISTORY_CLEAR && inRect(x,y,HB_HISTORY_CLEAR)) return 'histclear';
   if(HB_ARTIST_SYNC && inRect(x,y,HB_ARTIST_SYNC)) return 'artsync';
+  if(HB_ANALYTICS && inRect(x,y,HB_ANALYTICS)) return 'analy';
+  if(HB_ANALYTICS_EXPORT && inRect(x,y,HB_ANALYTICS_EXPORT)) return 'anexport';
   if(HB_ARTISTS_SYNC_BTN && inRect(x,y,HB_ARTISTS_SYNC_BTN)) return 'artsyncbtn';
   if(HB_SYNC_FETCH_MISSING && inRect(x,y,HB_SYNC_FETCH_MISSING)) return 'syncmiss';
   if(HB_SYNC_FETCH_ALL && inRect(x,y,HB_SYNC_FETCH_ALL)) return 'syncall';
