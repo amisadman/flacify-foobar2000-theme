@@ -279,7 +279,7 @@ function drawMain(gr){
   HB_ARTIST_PHOTO=null; HB_ARTIST_EDIT_BTN=null; HB_ARTIST_EDIT_BIO_BTN=null; HB_FILTER_BTN=null; HB_INLINE_FILTER=null;
   HB_ARTISTS_SYNC_BTN=null;
   HB_SYNC_FETCH_MISSING=null; HB_SYNC_FETCH_ALL=null; HB_SYNC_STOP=null; HB_SYNC_OPEN_DIR=null; HB_SYNC_ROWS=[];
-  HB_ANALYTICS_EXPORT=null; HB_PODIUM=[]; HB_ARTIST_ROW=[];
+  HB_ANALYTICS_EXPORT=null; HB_PODIUM=[]; HB_ARTIST_ROW=[]; HB_HEATMAP=[];
   if(view!=='songs'){ HB_SG=null; SG_HB=[]; }
   if(view!=='playlist'){ HB_PLSORT=null; HB_PLSORTDIR=null; PL_SORT_HB=[]; }
   applyKeyMode();
@@ -863,6 +863,19 @@ function on_mouse_lbtn_up(x,y){
     if(HB_ANALYTICS_EXPORT && inRect(x,y,HB_ANALYTICS_EXPORT)){
       exportWrappedCard(); return;
     }
+    if(HB_HEATMAP && HB_HEATMAP.length){
+      for(var hmi=0; hmi<HB_HEATMAP.length; hmi++){
+        if(inRect(x,y,HB_HEATMAP[hmi])){
+          var clickedHm = HB_HEATMAP[hmi].hm;
+          if(selectedHeatmapDay && selectedHeatmapDay.dateStr === clickedHm.dateStr){
+            selectedHeatmapDay = null;
+          } else {
+            selectedHeatmapDay = clickedHm;
+          }
+          repaintAll(); return;
+        }
+      }
+    }
     if(HB_PODIUM && HB_PODIUM.length){
       for(var pdi=0; pdi<HB_PODIUM.length; pdi++){
         if(inRect(x,y,HB_PODIUM[pdi])){
@@ -1139,6 +1152,11 @@ function hoverSig(x,y){
   if(HB_ANALYTICS && inRect(x,y,HB_ANALYTICS)) return 'analy';
   if(view==='analytics'){
     if(HB_ANALYTICS_EXPORT && inRect(x,y,HB_ANALYTICS_EXPORT)) return 'anexport';
+    if(HB_HEATMAP && HB_HEATMAP.length){
+      for(var hmi2=0; hmi2<HB_HEATMAP.length; hmi2++){
+        if(inRect(x,y,HB_HEATMAP[hmi2])) return 'anhm'+hmi2;
+      }
+    }
     if(HB_PODIUM && HB_PODIUM.length){
       for(var pdi2=0; pdi2<HB_PODIUM.length; pdi2++){
         if(inRect(x,y,HB_PODIUM[pdi2])) return 'anpod'+pdi2;
@@ -1148,9 +1166,6 @@ function hoverSig(x,y){
       for(var ari2=0; ari2<HB_ARTIST_ROW.length; ari2++){
         if(inRect(x,y,HB_ARTIST_ROW[ari2])) return 'anart'+ari2;
       }
-    }
-    if(R.main && inRect(x,y,R.main)){
-      return 'anhm_'+Math.floor(x/15)+'_'+Math.floor(y/15);
     }
   }
   if(HB_ARTISTS_SYNC_BTN && inRect(x,y,HB_ARTISTS_SYNC_BTN)) return 'artsyncbtn';

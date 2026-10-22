@@ -6,6 +6,8 @@ var ANALYTICS_SCROLL = 0, ANALYTICS_SCROLL_T = 0, ANALYTICS_MAX_SCROLL = 0;
 var HB_ANALYTICS_EXPORT = null;
 var HB_PODIUM = [];
 var HB_ARTIST_ROW = [];
+var HB_HEATMAP = [];
+var selectedHeatmapDay = null;
 var analyticsToastMsg = '';
 var analyticsToastTimer = 0;
 
@@ -150,6 +152,7 @@ function drawAnalytics(gr, r){
   HB_PODIUM = [];
   HB_ARTIST_ROW = [];
   HB_ANALYTICS_EXPORT = null;
+  HB_HEATMAP = [];
 
   var summary = (typeof getAnalyticsSummary === 'function') ? getAnalyticsSummary() : null;
   if(!summary){
@@ -253,11 +256,24 @@ function drawAnalytics(gr, r){
 
     var hoveredDay = null;
     var hoveredCellRect = null;
+    var selectedCellRect = null;
+
     for(var hi = 0; hi < summary.heatmap.length; hi++){
       var hm = summary.heatmap[hi];
       if(hm.isFuture) continue; // Don't show remaining days of this week!
       var cellX = hmStartX + hm.col * (sq + sqGap);
       var cellY = hBoxY + hm.row * (sq + sqGap);
+
+      HB_HEATMAP.push({ x0: cellX, y0: cellY, x1: cellX + sq, y1: cellY + sq, hm: hm });
+
+      var isCellSel = (selectedHeatmapDay && selectedHeatmapDay.dateStr === hm.dateStr);
+      var isCellHov = hv(cellX, cellY, cellX + sq, cellY + sq);
+
+      if(isCellSel) selectedCellRect = { x: cellX, y: cellY, hm: hm };
+      if(isCellHov){
+        hoveredDay = hm;
+        hoveredCellRect = { x: cellX, y: cellY };
+      }
 
       var cellCol = RGB(26, 26, 30);
       if(hm.level === 1) cellCol = RGB(14, 68, 41);
@@ -265,30 +281,34 @@ function drawAnalytics(gr, r){
       else if(hm.level === 3) cellCol = RGB(38, 166, 65);
       else if(hm.level === 4) cellCol = RGB(57, 211, 83);
 
-      var isCellHov = hv(cellX, cellY, cellX + sq, cellY + sq);
       if(isCellHov){
-        hoveredDay = hm;
-        hoveredCellRect = { x: cellX, y: cellY };
         cellCol = COL.white;
+      } else if(isCellSel){
+        cellCol = RGB(74, 222, 128);
       }
 
       gr.FillRoundRect(cellX, cellY, sq, sq, 2, 2, cellCol);
 
-      // Distinct highlight for today
-      if(hm.isToday){
+      // Distinct highlight for selected day or today
+      if(isCellSel){
+        gr.DrawRoundRect(cellX - 2, cellY - 2, sq + 4, sq + 4, 3, 3, 2, COL.green);
+      } else if(hm.isToday){
         gr.DrawRoundRect(cellX - 1, cellY - 1, sq + 2, sq + 2, 2, 2, 1, isCellHov ? COL.white : COL.green);
       }
     }
 
-    // Floating Tooltip over hovered square
-    if(hoveredDay && hoveredCellRect){
-      var tipStr = (hoveredDay.count === 0 ? 'No tracks on ' : (hoveredDay.count + (hoveredDay.count === 1 ? ' track on ' : ' tracks on '))) + hoveredDay.shortDate;
-      if(hoveredDay.isToday) tipStr += ' (Today)';
+    var activeDay = hoveredDay || (selectedCellRect ? selectedCellRect.hm : null);
+    var activeRect = hoveredCellRect || (selectedCellRect ? { x: selectedCellRect.x, y: selectedCellRect.y } : null);
+
+    // Floating Tooltip over active square (hovered or clicked)
+    if(activeDay && activeRect){
+      var tipStr = (activeDay.count === 0 ? 'No tracks on ' : (activeDay.count + (activeDay.count === 1 ? ' song on ' : ' songs on '))) + activeDay.shortDate;
+      if(activeDay.isToday) tipStr += ' (Today)';
       var tipW = Math.round(gr.CalcTextWidth(tipStr, FONT.card)) + 22;
       var tipH = 26;
-      var tipX = Math.max(x0, Math.min(hoveredCellRect.x + Math.round(sq / 2) - Math.round(tipW / 2), rightEdge - pad - tipW));
-      var tipY = hoveredCellRect.y - tipH - 8;
-      if(tipY < gy) tipY = hoveredCellRect.y + sq + 8;
+      var tipX = Math.max(x0, Math.min(activeRect.x + Math.round(sq / 2) - Math.round(tipW / 2), rightEdge - pad - tipW));
+      var tipY = activeRect.y - tipH - 8;
+      if(tipY < gy) tipY = activeRect.y + sq + 8;
       gr.FillRoundRect(tipX, tipY, tipW, tipH, 6, 6, RGBA(18, 18, 22, 245));
       gr.DrawRoundRect(tipX, tipY, tipW, tipH, 6, 6, 1, RGBA(255, 255, 255, 60));
       tC(gr, tipStr, FONT.card, COL.white, tipX, tipY, tipW, tipH);
@@ -296,12 +316,12 @@ function drawAnalytics(gr, r){
 
     // Legend & Detailed Status
     var legY = hBoxY + 7 * (sq + sqGap) + 12;
-    if(hoveredDay){
-      var legText = hoveredDay.friendlyDate + ': ' + (hoveredDay.count === 0 ? 'No tracks played' : (hoveredDay.count + ' tracks (' + Math.round(hoveredDay.seconds / 60) + ' mins)'));
-      if(hoveredDay.isToday) legText += ' [Today]';
+    if(activeDay){
+      var legText = activeDay.friendlyDate + ': ' + (activeDay.count === 0 ? 'No songs played' : (activeDay.count + (activeDay.count === 1 ? ' song listened (' : ' songs listened (') + Math.round(activeDay.seconds / 60) + ' mins)'));
+      if(activeDay.isToday) legText += ' [Today]';
       tL(gr, legText, FONT.card, COL.green, x0, legY, w - 240, 20);
     } else {
-      tL(gr, 'Hover over any square to see date and tracks played', FONT.plSub, COL.text3, x0, legY, w - 240, 20);
+      tL(gr, 'Click any day to view date and listened songs', FONT.plSub, COL.text3, x0, legY, w - 240, 20);
     }
 
     // Color Scale Bar
@@ -443,11 +463,11 @@ function drawAnalytics(gr, r){
         drawCircle(gr, avX, avY, avSz, ah, artObj.name);
 
         var nameX = avX + avSz + 12;
-        var nameW = itemW - nameX - 110;
+        var nameW = Math.max(60, itemW - (nameX - ax) - 96);
         tL(gr, artObj.name, FONT.card, isHov ? COL.green : COL.text, nameX, ay + 8, nameW, 20);
 
         var timeStr = (artObj.seconds >= 3600) ? (artObj.seconds / 3600).toFixed(1) + ' hrs' : Math.max(1, Math.round(artObj.seconds / 60)) + ' mins';
-        tL(gr, artObj.plays + ' play' + (artObj.plays === 1 ? '' : 's') + ' • ' + timeStr, FONT.plSub, COL.text2, nameX, ay + 28, nameW, 16);
+        tL(gr, artObj.plays + ' play' + (artObj.plays === 1 ? '' : 's') + ' ' + CH_DOT + ' ' + timeStr, FONT.plSub, COL.text2, nameX, ay + 28, nameW, 16);
 
         var barW = 70, barH = 5, barX = ax + itemW - barW - 16, barY = ay + 24;
         gr.FillRoundRect(barX, barY, barW, barH, 2, 2, RGB(35, 35, 40));
