@@ -208,15 +208,22 @@ function getAnalyticsSummary(forceRefresh){
     }
     totalSeconds += secs;
 
-    var art = it.artist || 'Unknown Artist';
-    if(!artistMap[art]) artistMap[art] = { name: art, plays: 0, seconds: 0, topTrack: it.title, handle: it.handle };
-    artistMap[art].plays++;
-    artistMap[art].seconds += secs;
-    if(!artistMap[art].handle && it.handle) artistMap[art].handle = it.handle;
+    // Split multi-artist tracks into individual artists
+    var rawArt = it.artist || 'Unknown Artist';
+    var arts = (typeof splitArtists === 'function') ? splitArtists(rawArt) : [rawArt];
+    if(!arts || !arts.length) arts = [rawArt];
+    for(var ai = 0; ai < arts.length; ai++){
+      var art = (arts[ai] || '').trim();
+      if(!art) continue;
+      if(!artistMap[art]) artistMap[art] = { name: art, plays: 0, seconds: 0, topTrack: it.title, handle: it.handle };
+      artistMap[art].plays++;
+      artistMap[art].seconds += secs;
+      if(!artistMap[art].handle && it.handle) artistMap[art].handle = it.handle;
+    }
 
     var alb = it.album || 'Unknown Album';
-    var aKey = alb + ' -- ' + art;
-    if(!albumMap[aKey]) albumMap[aKey] = { title: alb, artist: art, plays: 0, handle: it.handle };
+    var aKey = alb + ' -- ' + rawArt;
+    if(!albumMap[aKey]) albumMap[aKey] = { title: alb, artist: rawArt, plays: 0, handle: it.handle };
     albumMap[aKey].plays++;
     if(!albumMap[aKey].handle && it.handle) albumMap[aKey].handle = it.handle;
 
@@ -258,8 +265,14 @@ function getAnalyticsSummary(forceRefresh){
         var lbd = TF.bitdepth ? (parseInt(TF.bitdepth.EvalWithMetadb(lh), 10) || 0) : 0;
         var lsr = TF.samplerate ? (parseInt(TF.samplerate.EvalWithMetadb(lh), 10) || 0) : 0;
 
-        if(!artistMap[lart]) artistMap[lart] = { name: lart, plays: 1, seconds: 200, handle: lh };
-        else artistMap[lart].plays++;
+        var larts = (typeof splitArtists === 'function') ? splitArtists(lart) : [lart];
+        if(!larts || !larts.length) larts = [lart];
+        for(var lai = 0; lai < larts.length; lai++){
+          var laName = (larts[lai] || '').trim();
+          if(!laName) continue;
+          if(!artistMap[laName]) artistMap[laName] = { name: laName, plays: 1, seconds: 200, handle: lh };
+          else artistMap[laName].plays++;
+        }
 
         var laKey = lalb + ' -- ' + lart;
         if(!albumMap[laKey]) albumMap[laKey] = { title: lalb, artist: lart, plays: 1, handle: lh };
@@ -274,35 +287,60 @@ function getAnalyticsSummary(forceRefresh){
     }
   }
 
-  var sortedArtists = Object.keys(artistMap).map(function(k){ return artistMap[k]; }).sort(function(a,b){ return b.plays - a.plays; });
+  var sortedArtists = Object.keys(artistMap).map(function(k){ return artistMap[k]; }).sort(function(a,b){
+    if(b.plays !== a.plays) return b.plays - a.plays;
+    return b.seconds - a.seconds;
+  });
+  for(var rk = 0; rk < sortedArtists.length; rk++){
+    sortedArtists[rk].rank = rk + 1;
+  }
+
   var sortedAlbums = Object.keys(albumMap).map(function(k){ return albumMap[k]; }).sort(function(a,b){ return b.plays - a.plays; });
 
+  // 52-Week GitHub Style Calendar: exactly 52 weeks ending on today without future days
   var heatmap = [];
-  var todayDayOfWeek = now.getDay();
-  var totalDays = 52 * 7;
-  var startDate = new Date(todayMidnight - (totalDays - 1 - todayDayOfWeek) * oneDayMs);
+  var todayDayOfWeek = now.getDay(); // 0: Sun, 1: Mon, ..., 6: Sat
+  var thisSundayMidnight = todayMidnight - todayDayOfWeek * oneDayMs;
+  var startSundayMidnight = thisSundayMidnight - 51 * 7 * oneDayMs;
 
-  for(var dayIdx = 0; dayIdx < totalDays; dayIdx++){
-    var curD = new Date(startDate.getTime() + dayIdx * oneDayMs);
-    var curDs = curD.getFullYear() + '-' + ('0' + (curD.getMonth() + 1)).slice(-2) + '-' + ('0' + curD.getDate()).slice(-2);
-    var info = dayMap[curDs] || { count: 0, seconds: 0 };
-    var col = Math.floor(dayIdx / 7);
-    var row = dayIdx % 7;
-    var level = 0;
-    if(info.count >= 10) level = 4;
-    else if(info.count >= 6) level = 3;
-    else if(info.count >= 3) level = 2;
-    else if(info.count >= 1) level = 1;
+  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 
-    heatmap.push({
-      dateStr: curDs,
-      col: col,
-      row: row,
-      count: info.count,
-      seconds: info.seconds,
-      level: level,
-      isFuture: curD.getTime() > todayMidnight
-    });
+  for(var col = 0; col < 52; col++){
+    var weekSundayTime = startSundayMidnight + col * 7 * oneDayMs;
+    // For col 51 (current week), only draw up to today! Don't show remaining days of this week
+    var maxRowThisWeek = (col === 51) ? todayDayOfWeek : 6;
+
+    for(var row = 0; row <= maxRowThisWeek; row++){
+      var cellTime = weekSundayTime + row * oneDayMs;
+      var curD = new Date(cellTime);
+      var curDs = curD.getFullYear() + '-' + ('0' + (curD.getMonth() + 1)).slice(-2) + '-' + ('0' + curD.getDate()).slice(-2);
+      var info = dayMap[curDs] || { count: 0, seconds: 0 };
+
+      var level = 0;
+      if(info.count >= 10) level = 4;
+      else if(info.count >= 6) level = 3;
+      else if(info.count >= 3) level = 2;
+      else if(info.count >= 1) level = 1;
+
+      var friendlyDate = dayNames[row] + ', ' + months[curD.getMonth()] + ' ' + curD.getDate() + ', ' + curD.getFullYear();
+      var shortDate = months[curD.getMonth()] + ' ' + curD.getDate() + ', ' + curD.getFullYear();
+
+      heatmap.push({
+        dateStr: curDs,
+        friendlyDate: friendlyDate,
+        shortDate: shortDate,
+        monthName: months[curD.getMonth()],
+        dayOfMonth: curD.getDate(),
+        col: col,
+        row: row,
+        count: info.count,
+        seconds: info.seconds,
+        level: level,
+        isToday: (cellTime === todayMidnight),
+        isFuture: false
+      });
+    }
   }
 
   var totalPlays = hiresCount + cdCount + lossyCount;
@@ -315,8 +353,8 @@ function getAnalyticsSummary(forceRefresh){
     totalMinutes: Math.round(totalSeconds / 60),
     totalHours: (totalSeconds / 3600).toFixed(1),
     uniqueArtists: Object.keys(artistMap).length,
-    topArtists: sortedArtists.slice(0, 5),
-    topAlbums: sortedAlbums.slice(0, 5),
+    topArtists: sortedArtists,
+    topAlbums: sortedAlbums.slice(0, 10),
     heatmap: heatmap,
     fidelity: {
       hiresCount: hiresCount,

@@ -80,6 +80,7 @@ function setScroll(y){
   else if(view==='artist') artistScroll=artistScrollT=px;
   else if(view==='artist_sync') artistSyncScroll=artistSyncScrollT=px;
   else if(view==='history') historyScroll=historyScrollT=px;
+  else if(view==='analytics') ANALYTICS_SCROLL=ANALYTICS_SCROLL_T=px;
   repaintMain();
 }
 function setScrollN(y){ if(!SBN) return; navScroll=navScrollT=Math.round(sbFrac(y,SBN.top,SBN.h,SBN.thumbH)*SBN.maxPx); repaintNav(); }

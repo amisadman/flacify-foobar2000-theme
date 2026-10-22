@@ -5,6 +5,7 @@
 var ANALYTICS_SCROLL = 0, ANALYTICS_SCROLL_T = 0, ANALYTICS_MAX_SCROLL = 0;
 var HB_ANALYTICS_EXPORT = null;
 var HB_PODIUM = [];
+var HB_ARTIST_ROW = [];
 var analyticsToastMsg = '';
 var analyticsToastTimer = 0;
 
@@ -147,6 +148,7 @@ function exportWrappedCard(){
 /* ------------------------- UI Rendering ------------------------- */
 function drawAnalytics(gr, r){
   HB_PODIUM = [];
+  HB_ARTIST_ROW = [];
   HB_ANALYTICS_EXPORT = null;
 
   var summary = (typeof getAnalyticsSummary === 'function') ? getAnalyticsSummary() : null;
@@ -177,11 +179,15 @@ function drawAnalytics(gr, r){
   // Scrollable Body
   var gy = headerY + headerH + 16, cropY = r.y + r.h, viewH = cropY - gy;
 
-  // Layout Calculations
+  // Dynamic Layout Calculations
   var statTileH = 80;
-  var heatmapH = 180;
-  var podiumH = 250;
-  var contentH = statTileH + heatmapH + podiumH + 120;
+  var heatmapH = 210;
+  var podiumH = 260;
+  var allArtists = summary.topArtists || [];
+  var colCount = (w > 820) ? 2 : 1;
+  var totalRows = Math.ceil(allArtists.length / colCount);
+  var leaderboardH = allArtists.length ? (60 + totalRows * 62 + 30) : 0;
+  var contentH = statTileH + 28 + heatmapH + 28 + podiumH + 34 + leaderboardH + 60;
   var maxPx = Math.max(0, contentH - viewH);
   ANALYTICS_MAX_SCROLL = maxPx;
   ANALYTICS_SCROLL = clampPx(ANALYTICS_SCROLL, maxPx);
@@ -196,7 +202,7 @@ function drawAnalytics(gr, r){
 
   var tiles = [
     { label: 'HOURS STREAMED', val: summary.totalHours + ' hrs', sub: summary.totalTracks + ' tracks played', icon: 'clock', col: COL.green },
-    { label: 'ARTISTS DISCOVERED', val: '' + summary.uniqueArtists, sub: 'in local library', icon: 'artist', col: RGB(6, 182, 212) },
+    { label: 'ARTISTS DISCOVERED', val: '' + summary.uniqueArtists, sub: 'individual artists', icon: 'artist', col: RGB(6, 182, 212) },
     { label: 'LOSSLESS PURITY', val: (summary.fidelity.hiresPct + summary.fidelity.cdPct) + '%', sub: summary.fidelity.hiresPct + '% Studio Master', icon: 'sparkle', col: RGB(139, 92, 246) },
     { label: 'HI-RES AUDIO SHARE', val: summary.fidelity.hiresPct + '%', sub: summary.fidelity.hiresCount + ' studio master tracks', icon: 'sparkle', col: RGB(245, 158, 11) }
   ];
@@ -217,11 +223,28 @@ function drawAnalytics(gr, r){
   // ---- 2) 52-Week Activity Heatmap (GitHub Calendar Style) ----
   if(cy + heatmapH > gy && cy < cropY){
     tL(gr, '52-Week Listening Heatmap', FONT.sect2, COL.text, x0, cy, w, 26);
-    var hBoxY = cy + 32;
+    var hMonthY = cy + 32;
+    var hBoxY = hMonthY + 20;
     var sq = 12, sqGap = 3, hmStartX = x0 + 36;
     var dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-    // Day labels
+    // Month headers above columns
+    var lastMonth = '';
+    for(var colI = 0; colI < 52; colI++){
+      for(var hmi = 0; hmi < summary.heatmap.length; hmi++){
+        var hitem = summary.heatmap[hmi];
+        if(hitem.col === colI && hitem.row === 0){
+          if(colI === 0 || hitem.monthName !== lastMonth){
+            var mX = hmStartX + colI * (sq + sqGap);
+            tL(gr, hitem.monthName, FONT.eyebrow, COL.text3, mX, hMonthY, 36, 16);
+            lastMonth = hitem.monthName;
+          }
+          break;
+        }
+      }
+    }
+
+    // Day labels on left
     for(var di = 0; di < 7; di++){
       if(di === 1 || di === 3 || di === 5){
         tL(gr, dayLabels[di], FONT.eyebrow, COL.text3, x0, hBoxY + di * (sq + sqGap), 30, sq);
@@ -229,8 +252,10 @@ function drawAnalytics(gr, r){
     }
 
     var hoveredDay = null;
+    var hoveredCellRect = null;
     for(var hi = 0; hi < summary.heatmap.length; hi++){
       var hm = summary.heatmap[hi];
+      if(hm.isFuture) continue; // Don't show remaining days of this week!
       var cellX = hmStartX + hm.col * (sq + sqGap);
       var cellY = hBoxY + hm.row * (sq + sqGap);
 
@@ -241,24 +266,45 @@ function drawAnalytics(gr, r){
       else if(hm.level === 4) cellCol = RGB(57, 211, 83);
 
       var isCellHov = hv(cellX, cellY, cellX + sq, cellY + sq);
-      if(isCellHov && !hm.isFuture){
+      if(isCellHov){
         hoveredDay = hm;
-        cellCol = COL.text;
+        hoveredCellRect = { x: cellX, y: cellY };
+        cellCol = COL.white;
       }
 
       gr.FillRoundRect(cellX, cellY, sq, sq, 2, 2, cellCol);
+
+      // Distinct highlight for today
+      if(hm.isToday){
+        gr.DrawRoundRect(cellX - 1, cellY - 1, sq + 2, sq + 2, 2, 2, 1, isCellHov ? COL.white : COL.green);
+      }
     }
 
-    // Legend & Tooltip
-    var legY = hBoxY + 7 * (sq + sqGap) + 8;
+    // Floating Tooltip over hovered square
+    if(hoveredDay && hoveredCellRect){
+      var tipStr = (hoveredDay.count === 0 ? 'No tracks on ' : (hoveredDay.count + (hoveredDay.count === 1 ? ' track on ' : ' tracks on '))) + hoveredDay.shortDate;
+      if(hoveredDay.isToday) tipStr += ' (Today)';
+      var tipW = Math.round(gr.CalcTextWidth(tipStr, FONT.card)) + 22;
+      var tipH = 26;
+      var tipX = Math.max(x0, Math.min(hoveredCellRect.x + Math.round(sq / 2) - Math.round(tipW / 2), rightEdge - pad - tipW));
+      var tipY = hoveredCellRect.y - tipH - 8;
+      if(tipY < gy) tipY = hoveredCellRect.y + sq + 8;
+      gr.FillRoundRect(tipX, tipY, tipW, tipH, 6, 6, RGBA(18, 18, 22, 245));
+      gr.DrawRoundRect(tipX, tipY, tipW, tipH, 6, 6, 1, RGBA(255, 255, 255, 60));
+      tC(gr, tipStr, FONT.card, COL.white, tipX, tipY, tipW, tipH);
+    }
+
+    // Legend & Detailed Status
+    var legY = hBoxY + 7 * (sq + sqGap) + 12;
     if(hoveredDay){
-      var tooltip = hoveredDay.dateStr + ': ' + hoveredDay.count + ' tracks (' + Math.round(hoveredDay.seconds / 60) + ' mins)';
-      tL(gr, tooltip, FONT.pl, COL.green, x0, legY, w - 200, 20);
+      var legText = hoveredDay.friendlyDate + ': ' + (hoveredDay.count === 0 ? 'No tracks played' : (hoveredDay.count + ' tracks (' + Math.round(hoveredDay.seconds / 60) + ' mins)'));
+      if(hoveredDay.isToday) legText += ' [Today]';
+      tL(gr, legText, FONT.card, COL.green, x0, legY, w - 240, 20);
     } else {
-      tL(gr, 'Activity measured in daily tracks played', FONT.plSub, COL.text3, x0, legY, w - 200, 20);
+      tL(gr, 'Hover over any square to see date and tracks played', FONT.plSub, COL.text3, x0, legY, w - 240, 20);
     }
 
-    // Color bar
+    // Color Scale Bar
     var legStartX = rightEdge - pad - 120;
     tL(gr, 'Less', FONT.eyebrow, COL.text3, legStartX - 32, legY, 30, sq);
     var legColors = [RGB(26, 26, 30), RGB(14, 68, 41), RGB(0, 109, 50), RGB(38, 166, 65), RGB(57, 211, 83)];
@@ -267,7 +313,7 @@ function drawAnalytics(gr, r){
     }
     tL(gr, 'More', FONT.eyebrow, COL.text3, legStartX + 5 * (sq + sqGap) + 4, legY, 30, sq);
   }
-  cy += heatmapH + 20;
+  cy += heatmapH + 28;
 
   // ---- 3) Top Artists Podium & Lossless Fidelity Spectrum (Side by Side) ----
   var halfW = Math.floor((w - 24) / 2);
@@ -283,9 +329,9 @@ function drawAnalytics(gr, r){
 
     // Center (#1 Gold), Left (#2 Silver), Right (#3 Bronze)
     var podSlots = [
-      { rank: 2, art: arts3[1], h: 74, col: RGB(160, 160, 175), label: '#2 Silver', colIdx: 0 },
-      { rank: 1, art: arts3[0], h: 110, col: RGB(245, 158, 11), label: '#1 Gold', colIdx: 1 },
-      { rank: 3, art: arts3[2], h: 54, col: RGB(180, 83, 9), label: '#3 Bronze', colIdx: 2 }
+      { rank: 2, art: arts3[1], h: 80, col: RGB(160, 160, 175), label: '#2 Silver', colIdx: 0 },
+      { rank: 1, art: arts3[0], h: 120, col: RGB(245, 158, 11), label: '#1 Gold', colIdx: 1 },
+      { rank: 3, art: arts3[2], h: 60, col: RGB(180, 83, 9), label: '#3 Bronze', colIdx: 2 }
     ];
 
     for(var psi = 0; psi < podSlots.length; psi++){
@@ -314,12 +360,12 @@ function drawAnalytics(gr, r){
     }
   }
 
-  // Right Column: Lossless Fidelity Spectrum
+  // Right Column: Lossless Fidelity Spectrum (Card height 260 to cleanly enclose all content)
   if(cy + podiumH > gy && cy < cropY){
     var pieX = x0 + halfW + 24, pieY = cy;
     tL(gr, 'Lossless Fidelity Spectrum', FONT.sect2, COL.text, pieX, pieY, halfW, 26);
 
-    var dCardY = pieY + 36, dCardH = podiumH - 40;
+    var dCardY = pieY + 36, dCardH = 260; // Clean height that encloses all legend items + padding
     gr.FillRoundRect(pieX, dCardY, halfW, dCardH, 8, 8, COL.elev);
 
     var fid = summary.fidelity;
@@ -351,18 +397,70 @@ function drawAnalytics(gr, r){
     tL(gr, fid.hiresCount + ' tracks (' + fid.hiresPct + '%) - >= 24-bit / DSD', FONT.plSub, COL.text2, barX + 20, legY0 + 20, halfW - 60, 16);
 
     // Item 2: CD Lossless
-    gr.FillRoundRect(barX, legY0 + 46, 12, 12, 2, 2, RGB(16, 185, 129));
-    tL(gr, 'CD Quality Lossless', FONT.card, COL.text, barX + 20, legY0 + 42, halfW - 60, 20);
-    tL(gr, fid.cdCount + ' tracks (' + fid.cdPct + '%) - 16-bit FLAC/WAV', FONT.plSub, COL.text2, barX + 20, legY0 + 62, halfW - 60, 16);
+    gr.FillRoundRect(barX, legY0 + 48, 12, 12, 2, 2, RGB(16, 185, 129));
+    tL(gr, 'CD Quality Lossless', FONT.card, COL.text, barX + 20, legY0 + 44, halfW - 60, 20);
+    tL(gr, fid.cdCount + ' tracks (' + fid.cdPct + '%) - 16-bit FLAC/WAV', FONT.plSub, COL.text2, barX + 20, legY0 + 64, halfW - 60, 16);
 
     // Item 3: Lossy
-    gr.FillRoundRect(barX, legY0 + 88, 12, 12, 2, 2, RGB(100, 116, 139));
-    tL(gr, 'Compressed Lossy', FONT.card, COL.text, barX + 20, legY0 + 84, halfW - 60, 20);
-    tL(gr, fid.lossyCount + ' tracks (' + fid.lossyPct + '%) - MP3/AAC/Vorbis', FONT.plSub, COL.text2, barX + 20, legY0 + 104, halfW - 60, 16);
+    gr.FillRoundRect(barX, legY0 + 92, 12, 12, 2, 2, RGB(100, 116, 139));
+    tL(gr, 'Compressed Lossy', FONT.card, COL.text, barX + 20, legY0 + 88, halfW - 60, 20);
+    tL(gr, fid.lossyCount + ' tracks (' + fid.lossyPct + '%) - MP3/AAC/Vorbis', FONT.plSub, COL.text2, barX + 20, legY0 + 108, halfW - 60, 16);
   }
-  cy += podiumH + 30;
+  cy += podiumH + 34;
 
-  // ---- 4) Toast Notification ----
+  // ---- 4) All Ranked Artists Leaderboard ----
+  if(allArtists.length > 0){
+    if(cy + 40 > gy && cy < cropY){
+      tL(gr, 'All Ranked Artists (' + allArtists.length + ')', FONT.sect2, COL.text, x0, cy, w, 28);
+      tL(gr, 'Complete ranking of all listened artists by play count and listening time', FONT.plSub, COL.text2, x0, cy + 28, w, 18);
+    }
+    cy += 56;
+
+    var rowH = 54;
+    var colGap = 16;
+    var itemW = (colCount === 2) ? Math.floor((w - colGap) / 2) : w;
+    var maxPlays = (allArtists.length && allArtists[0].plays) ? allArtists[0].plays : 1;
+
+    for(var ai = 0; ai < allArtists.length; ai++){
+      var artObj = allArtists[ai];
+      var c = (colCount === 2) ? (ai % 2) : 0;
+      var rIdx = (colCount === 2) ? Math.floor(ai / 2) : ai;
+      var ax = x0 + c * (itemW + colGap);
+      var ay = cy + rIdx * (rowH + 8);
+
+      if(ay + rowH > gy && ay < cropY){
+        var isHov = hv(ax, ay, ax + itemW, ay + rowH);
+        gr.FillRoundRect(ax, ay, itemW, rowH, 8, 8, isHov ? COL.rowHover : COL.elev);
+
+        var rk = artObj.rank || (ai + 1);
+        var rankCol = (rk === 1) ? RGB(245, 158, 11) : ((rk === 2) ? RGB(160, 160, 175) : ((rk === 3) ? RGB(180, 83, 9) : COL.text3));
+        var rankBg = (rk <= 3) ? RGBA(255, 255, 255, 14) : RGBA(255, 255, 255, 6);
+        gr.FillRoundRect(ax + 10, ay + 14, 32, 26, 4, 4, rankBg);
+        tC(gr, '#' + rk, FONT.eyebrow, rankCol, ax + 10, ay + 14, 32, 26);
+
+        var avSz = 36, avX = ax + 50, avY = ay + 9;
+        var ah = artObj.handle || (typeof artistCover === 'function' ? artistCover(artObj.name) : null);
+        drawCircle(gr, avX, avY, avSz, ah, artObj.name);
+
+        var nameX = avX + avSz + 12;
+        var nameW = itemW - nameX - 110;
+        tL(gr, artObj.name, FONT.card, isHov ? COL.green : COL.text, nameX, ay + 8, nameW, 20);
+
+        var timeStr = (artObj.seconds >= 3600) ? (artObj.seconds / 3600).toFixed(1) + ' hrs' : Math.max(1, Math.round(artObj.seconds / 60)) + ' mins';
+        tL(gr, artObj.plays + ' play' + (artObj.plays === 1 ? '' : 's') + ' • ' + timeStr, FONT.plSub, COL.text2, nameX, ay + 28, nameW, 16);
+
+        var barW = 70, barH = 5, barX = ax + itemW - barW - 16, barY = ay + 24;
+        gr.FillRoundRect(barX, barY, barW, barH, 2, 2, RGB(35, 35, 40));
+        var fillW = Math.max(4, Math.round(barW * (artObj.plays / maxPlays)));
+        gr.FillRoundRect(barX, barY, fillW, barH, 2, 2, isHov ? COL.green : RGB(16, 185, 129));
+
+        HB_ARTIST_ROW.push({ x0: ax, y0: ay, x1: ax + itemW, y1: ay + rowH, artist: artObj.name });
+      }
+    }
+    cy += totalRows * (rowH + 8) + 40;
+  }
+
+  // ---- 5) Toast Notification ----
   if(analyticsToastTimer > Date.now() && analyticsToastMsg){
     var tw = Math.min(420, w), th = 42, tx = x0 + Math.floor((w - tw) / 2), ty = r.y + r.h - th - 20;
     gr.FillRoundRect(tx, ty, tw, th, 8, 8, RGB(22, 101, 52));
