@@ -10,7 +10,7 @@ function drawNavRow(gr,y,h,on,hov,pi,name,sub){
   if(on||hov){
     gr.FillRoundRect(rx,ry,rw,rh,6,6,on?COL.rowActive:COL.rowHover);
     if(on){
-      gr.FillRoundRect(rx+2,ry+Math.round(rh*0.2),3,Math.round(rh*0.6),2,2,COL.green);
+      gr.FillSolidRect(rx+2,ry+Math.round(rh*0.2),3,Math.round(rh*0.6),COL.green);
     }
   }
   var cs=(h<=48)?30:36;
