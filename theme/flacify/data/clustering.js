@@ -204,6 +204,22 @@ function getDailyMixes(){
   return buildDailyMixes();
 }
 
+function getPlaylistDescription(name){
+  if(!name) return '';
+  if(typeof MIX_DEFINITIONS !== 'undefined' && MIX_DEFINITIONS){
+    for(var i = 0; i < MIX_DEFINITIONS.length; i++){
+      if(name.indexOf(MIX_DEFINITIONS[i].title) >= 0){
+        return MIX_DEFINITIONS[i].desc || '';
+      }
+    }
+  }
+  if(name.indexOf('24-bit Hi-Res Vault') >= 0) return 'Studio Master Quality lossless audio (>= 24-bit / DSD) from your library.';
+  if(name.indexOf('Forgotten Gems') >= 0) return 'High-affinity tracks from your library you haven\'t played recently.';
+  if(name.indexOf('Heavy Rotation') >= 0) return 'Your most-played library favorites on repeat.';
+  if(name === (typeof LIKED_PLAYLIST_NAME !== 'undefined' ? LIKED_PLAYLIST_NAME : 'Liked Songs')) return 'Your saved lossless favorites.';
+  return '';
+}
+
 /* ------------------------- Play Daily Mix ------------------------- */
 function playDailyMix(mixId, startPlayback){
   var mixes = getDailyMixes();
@@ -221,7 +237,7 @@ function playDailyMix(mixId, startPlayback){
 
       plman.InsertPlaylistItems(pi, 0, hl, false);
       plman.ActivePlaylist = pi;
-      plman.MovePlaylist(pi, plman.PlaylistCount - 1);
+      invalidateItems();
 
       firstRow = firstRowT = 0;
       pushNav('playlist', { pl: pi });

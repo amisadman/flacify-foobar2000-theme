@@ -93,7 +93,7 @@ var navRevealPl=-1;
 function revealPlaylist(i){ navRevealPl=i; }
 var plDropHover=false, HB_PLADD_FILES=null, HB_PLADD_FOLDER=null;   // empty-playlist "add songs" zone
 // playlist edit: context menu, inline rename, delete confirm
-var HB_DOTS=[], ctxMenu=null, CTX_HB=[], renameEdit=null, confirmDel=null, CONF_HB=null, RENAME_HB=null, HB_PL_COVER=null;
+var HB_DOTS=[], ctxMenu=null, CTX_HB=[], renameEdit=null, confirmDel=null, CONF_HB=null, RENAME_HB=null, HB_PL_COVER=null, HB_PL_PLAY=null, HB_PL_SHUFFLE=null;
 
 var rightTab='queue';
 var view='home', homeScroll=0, artScroll=0;
@@ -194,7 +194,19 @@ function layout(){
 function on_size(w,h){ W=w; H=h; layout(); plCardCache={}; artCardCache={}; artCardN=0; skelImgs={}; dirtyAll=true; }
 
 // name/count come from the per-playlist caches, not fresh interop: this runs on every paint of the playlist view
-function activePl(){ var i=plman.ActivePlaylist; return {i:i, name:i>=0?plName(i):'', count:i>=0?plCount(i):0}; }
+function activePl(){
+  var i=plman.ActivePlaylist;
+  if(i<0 || isHiddenPl(plName(i))){
+    var cur = (typeof navHistory!=='undefined' && typeof navHistIdx!=='undefined') ? navHistory[navHistIdx] : null;
+    if(cur && cur.view==='playlist' && cur.pl!==undefined && cur.pl>=0 && cur.pl<plman.PlaylistCount && !isHiddenPl(plName(cur.pl))){
+      i = cur.pl;
+    } else {
+      var vis = (typeof visiblePlaylists==='function') ? visiblePlaylists() : [];
+      i = (vis && vis.length) ? vis[0] : 0;
+    }
+  }
+  return {i:i, name:i>=0?plName(i):'', count:i>=0?plCount(i):0};
+}
 function updateNP(){
   var m=(fb.IsPlaying||fb.IsPaused)?fb.GetNowPlaying():null;
   NP=m;
@@ -257,7 +269,7 @@ function on_paint(gr){
 }
 
 function drawMain(gr){
-  HB_CARD=[]; HB_TR=[]; SB=null; SBH=null; HB_BACK_BTN=null; HB_PL_COVER=null;   // clear stale click targets from previous views
+  HB_CARD=[]; HB_TR=[]; SB=null; SBH=null; HB_BACK_BTN=null; HB_PL_COVER=null; HB_PL_PLAY=null; HB_PL_SHUFFLE=null;   // clear stale click targets from previous views
   HB_ALBUM_PLAY=null; HB_ALBUM_SHUFFLE=null; HB_ALBUM_ARTIST=null; HB_ALBUM_ARTISTS=[]; HB_ALBUM_CTA=null; HB_ALBUM_OTHER=[];
   HB_ARTIST_PLAY=null; HB_ARTIST_SHUFFLE=null; HB_ARTIST_FOLLOW=null; HB_ARTIST_SEE_MORE=null; HB_ARTIST_LATEST=null; HB_ARTIST_ALBUMS=[]; HB_ARTIST_SINGLES=[]; HB_ARTIST_APPEARS=[];
   HB_ARTIST_PHOTO=null; HB_ARTIST_EDIT_BTN=null; HB_ARTIST_EDIT_BIO_BTN=null; HB_FILTER_BTN=null; HB_INLINE_FILTER=null;
@@ -341,11 +353,15 @@ function playHandleList(handles,idx){
   if(pbShuffle){ shuffleArr(arr); var ci=indexOfHandle(arr,start); if(ci>=0) arr.splice(ci,1); arr.unshift(start); shufSrcName=ROUTE; idx=0; }
   var hl=fb.CreateHandleList();
   for(i=0;i<arr.length;i++) hl.Add(arr[i]);
+  var savedActive=plman.ActivePlaylist;
   var pi=plman.FindOrCreatePlaylist(ROUTE,true);
   try{ plman.ClearPlaylist(pi); }catch(e){}
   plman.InsertPlaylistItems(pi,0,hl,false);
-  plman.ActivePlaylist=pi; invalidateItems();
+  invalidateItems();
   plman.ExecutePlaylistDefaultAction(pi,idx);
+  if(savedActive>=0 && savedActive!==pi && !isHiddenPl(plName(savedActive))){
+    try{ plman.ActivePlaylist=savedActive; }catch(e){}
+  }
 }
 function playArtistTrack(block,idx){
   var al=artistAlbums[block]; if(!al) return;
@@ -446,7 +462,23 @@ function on_mouse_lbtn_up(x,y){
       }
       if((SONG_DET_HB.play && inRect(x,y,SONG_DET_HB.play)) || (SONG_DET_HB.artPlay && inRect(x,y,SONG_DET_HB.artPlay))){
         var sh=songDetails.handle; closeSongDetails();
-        if(sh) playHandleList([sh],0);
+        if(sh){
+          var ap=activePl();
+          var foundIdx=-1;
+          if(ap && ap.i>=0 && ap.count>0){
+            var pit=getItems(ap.i);
+            if(pit){
+              for(var pi_i=0; pi_i<pit.Count; pi_i++){
+                if(pit[pi_i] && pit[pi_i].Path===sh.Path){ foundIdx=pi_i; break; }
+              }
+            }
+          }
+          if(foundIdx>=0){
+            playPlaylistItem(ap.i, foundIdx);
+          } else {
+            playHandleList([sh],0);
+          }
+        }
         return;
       }
       if((SONG_DET_HB.toggleLyrics && inRect(x,y,SONG_DET_HB.toggleLyrics)) ||
@@ -878,6 +910,32 @@ function on_mouse_lbtn_up(x,y){
     choosePlaylistCover(HB_PL_COVER.name);
     return;
   }
+  if(view==='playlist' && HB_PL_PLAY && inRect(x,y,HB_PL_PLAY)){
+    var loc=playingLoc();
+    if(fb.IsPlaying && loc && loc.IsValid && loc.PlaylistIndex===HB_PL_PLAY.pl){
+      fb.PlayOrPause();
+    } else if(fb.IsPaused && loc && loc.IsValid && loc.PlaylistIndex===HB_PL_PLAY.pl){
+      fb.PlayOrPause();
+    } else {
+      var it=getItems(HB_PL_PLAY.pl);
+      if(it && it.Count>0){
+        if(pbShuffle) playShuffled(HB_PL_PLAY.pl, null, plName(HB_PL_PLAY.pl), false);
+        else playPlaylistItem(HB_PL_PLAY.pl, 0);
+      }
+    }
+    repaintAll();
+    return;
+  }
+  if(view==='playlist' && HB_PL_SHUFFLE && inRect(x,y,HB_PL_SHUFFLE)){
+    var it=getItems(HB_PL_SHUFFLE.pl);
+    if(it && it.Count>0){
+      pbShuffle=true;
+      applyPlaybackOrder();
+      playShuffled(HB_PL_SHUFFLE.pl, null, plName(HB_PL_SHUFFLE.pl), false);
+    }
+    repaintAll();
+    return;
+  }
   if(HB_ADDPL && inRect(x,y,HB_ADDPL)){ var np=createNewPlaylist(); plman.ActivePlaylist=np; revealPlaylist(np); firstRow=firstRowT=0; pushNav('playlist',{pl:np}); view='playlist'; repaintAll(); return; }
   if(HB_PLADD_FILES && inRect(x,y,HB_PLADD_FILES)){ addFilesToPl(plman.ActivePlaylist); return; }
   if(HB_PLADD_FOLDER && inRect(x,y,HB_PLADD_FOLDER)){ addFolderToPl(plman.ActivePlaylist); return; }
@@ -921,9 +979,7 @@ function on_mouse_lbtn_up(x,y){
   }
   if((t=hit(HB_PL,x,y))){ plman.ActivePlaylist=t.i; firstRow=firstRowT=0; pushNav('playlist',{pl:t.i}); view='playlist'; repaintAll(); return; }
   if((t=hit(HB_Q,x,y))){ if(t.q!==undefined) playQueueItem(t.q); else playQueueNext(t.pl,t.item); repaintAll(); return; }
-  /* Rows play on DOUBLE click -- see on_mouse_lbtn_dblclk. The exception is the play glyph that
-     replaces the track number on the hovered row: that is a button, and a button takes one click.
-     Clicking the row body opens Song Details! */
+  /* Rows play on single click (or double click). Clicking heart toggles like! */
   if((t=hit(HB_TR,x,y))){
     if(t.hx0!==undefined && x>=t.hx0 && x<=t.hx1){
       // clicked heart!
@@ -939,26 +995,12 @@ function on_mouse_lbtn_up(x,y){
       if(hh) toggleLike(hh);
       return;
     }
-    if(t.pgx1!==undefined && x>=t.pgx0 && x<t.pgx1){
-      if(t.historyRow && t.path){
-        var hlh = typeof getHandleByPath==='function' ? getHandleByPath(t.path) : null;
-        if(hlh) playHandleList([hlh],0);
-        return;
-      }
-      playRow(t);
+    if(t.historyRow && t.path){
+      var hlh = typeof getHandleByPath==='function' ? getHandleByPath(t.path) : null;
+      if(hlh) playHandleList([hlh],0);
+      return;
     }
-    else {
-      var h=null;
-      if(t.albumRow && t.handles) h=t.handles[t.idx];
-      else if(t.songs && songsTracks && songsTracks[t.ti]) h=songsTracks[t.ti].h;
-      else if(t.srch && searchTrks && searchTrks[t.idx]) h=searchTrks[t.idx].h;
-      else if(t.lib && artistAlbums[t.block] && artistAlbums[t.block].tracks[t.idx]) h=artistAlbums[t.block].tracks[t.idx].handle;
-      else if(t.pl!==undefined && t.item!==undefined){ var it2=getItems(t.pl); if(it2) h=it2[t.item]; }
-      else if(t.historyRow && t.path){
-        h = typeof getHandleByPath==='function' ? getHandleByPath(t.path) : null;
-      }
-      if(h) openSongDetails(h);
-    }
+    playRow(t);
     return;
   }
 }
@@ -1031,6 +1073,8 @@ function hoverSig(x,y){
   if(HB_PLADD_FILES && inRect(x,y,HB_PLADD_FILES)) return 'pladdf';
   if(HB_PLADD_FOLDER && inRect(x,y,HB_PLADD_FOLDER)) return 'pladdd';
   if(HB_PL_COVER && inRect(x,y,HB_PL_COVER)) return 'plcov';
+  if(HB_PL_PLAY && inRect(x,y,HB_PL_PLAY)) return 'plp';
+  if(HB_PL_SHUFFLE && inRect(x,y,HB_PL_SHUFFLE)) return 'plsh';
   if(HB_ALLSONGS && inRect(x,y,HB_ALLSONGS)) return 'als';
   if(HB_ALBUMS && inRect(x,y,HB_ALBUMS)) return 'albs';
   if(HB_ARTISTS && inRect(x,y,HB_ARTISTS)) return 'arts';

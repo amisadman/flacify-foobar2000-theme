@@ -57,7 +57,8 @@ function drawNav(gr){
   // library card
   panelBg(gr,R.navLib,COL.base);
   tL(gr,'Your Library',FONT.lib,COL.text2,R.navLib.x+18,R.navLib.y+14,R.navLib.w-56,26);
-  var active=plman.ActivePlaylist, pls=visiblePlaylists();
+  var ap=activePl();
+  var active=ap.i, pls=visiblePlaylists();
   var footH=72, footTop=R.navLib.y+R.navLib.h-footH;   // pinned "add playlist" footer, always visible
   var pinY0=R.navLib.y+44, pinH=38;                    // pinned "Liked Songs" row
   var pinY1=pinY0+pinH+2;                              // pinned "All Songs" row

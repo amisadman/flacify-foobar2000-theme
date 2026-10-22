@@ -105,14 +105,15 @@ function drawHome(gr,r){
       // Play button on hover
       var mpb = 40, mpbx = mx + mcardW - mpb - 8, mpby = my + mcardW - mpb - 8;
       if(mHov){
-        gr.FillEllipse(mpbx, mpby, mpb, mpb, COL.green);
+        var pbHot = hv(mpbx, mpby, mpbx + mpb, mpby + mpb);
+        gr.FillEllipse(mpbx, mpby, mpb, mpb, pbHot ? RGB(45, 230, 115) : COL.green);
         drawIcon(gr, 'play', COL.black, mpbx, mpby, mpb, mpb, 18);
       }
 
-      // Title & Category
+      // Title & Description
       var mty = my + mcardW + 8;
       tL(gr, mix.title, FONT.card, mHov ? COL.green : COL.text, mx, mty, mcardW, 20);
-      tL(gr, mix.category, FONT.plSub, COL.text2, mx, mty + 20, mcardW, 16);
+      tL(gr, mix.desc || mix.category, FONT.plSub, COL.text2, mx, mty + 20, mcardW, 32);
 
       var vmy0 = Math.max(my - 6, gy), vmy1 = Math.min(my + mcardH + 6, cropY);
       if(vmy1 > vmy0){

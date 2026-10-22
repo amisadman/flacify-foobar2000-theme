@@ -2,8 +2,10 @@
    Part of FLACify, the lossless Spotify-style experience for foobar2000. Loaded by main.js;
    every module shares one global scope, so load order is set there. */
 
+var HB_PL_PLAY=null, HB_PL_SHUFFLE=null;
+
 function drawPlaylist(gr,r){
-  HB_TR=[]; HB_PLADD_FILES=null; HB_PLADD_FOLDER=null;
+  HB_TR=[]; HB_PLADD_FILES=null; HB_PLADD_FOLDER=null; HB_PL_PLAY=null; HB_PL_SHUFFLE=null;
   var p=activePl();
   // the header reads meta too (track count, total duration), so the whole view waits on it, and
   // then on the artwork the reveal will actually show
@@ -15,7 +17,7 @@ function drawPlaylist(gr,r){
   var isLikedPl=(p.name===(typeof LIKED_PLAYLIST_NAME!=='undefined'?LIKED_PLAYLIST_NAME:'Liked Songs'));
   var headHue=isLikedPl?RGB(75,45,145):artHue(plChoice(p.i).single,p.name);
   gr.FillGradRect(r.x,r.y,r.w,M.headH,90,blend(headHue,COL.base,0.42),COL.base,1.0);
-  var ax=r.x+M.cpad, ay=r.y+44, art=M.artSz;
+  var ax=r.x+M.cpad, ay=r.y+32, art=188;
   var pal=(typeof getAlbumPalette==='function')?getAlbumPalette(isLikedPl?null:plChoice(p.i).single,p.name):null;
   var auraCol=pal?pal.aura:RGBA(30,215,96,60);
   if(typeof drawArtworkAura==='function') drawArtworkAura(gr,ax,ay,art,8,auraCol);
@@ -36,33 +38,69 @@ function drawPlaylist(gr,r){
     }
     HB_PL_COVER={x0:ax,y0:ay,x1:ax+art,y1:ay+art,pl:p.i,name:p.name};
   }
-  // sort pill + asc/desc button + filter button, right-aligned like the All Songs group pill; header text
-  // stops short of this column so the two can never collide on a narrow panel
-  var rx0=r.x+r.w-M.cpad, sortDirW=38, sortPillW=200, sortGap=8, fltBtnSz=38, fltGap=8;
-  var sortTotalW=sortPillW+sortGap+sortDirW+fltGap+fltBtnSz;
-  var fltBtnX=Math.max(ax+art+24,rx0-sortTotalW), sortY=ay+142;
-  var sortX=fltBtnX+fltBtnSz+fltGap;
-  var tx=ax+art+24, tw=Math.max(120,fltBtnX-12-tx);
-  tL(gr,'PLAYLIST',FONT.eyebrow,COL.text,tx,ay+6,tw,18);
-  tL(gr,p.name,FONT.title,COL.text,tx,ay+28,tw,84);
+
+  // Right Column: Eyebrow, Title, Description, Stats, and Action Controls Bar
+  var rx0=r.x+r.w-M.cpad;
+  var tx=ax+art+24, tw=Math.max(120,rx0-tx);
+  var isMix=(p.name.indexOf('Daily Mix')===0);
+  var eyebrowTxt=isMix?'DAILY MIX':(isLikedPl?'PLAYLIST':'PLAYLIST');
+  tL(gr,eyebrowTxt,FONT.eyebrow,isMix?COL.green:COL.text2,tx,ay+2,tw,18);
+
+  var titleY=ay+22;
+  var titleFont=(p.name.length>26?FONT.sect2:FONT.title);
+  var titleH=(p.name.length>26?36:44);
+  tL(gr,p.name,titleFont,COL.text,tx,titleY,tw,titleH);
+
+  var desc=(typeof getPlaylistDescription==='function')?getPlaylistDescription(p.name):'';
+  var curY=titleY+titleH+4;
+  if(desc){
+    tL(gr,desc,FONT.plSub,COL.text2,tx,curY,tw,20);
+    curY+=24;
+  }
+
   var meta0=getMeta(p.i);
   var pCntStr=fmtNum(p.count);
   var pCntW=Math.round(gr.CalcTextWidth(pCntStr, FONT.meta));
-  tL(gr, pCntStr, FONT.meta, COL.white, tx, ay+150, pCntW, 22);
+  tL(gr, pCntStr, FONT.meta, COL.white, tx, curY, pCntW, 20);
   var pRestX=tx+pCntW;
   var sLbl=' song'+(p.count===1?'':'s');
   var sLblW=Math.round(gr.CalcTextWidth(sLbl, FONT.meta));
-  tL(gr, sLbl, FONT.meta, COL.text2, pRestX, ay+150, sLblW, 22);
+  tL(gr, sLbl, FONT.meta, COL.text2, pRestX, curY, sLblW, 20);
   pRestX+=sLblW;
   if(meta0.totalSec>0){
     var dotSep=' '+CH_DOT+' ';
     var dotSepW=Math.round(gr.CalcTextWidth(dotSep, FONT.meta));
-    tL(gr, dotSep, FONT.meta, COL.text2, pRestX, ay+150, dotSepW, 22);
+    tL(gr, dotSep, FONT.meta, COL.text2, pRestX, curY, dotSepW, 20);
     pRestX+=dotSepW;
     var durStr=fmtDur(meta0.totalSec);
     var durW=Math.round(gr.CalcTextWidth(durStr, FONT.meta));
-    tL(gr, durStr, FONT.meta, COL.white, pRestX, ay+150, durW, 22);
+    tL(gr, durStr, FONT.meta, COL.white, pRestX, curY, durW, 20);
   }
+  curY+=22;
+
+  // Action Controls Bar: Big Play Button (48px) + Shuffle (38px) + Filter + Sort Controls
+  var actY=Math.max(curY+8, ay+138);
+  var pbSz=48;
+  var loc=playingLoc();
+  var isPlayingThisPl=(fb.IsPlaying && loc && loc.IsValid && loc.PlaylistIndex===p.i);
+  var pbHot=hv(tx,actY,tx+pbSz,actY+pbSz);
+  gr.FillEllipse(tx,actY,pbSz,pbSz,pbHot?RGB(45,230,115):COL.green);
+  drawIcon(gr,isPlayingThisPl?'pause':'play',COL.black,tx,actY,pbSz,pbSz,20);
+  HB_PL_PLAY={x0:tx,y0:actY,x1:tx+pbSz,y1:actY+pbSz,pl:p.i};
+
+  var shufSz=38, shufX=tx+pbSz+14, shufY=actY+Math.round((pbSz-shufSz)/2);
+  var shufHot=hv(shufX,shufY,shufX+shufSz,shufY+shufSz);
+  var isShufActive=(pbShuffle && loc && loc.IsValid && loc.PlaylistIndex===p.i);
+  gr.FillEllipse(shufX,shufY,shufSz,shufSz,shufHot?RGBA(255,255,255,24):RGBA(255,255,255,12));
+  strokeRound(gr,shufX,shufY,shufSz,shufSz,shufSz/2,1,(shufHot||isShufActive)?COL.green:RGBA(255,255,255,28));
+  drawIcon(gr,'shuffle',(shufHot||isShufActive)?COL.green:COL.text2,shufX,shufY,shufSz,shufSz,18);
+  HB_PL_SHUFFLE={x0:shufX,y0:shufY,x1:shufX+shufSz,y1:shufY+shufSz,pl:p.i};
+
+  var sortDirW=38, sortPillW=180, sortGap=8, fltBtnSz=38, fltGap=8;
+  var sortTotalW=sortPillW+sortGap+sortDirW+fltGap+fltBtnSz;
+  var fltBtnX=Math.max(shufX+shufSz+16,rx0-sortTotalW);
+  var sortY=actY+Math.round((pbSz-38)/2);
+  var sortX=fltBtnX+fltBtnSz+fltGap;
   drawFilterButton(gr,fltBtnX,sortY,fltBtnSz);
   HB_PLSORT=drawDropPill(gr,sortX,sortY,sortPillW,38,'Sort: '+labelOf(PL_SORTS,plSort,'Artist'),plSortMenuOpen);
   drawSortDirBtn(gr,sortX+sortPillW+sortGap,sortY,sortDirW,38);
