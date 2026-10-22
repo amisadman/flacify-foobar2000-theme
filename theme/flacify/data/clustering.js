@@ -213,10 +213,11 @@ function getPlaylistDescription(name){
       }
     }
   }
-  if(name.indexOf('24-bit Hi-Res Vault') >= 0) return 'Studio Master Quality lossless audio (>= 24-bit / DSD) from your library.';
-  if(name.indexOf('Forgotten Gems') >= 0) return 'High-affinity tracks from your library you haven\'t played recently.';
-  if(name.indexOf('Heavy Rotation') >= 0) return 'Your most-played library favorites on repeat.';
-  if(name === (typeof LIKED_PLAYLIST_NAME !== 'undefined' ? LIKED_PLAYLIST_NAME : 'Liked Songs')) return 'Your saved lossless favorites.';
+  var low = name.toLowerCase();
+  if(low.indexOf('24-bit') >= 0 || low.indexOf('hi-res') >= 0) return 'Studio Master Quality lossless audio (>= 24-bit / DSD) from your library.';
+  if(low.indexOf('forgotten gems') >= 0) return 'High-affinity tracks from your library you haven\'t played recently.';
+  if(low.indexOf('heavy rotation') >= 0) return 'Your most-played library favorites on repeat.';
+  if(name === (typeof LIKED_PLAYLIST_NAME !== 'undefined' ? LIKED_PLAYLIST_NAME : 'Liked Songs')) return '';
   return '';
 }
 
@@ -355,22 +356,65 @@ function playHeavyRotation(startPlayback){
 /* ------------------------- Auto-Clean Mojibake Playlists ------------------------- */
 function cleanupMojibakePlaylists(){
   try {
-    var count = plman.PlaylistCount;
-    for(var i = 0; i < count; i++){
+    var foundForgotten = false, foundHiRes = false, foundRotation = false;
+    for(var i = plman.PlaylistCount - 1; i >= 0; i--){
       var name = plman.GetPlaylistName(i);
       if(!name) continue;
+      var low = name.toLowerCase();
+
+      // Forgotten Gems cleanup: remove duplicate or malformed variants, keep one clean 'Forgotten Gems'
+      if(low.indexOf('forgotten gems') >= 0){
+        if(name === 'Forgotten Gems' && !foundForgotten){
+          foundForgotten = true;
+        } else if(foundForgotten){
+          try { plman.RemovePlaylist(i); } catch(e){}
+        } else {
+          try { plman.RenamePlaylist(i, 'Forgotten Gems'); } catch(e){}
+          foundForgotten = true;
+        }
+        continue;
+      }
+
+      // Heavy Rotation cleanup
+      if(low.indexOf('heavy rotation') >= 0){
+        if(name === 'Heavy Rotation' && !foundRotation){
+          foundRotation = true;
+        } else if(foundRotation){
+          try { plman.RemovePlaylist(i); } catch(e){}
+        } else {
+          try { plman.RenamePlaylist(i, 'Heavy Rotation'); } catch(e){}
+          foundRotation = true;
+        }
+        continue;
+      }
+
+      // Hi-Res Vault cleanup
+      if(low.indexOf('hi-res') >= 0 || low.indexOf('24-bit') >= 0){
+        if(name === '24-bit Hi-Res Vault' && !foundHiRes){
+          foundHiRes = true;
+        } else if(foundHiRes){
+          try { plman.RemovePlaylist(i); } catch(e){}
+        } else {
+          try { plman.RenamePlaylist(i, '24-bit Hi-Res Vault'); } catch(e){}
+          foundHiRes = true;
+        }
+        continue;
+      }
+
+      // General mojibake and stray leading slashes/bullets cleanup
       var hasNonAscii = false;
       for(var c = 0; c < name.length; c++){
         if(name.charCodeAt(c) > 127){ hasNonAscii = true; break; }
       }
-      if(hasNonAscii){
+      var hasLeadingPunct = /^[\s\/\-\u2022]+/.test(name);
+      if(hasNonAscii || hasLeadingPunct){
         var clean = name
-          .replace(/[\u00E2\u20AC\u00A2\u2022]+/g, ' / ')
+          .replace(/[\u00E2\u20AC\u00A2\u2022\uD800-\uDFFF]+/g, '')
           .replace(/[\u0080-\uFFFF]/g, '')
-          .replace(/\s+/g, ' ')
-          .replace(/^\s+|\s+$/g, '');
+          .replace(/^[\s\/\-\u2022\u2013\u2014]+|[\s\/\-\u2022\u2013\u2014]+$/g, '')
+          .replace(/\s+/g, ' ');
         if(clean && clean !== name){
-          plman.RenamePlaylist(i, clean);
+          try { plman.RenamePlaylist(i, clean); } catch(e){}
         }
       }
     }

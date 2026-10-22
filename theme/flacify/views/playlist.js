@@ -47,15 +47,17 @@ function drawPlaylist(gr,r){
   tL(gr,eyebrowTxt,FONT.eyebrow,isMix?COL.green:COL.text2,tx,ay+2,tw,18);
 
   var titleY=ay+22;
-  var titleFont=(p.name.length>26?FONT.sect2:FONT.title);
-  var titleH=(p.name.length>26?36:44);
+  var titleFont=(p.name.length>24?FONT.sect2:FONT.title);
+  var tH=lineH(gr,titleFont);
+  var titleH=Math.max(tH,(titleFont===FONT.title?62:34));
   tL(gr,p.name,titleFont,COL.text,tx,titleY,tw,titleH);
 
   var desc=(typeof getPlaylistDescription==='function')?getPlaylistDescription(p.name):'';
-  var curY=titleY+titleH+4;
+  var curY=titleY+titleH+10;
   if(desc){
-    tL(gr,desc,FONT.plSub,COL.text2,tx,curY,tw,20);
-    curY+=24;
+    var descH=Math.max(18,lineH(gr,FONT.plSub));
+    tL(gr,desc,FONT.plSub,COL.text2,tx,curY,tw,descH);
+    curY+=descH+10;
   }
 
   var meta0=getMeta(p.i);
@@ -79,7 +81,7 @@ function drawPlaylist(gr,r){
   curY+=22;
 
   // Action Controls Bar: Big Play Button (48px) + Shuffle (38px) + Filter + Sort Controls
-  var actY=Math.max(curY+8, ay+138);
+  var actY=Math.max(curY+10, ay+138);
   var pbSz=48;
   var loc=playingLoc();
   var isPlayingThisPl=(fb.IsPlaying && loc && loc.IsValid && loc.PlaylistIndex===p.i);
