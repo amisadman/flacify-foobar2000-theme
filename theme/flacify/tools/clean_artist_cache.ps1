@@ -1,5 +1,5 @@
 param(
-    [string]$CacheDir = "D:\Music\foobar2000\profile\flacify\cache\artists"
+    [string]$CacheDir = "$PSScriptRoot\..\cache\artists"
 )
 
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8

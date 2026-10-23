@@ -461,4 +461,37 @@
   Standardized variable names and scope declarations across all modules. Verified exactly 0 redeclarations and 0 implicit globals remain in the entire codebase.
 
 ---
+
+### BUG-24: Fallback Barcode Hash Truncation in Album View
+- **File**: [`theme/flacify/views/album.js`](file:///d:/Coding/!Git/verdant-foobar2000-theme/theme/flacify/views/album.js#L427)
+- **Description**:
+  In `views/album.js`, the fallback barcode string calculation used `('506'+String(Math.abs(hash(alb.name+(alb.artist||'')))).slice(0,9))` without zero-padding. When `Math.abs(hash(...))` evaluated to fewer than 9 digits, `codeToDraw` had fewer than 12 digits, causing `encodeEAN13()` to reject it and fall back to Code 39.
+- **Fix**:
+  Applied standard 9-digit leading zero padding matching `views/song_details.js`:
+  ```javascript
+  var bHashStr = ('000000000' + Math.abs(hash(alb.name + (alb.artist||'')))).slice(-9);
+  var codeToDraw = alb.barcode || alb.isrc || ('506' + bHashStr);
+  ```
+
+---
+
+### BUG-25: Redundant Double Header Render in Albums and Artists Views
+- **Files**:
+  - [`theme/flacify/views/albums.js`](file:///d:/Coding/!Git/verdant-foobar2000-theme/theme/flacify/views/albums.js#L12-L21)
+  - [`theme/flacify/views/artists.js`](file:///d:/Coding/!Git/verdant-foobar2000-theme/theme/flacify/views/artists.js#L13-L22)
+- **Description**:
+  In both `views/albums.js` and `views/artists.js`, the header title and count text were drawn before rendering the grid, and then immediately obscured by `gr.FillSolidRect` during sticky header rendering on every single paint frame.
+- **Fix**:
+  Gated initial header text drawing behind `if (!list.length)`, eliminating redundant GDI+ text measurement and draw operations when the library is populated.
+
+---
+
+### BUG-26: Navigation Label Width Underflow Guard
+- **File**: [`theme/flacify/views/nav.js`](file:///d:/Coding/!Git/verdant-foobar2000-theme/theme/flacify/views/nav.js#L41)
+- **Description**:
+  In `drawNavRow()`, `tw` calculated available text width without a lower bound guard: `R.navLib.x + R.navLib.w - 16 - tx - ((hov && pi >= 0) ? 26 : 0)`. On very narrow sidebars, `tw` could become zero or negative, passing invalid dimensions to GDI+ text rendering.
+- **Fix**:
+  Clamped `tw` with `Math.max(20, ...)`.
+
+---
 *Report updated following full-codebase static, AST, and semantic audit of all 40 JavaScript files.*

@@ -38,7 +38,7 @@ function drawNavRow(gr,y,h,on,hov,pi,name,sub){
     gr.FillEllipse(cx,cy,cs,cs,RGBA(255,255,255,16));
     drawIcon(gr,'home',on?COL.green:COL.text2,cx,cy,cs,cs,cs<=30?16:18);
   }
-  var tx=cx+cs+12, tw=R.navLib.x+R.navLib.w-16-tx-((hov&&pi>=0)?26:0);   // leave room for the "..." button
+  var tx=cx+cs+12, tw=Math.max(20, R.navLib.x+R.navLib.w-16-tx-((hov&&pi>=0)?26:0));   // leave room for the "..." button
   var ty=y+Math.round((h-32)/2);
   tL(gr,name,FONT.pl,on?COL.green:(hov?COL.white:COL.text),tx,ty-1,tw,18);
   tL(gr,sub,FONT.plSub,COL.text2,tx,ty+17,tw,14);

@@ -424,7 +424,8 @@ function drawAlbum(gr, r){
   if(curY+20>r.y && curY<cropY) tL(gr, cText, FONT.plSub, COL.text3, x0, curY, w, 18);
   curY+=26;
 
-  var codeToDraw=alb.barcode || alb.isrc || ('506'+String(Math.abs(hash(alb.name+(alb.artist||'')))).slice(0,9));
+  var bHashStr = ('000000000' + Math.abs(hash(alb.name + (alb.artist||'')))).slice(-9);
+  var codeToDraw = alb.barcode || alb.isrc || ('506' + bHashStr);
   if(curY+44>r.y && curY<cropY){
     drawBarcode(gr, x0, curY, 200, 44, codeToDraw, COL.text, COL.text2);
   }

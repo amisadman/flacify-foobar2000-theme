@@ -10,11 +10,10 @@ function drawAlbums(gr, r){
   var list=getAlbumList();
 
   var titleY=r.y+22;
-  tL(gr,'Albums',FONT.sect2,COL.text,x0,titleY,w,30);
-  tL(gr,fmtNum(list.length)+' albums in your library',FONT.meta,COL.text2,x0,titleY+32,w,20);
-
   var gy=titleY+64, cropY=r.y+r.h, viewH=cropY-gy;
   if(!list.length){
+    tL(gr,'Albums',FONT.sect2,COL.text,x0,titleY,w,30);
+    tL(gr,'0 albums in your library',FONT.meta,COL.text2,x0,titleY+32,w,20);
     tC(gr,'No albums in your library',FONT.sect,COL.text2,r.x,r.y+Math.round(r.h/2)-20,r.w,24);
     tC(gr,'Add folders via foobar Preferences > Media Library.',FONT.qArtist,COL.text3,r.x,r.y+Math.round(r.h/2)+10,r.w,18);
     return;
