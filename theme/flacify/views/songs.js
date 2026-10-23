@@ -76,6 +76,7 @@ function drawSongs(gr,r){
     displaySongsRows=[];
     for(var si=0; si<songsRows.length; si++){
       var sRow=songsRows[si];
+      if(!sRow || !sRow.t) continue;
       if(sRow.k==='t'){
         var stTitle=(sRow.t.title||'').toLowerCase();
         var stArtist=(sRow.t.artist||'').toLowerCase();
@@ -124,22 +125,23 @@ function drawSongs(gr,r){
     var vy0=Math.max(ry,rowsTop), vy1=Math.min(ry+gh,cropY);   // visible band: rows scrolled
     if(vy1<=vy0) continue;                                     // under the sticky header don't take the mouse
     if(row.k==='t'){
-      var t=row.t, isPlaying=!!(NP && t.h && t.h.Path===NP.Path);
+      var t=row.t; if(!t) continue;
+      var isPlaying=!!(NP && t.h && t.h.Path && NP.Path===t.h.Path);
       var isHover=hv(lx-8,vy0,rx+8,vy1);
       if(isHover) gr.FillRoundRect(lx-8,ry,rx-lx+16,gh,4,4,COL.rowHover);
       if(isHover) drawIcon(gr,'play',COL.text,numX,ry,numW,gh,14);
-      else tR(gr,String(row.n),FONT.rowNum,isPlaying?COL.green:COL.white,numX,ry,numW-8,gh);
+      else tR(gr,String(row.n||''),FONT.rowNum,isPlaying?COL.green:COL.white,numX,ry,numW-8,gh);
       if(flat){
         var cs=40, cy=ry+(gh-cs)/2;
         drawCover(gr,titleX,cy,cs,3,t.h,t.album||t.title,t.artkey);
-        tL(gr,t.title,FONT.rowTitle,isPlaying?COL.green:COL.text,titleX+cs+12,ry+8,titleW-cs-12,20);
-        tL(gr,t.artist,FONT.rowArtist,COL.text2,titleX+cs+12,ry+30,titleW-cs-12,16);
+        tL(gr,t.title||'Unknown Track',FONT.rowTitle,isPlaying?COL.green:COL.text,titleX+cs+12,ry+8,titleW-cs-12,20);
+        tL(gr,t.artist||'Unknown Artist',FONT.rowArtist,COL.text2,titleX+cs+12,ry+30,titleW-cs-12,16);
       } else {
-        tL(gr,t.title,FONT.rowTitle,isPlaying?COL.green:COL.text,titleX,ry,titleW,gh);
+        tL(gr,t.title||'Unknown Track',FONT.rowTitle,isPlaying?COL.green:COL.text,titleX,ry,titleW,gh);
       }
-      if(showAlbum) tL(gr,t.album,FONT.rowCell,COL.text2,colX,ry,colW,gh);
-      else if(showArtist) tL(gr,t.artist,FONT.rowCell,COL.text2,colX,ry,colW,gh);
-      tR(gr,t.len,FONT.rowCell,isPlaying?COL.green:COL.white,rx-durW,ry,durW,gh);
+      if(showAlbum) tL(gr,t.album||'',FONT.rowCell,COL.text2,colX,ry,colW,gh);
+      else if(showArtist) tL(gr,t.artist||'',FONT.rowCell,COL.text2,colX,ry,colW,gh);
+      tR(gr,t.len||'0:00',FONT.rowCell,isPlaying?COL.green:COL.white,rx-durW,ry,durW,gh);
       HB_TR.push({x0:lx-8,y0:vy0,x1:rx+8,y1:vy1,songs:true,ti:row.ti,pgx0:numX,pgx1:numX+numW});
     } else {
       /* Group header: every kind is the same block on the same rhythm (GAP, artwork, PADB),

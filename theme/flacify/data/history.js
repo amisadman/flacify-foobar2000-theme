@@ -197,13 +197,20 @@ function getAnalyticsSummary(forceRefresh){
 
   for(var i = 0; i < list.length; i++){
     var it = list[i];
+    if(!it) continue;
     var secs = 180;
     if(it.dur){
-      var parts = it.dur.split(':');
-      if(parts.length === 2){
-        secs = (parseInt(parts[0], 10) || 0) * 60 + (parseInt(parts[1], 10) || 0);
-      } else if(parts.length === 3){
-        secs = (parseInt(parts[0], 10) || 0) * 3600 + (parseInt(parts[1], 10) || 0) * 60 + (parseInt(parts[2], 10) || 0);
+      var durStr = String(it.dur);
+      if(durStr.indexOf(':') !== -1){
+        var parts = durStr.split(':');
+        if(parts.length === 2){
+          secs = (parseInt(parts[0], 10) || 0) * 60 + (parseInt(parts[1], 10) || 0);
+        } else if(parts.length === 3){
+          secs = (parseInt(parts[0], 10) || 0) * 3600 + (parseInt(parts[1], 10) || 0) * 60 + (parseInt(parts[2], 10) || 0);
+        }
+      } else {
+        var numSec = parseFloat(durStr);
+        if(!isNaN(numSec) && numSec > 0) secs = Math.round(numSec);
       }
     }
     totalSeconds += secs;
@@ -215,7 +222,7 @@ function getAnalyticsSummary(forceRefresh){
     for(var ai = 0; ai < arts.length; ai++){
       var art = (arts[ai] || '').trim();
       if(!art) continue;
-      if(!artistMap[art]) artistMap[art] = { name: art, plays: 0, seconds: 0, topTrack: it.title, handle: it.handle };
+      if(!artistMap[art]) artistMap[art] = { name: art, plays: 0, seconds: 0, topTrack: (it.title || 'Unknown Track'), handle: (it.handle || null) };
       artistMap[art].plays++;
       artistMap[art].seconds += secs;
       if(!artistMap[art].handle && it.handle) artistMap[art].handle = it.handle;

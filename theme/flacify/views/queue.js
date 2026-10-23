@@ -92,12 +92,18 @@ function drawQueue(gr){
     }
     else if(pli>=0){
       var items=getItems(pli), qmeta=getMeta(pli), cnt=plCount(pli);
-      for(var k=start;k<cnt&&shown<20;k++){
-        if(qy+rh>bottom) break;
-        var h=items[k]; if(!h) continue;
-        var nhb=qRow(gr,r,x,qy,rh); nhb.pl=pli; nhb.item=k; HB_Q.push(nhb);
-        qEntry(gr,r,x,qy,44,5,h,qmeta.album[k]||String(k),qmeta.artkey[k],qmeta.title[k],qmeta.artist[k],COL.text);
-        qy+=rh; shown++;
+      if(items && qmeta){
+        for(var k=start;k<cnt&&shown<20;k++){
+          if(qy+rh>bottom) break;
+          var h=items[k]; if(!h) continue;
+          var nhb=qRow(gr,r,x,qy,rh); nhb.pl=pli; nhb.item=k; HB_Q.push(nhb);
+          var qAlb=(qmeta.album&&qmeta.album[k])||String(k);
+          var qKey=(qmeta.artkey)?qmeta.artkey[k]:undefined;
+          var qTitle=(qmeta.title&&qmeta.title[k])||'Unknown Title';
+          var qArtist=(qmeta.artist&&qmeta.artist[k])||'Unknown Artist';
+          qEntry(gr,r,x,qy,44,5,h,qAlb,qKey,qTitle,qArtist,COL.text);
+          qy+=rh; shown++;
+        }
       }
       if(shown===0) tL(gr,'End of playlist',FONT.qArtist,COL.text3,x,qy,r.w-36,18);
     }

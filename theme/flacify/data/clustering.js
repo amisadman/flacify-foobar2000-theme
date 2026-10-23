@@ -68,8 +68,8 @@ function loadDailyMixesFromDisk(){
             }
           }
           // Hydrate candidate album handles for mosaic artwork
-          m.cands = [];
           var candPaths = m.cands || [];
+          m.cands = [];
           for(var ci = 0; ci < candPaths.length; ci++){
             var cp = candPaths[ci];
             var ch = (typeof cp === 'string') ? getHandleByPath(cp) : cp;
@@ -77,7 +77,7 @@ function loadDailyMixesFromDisk(){
           }
           if(m.cands.length < 4 && m.handles.length >= 4){
             var seen = {};
-            for(var sc = 0; sc < m.cands.length; sc++) seen[m.cands[sc].Path] = true;
+            for(var sc = 0; sc < m.cands.length; sc++) if(m.cands[sc] && m.cands[sc].Path) seen[m.cands[sc].Path] = true;
             for(var hi = 0; hi < m.handles.length && m.cands.length < 4; hi++){
               var candH = m.handles[hi];
               if(candH && candH.Path && !seen[candH.Path]){
@@ -298,7 +298,7 @@ function playForgottenGems(startPlayback){
   for(var hi = 0; hi < Math.min(100, hist.length); hi++){
     if(hist[hi] && hist[hi].path){
       if(hi < 40) recentMap[hist[hi].path] = true;
-      if(hist[hi].artist) favArtists[hist[hi].artist.toLowerCase()] = true;
+      if(hist[hi].artist) favArtists[(hist[hi].artist || '').toLowerCase()] = true;
     }
   }
 

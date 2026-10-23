@@ -103,7 +103,7 @@ function drawBarcode(gr, x, y, maxW, maxH, code, barCol, textCol){
   }
 
   // render formatted digit string centered beneath the bars
-  var label=enc.text;
+  var label=(enc && enc.text) ? enc.text : '';
   if(label.length===13){
     // format as 1 234567 890128
     label=label.charAt(0)+' '+label.substring(1,7)+' '+label.substring(7);

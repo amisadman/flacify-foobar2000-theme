@@ -217,7 +217,7 @@ function removeTrackFromPl(pl,item){
   invalidateItems(); updateNP(); repaintAll();
 }
 function startRename(pl){ renameEdit={pl:pl, text:plman.GetPlaylistName(pl)}; ctxMenu=null; caretOn=true; startCaret(); applyKeyMode(); repaintAll(); }
-function commitRename(){ if(!renameEdit) return; var t=renameEdit.text.replace(/^\s+|\s+$/g,''); if(t) plman.RenamePlaylist(renameEdit.pl,t); renameEdit=null; applyKeyMode(); repaintAll(); }
+function commitRename(){ if(!renameEdit) return; var t=(renameEdit.text||'').replace(/^\s+|\s+$/g,''); if(t) plman.RenamePlaylist(renameEdit.pl,t); renameEdit=null; applyKeyMode(); repaintAll(); }
 function cancelRename(){ renameEdit=null; applyKeyMode(); repaintAll(); }
 function doDeletePlaylist(pl){
   var wasShown=(view==='playlist' && pl===plman.ActivePlaylist);

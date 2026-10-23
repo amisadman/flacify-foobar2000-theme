@@ -130,9 +130,9 @@ function drawPlaylist(gr,r){
     displayOrder=[];
     for(var oi=0; oi<order.length; oi++){
       var oj=order[oi];
-      var tT=(meta.title[oj]||'').toLowerCase();
-      var tA=(meta.artist[oj]||'').toLowerCase();
-      var tAl=(meta.album[oj]||'').toLowerCase();
+      var tT=(meta && meta.title && meta.title[oj] ? meta.title[oj] : '').toLowerCase();
+      var tA=(meta && meta.artist && meta.artist[oj] ? meta.artist[oj] : '').toLowerCase();
+      var tAl=(meta && meta.album && meta.album[oj] ? meta.album[oj] : '').toLowerCase();
       if(tT.indexOf(fq)!==-1 || tA.indexOf(fq)!==-1 || tAl.indexOf(fq)!==-1){
         displayOrder.push(oj);
       }
@@ -146,7 +146,7 @@ function drawPlaylist(gr,r){
   warmOnce('pl'+p.i,items);
   for(var d=Math.floor(firstRow/rh); d<displayCount; d++){
     var ry=rowsTop+d*rh-firstRow; if(ry>=cropY) break;
-    var j=displayOrder[d]; var h=items[j]; if(!h){ continue; }
+    var j=displayOrder[d]; var h=items?items[j]:null; if(!h){ continue; }
     var isPlaying=(loc && loc.IsValid && loc.PlaylistIndex===p.i && loc.PlaylistItemIndex===j)
                   || (shufHere && sameHandle(h,NP));   // playing from this playlist's hidden shuffle copy
     // the row whose context menu is open stays lit (brighter than hover)
@@ -156,18 +156,23 @@ function drawPlaylist(gr,r){
     var titleCol=isPlaying?COL.green:COL.text;
     if(isHover) drawIcon(gr,'play',COL.text,lx,ry,numW,rh,14);
     else tL(gr,String(d+1),FONT.rowNum,isPlaying?COL.green:COL.white,lx,ry,numW,rh);
-    var cs=40, cy=ry+(rh-cs)/2, alb=meta.album[j];
-    drawCover(gr,titleX,cy,cs,3,h,alb||String(j),meta.artkey[j]);
+    var cs=40, cy=ry+(rh-cs)/2;
+    var alb=(meta && meta.album && meta.album[j]) ? meta.album[j] : '';
+    var artKey=(meta && meta.artkey) ? meta.artkey[j] : undefined;
+    var rowTitle=(meta && meta.title && meta.title[j]) ? meta.title[j] : 'Unknown Title';
+    var rowArtist=(meta && meta.artist && meta.artist[j]) ? meta.artist[j] : 'Unknown Artist';
+    var rowLen=(meta && meta.len && meta.len[j]) ? meta.len[j] : '0:00';
+    drawCover(gr,titleX,cy,cs,3,h,alb||String(j),artKey);
     var ttx=titleX+cs+12, ttw=titleW-cs-12;
-    tL(gr,meta.title[j],FONT.rowTitle,titleCol,ttx,ry+8,ttw,20);
-    tL(gr,meta.artist[j],FONT.rowArtist,COL.text2,ttx,ry+30,ttw,16);
+    tL(gr,rowTitle,FONT.rowTitle,titleCol,ttx,ry+8,ttw,20);
+    tL(gr,rowArtist,FONT.rowArtist,COL.text2,ttx,ry+30,ttw,16);
     tL(gr,alb,FONT.rowCell,COL.text2,albumX,ry,albumW,rh);
     var lk=isLiked(h);
     if(isHover || lk){
       var hCol=lk?COL.green:(hv(heartX-4,ry+(rh-18)/2-2,heartX+22,ry+(rh-18)/2+20)?COL.text:COL.text2);
       drawIcon(gr,lk?'heartFilled':'heart',hCol,heartX,ry+(rh-18)/2,18,18,15);
     }
-    tR(gr,meta.len[j],FONT.rowCell,isPlaying?COL.green:COL.white,rx-durW,ry,durW,rh);
+    tR(gr,rowLen,FONT.rowCell,isPlaying?COL.green:COL.white,rx-durW,ry,durW,rh);
     HB_TR.push({x0:lx-8,y0:ry,x1:rx+8,y1:ry+rh,pl:p.i,item:j,pgx0:lx,pgx1:lx+numW,hx0:heartX-6,hx1:heartX+24});
   }
   // crop the partial rows top & bottom, then draw the sticky column header on top

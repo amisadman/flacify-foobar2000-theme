@@ -109,14 +109,14 @@ function readFirst(paths){
   return null;
 }
 function parseLyrics(text){
-  if(!text) return {lines:[], synced:false};
+  if(!text || typeof text !== 'string') return {lines:[], synced:false};
   // Normalize slash-separated lines if text contains " / " with few/no newlines
   if(text.indexOf('\n')===-1 && text.indexOf(' / ')!==-1){
     text=text.replace(/\s+\/\s+/g, '\n');
   }
   var raw=text.split(/\r?\n/), lines=[], synced=false, reAll=/\[(\d+):(\d+(?:\.\d+)?)\]/g, i, j, m;
   for(i=0;i<raw.length;i++){
-    var line=raw[i].trim(), times=[]; reAll.lastIndex=0;
+    var line=(raw[i]||'').trim(), times=[]; reAll.lastIndex=0;
     while((m=reAll.exec(line))!==null){ times.push(parseInt(m[1],10)*60+parseFloat(m[2])); }
     var txt=line.replace(reAll,'').trim();
     if(times.length){
@@ -145,9 +145,9 @@ function loadLyrics(){
   var text='';
   try{ text=TF.lyrics.EvalWithMetadb(NP); }catch(e){ text=''; }
   // 2. If tag is empty, read external .lrc / .txt beside the track
-  if(!text || !text.trim().length){
-    var base=key.replace(/\.[^.\\\/]+$/,'');
+  if(!text || !(text.trim ? text.trim() : '').length){
+    var base=(key||'').replace(/\.[^.\\\/]+$/,'');
     text=readFirst([base+'.lrc', base+'.txt']);
   }
-  if(text && text.trim().length) lyrics=parseLyrics(text);
+  if(text && (text.trim ? text.trim() : '').length) lyrics=parseLyrics(text);
 }

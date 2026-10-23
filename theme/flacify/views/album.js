@@ -135,7 +135,7 @@ function drawAlbum(gr, r){
 
   // Hi-Res Lossless Specs Glass Pill
   var specsText='';
-  if(alb.codec) specsText+=alb.codec.toUpperCase();
+  if(alb.codec) specsText+=String(alb.codec).toUpperCase();
   if(alb.bitdepth) specsText+=(specsText?' '+CH_DOT+' ':'')+alb.bitdepth+'-bit';
   if(alb.samplerate){
     var sr=parseFloat(alb.samplerate);
@@ -179,12 +179,13 @@ function drawAlbum(gr, r){
   }
 
   // 4. Compute Filtered Track Rows
-  var displayTracks=alb.trackRows;
+  var displayTracks=(alb && alb.trackRows)?alb.trackRows:[];
   if(typeof inlineFilterText!=='undefined' && inlineFilterText.length>0){
     var afq=inlineFilterText.toLowerCase();
     displayTracks=[];
-    for(var adi=0; adi<alb.trackRows.length; adi++){
+    for(var adi=0; adi<(alb.trackRows?alb.trackRows.length:0); adi++){
       var atr=alb.trackRows[adi];
+      if(!atr) continue;
       var atTitle=(atr.title||'').toLowerCase();
       var atArtist=(atr.artist||'').toLowerCase();
       if(atTitle.indexOf(afq)!==-1 || atArtist.indexOf(afq)!==-1){
@@ -225,6 +226,7 @@ function drawAlbum(gr, r){
     if(ry>=cropY) break;
 
     var tr=displayTracks[d];
+    if(!tr) continue;
     var isPlaying=!!(NP && tr.handle && NP.Path===tr.handle.Path);
     var isHov=hv(x0-6, Math.max(ry, r.y), x0+w+6, Math.min(ry+rh, cropY));
 
@@ -233,22 +235,22 @@ function drawAlbum(gr, r){
     // Number / Playing Indicator / Hover Play
     if(isHov) drawIcon(gr, 'play', COL.text, x0, ry, numW, rh, 14);
     else if(isPlaying) drawIcon(gr, 'equalizer', COL.green, x0, ry, numW, rh, 14);
-    else tL(gr, String(tr.trackno), FONT.rowNum, COL.white, x0, ry, numW, rh);
+    else tL(gr, String(tr.trackno||(d+1)), FONT.rowNum, COL.white, x0, ry, numW, rh);
 
     // Title + Collaboration/Featured Artist Subline
     if(tr.artist && tr.artist!==alb.artist){
-      tL(gr, tr.title, FONT.rowTitle, isPlaying ? COL.green : COL.text, titleX, ry+6, titleW, 20);
+      tL(gr, tr.title||'Unknown Track', FONT.rowTitle, isPlaying ? COL.green : COL.text, titleX, ry+6, titleW, 20);
       tL(gr, tr.artist, FONT.plSub, COL.text3, titleX, ry+27, titleW, 16);
     } else {
-      tL(gr, tr.title, FONT.rowTitle, isPlaying ? COL.green : COL.text, titleX, ry, titleW, rh);
+      tL(gr, tr.title||'Unknown Track', FONT.rowTitle, isPlaying ? COL.green : COL.text, titleX, ry, titleW, rh);
     }
 
     // Duration
-    tR(gr, tr.dur, FONT.rowCell, isPlaying ? COL.green : COL.white, durX, ry, durW, rh);
+    tR(gr, tr.dur||'0:00', FONT.rowCell, isPlaying ? COL.green : COL.white, durX, ry, durW, rh);
 
     var cy0=Math.max(ry, r.y), cy1=Math.min(ry+rh, cropY);
     if(cy1>cy0){
-      HB_TR.push({x0:x0-6, y0:cy0, x1:x0+w+6, y1:cy1, albumRow:true, idx:tr.idx, handles:alb.handles, pgx0:x0, pgx1:x0+numW});
+      HB_TR.push({x0:x0-6, y0:cy0, x1:x0+w+6, y1:cy1, albumRow:true, idx:(tr.idx!==undefined?tr.idx:d), handles:alb.handles, pgx0:x0, pgx1:x0+numW});
     }
   }
 
@@ -340,6 +342,7 @@ function drawAlbum(gr, r){
 
         if(ocY+oCardH>r.y && ocY<cropY){
           var oAlb=shArt.otherAlbums[oi];
+          if(!oAlb) continue;
           var oHov=hv(ocX-6, Math.max(ocY-6, r.y), ocX+oCardW+6, Math.min(ocY+oCardH+6, cropY));
           if(oHov) gr.FillRoundRect(ocX-6, ocY-6, oCardW+12, oCardH+12, 8, 8, COL.rowHover);
 
@@ -386,6 +389,7 @@ function drawAlbum(gr, r){
       var srh=42;
       for(var oti=0; oti<shArt.otherTracks.length; oti++){
         var ot=shArt.otherTracks[oti];
+        if(!ot) continue;
         var oty=curY+oti*srh;
         if(oty+srh<=r.y) continue;
         if(oty>=cropY) break;
@@ -398,15 +402,15 @@ function drawAlbum(gr, r){
 
         var otTitleX=x0+38, otDurW=56;
         var otTitleW=w-38-otDurW-16;
-        tL(gr, ot.title, FONT.rowTitle, otHov ? COL.green : COL.text, otTitleX, oty+4, otTitleW, 18);
+        tL(gr, ot.title||'Unknown Track', FONT.rowTitle, otHov ? COL.green : COL.text, otTitleX, oty+4, otTitleW, 18);
         tL(gr, ot.album || shArt.name, FONT.plSub, COL.text3, otTitleX, oty+22, otTitleW, 16);
-        tR(gr, ot.dur, FONT.rowCell, COL.text2, x0+w-otDurW, oty, otDurW, srh);
+        tR(gr, ot.dur||'0:00', FONT.rowCell, COL.text2, x0+w-otDurW, oty, otDurW, srh);
 
         var ocy0=Math.max(oty, r.y), ocy1=Math.min(oty+srh, cropY);
         if(ocy1>ocy0){
           HB_TR.push({
             x0:x0-4, y0:ocy0, x1:x0+w+4, y1:ocy1,
-            albumRow:true, idx:0, handles:[ot.handle], pgx0:x0, pgx1:x0+28
+            albumRow:true, idx:0, handles:(ot.handle ? [ot.handle] : []), pgx0:x0, pgx1:x0+28
           });
         }
       }

@@ -154,10 +154,10 @@ function drawOverlays(gr){
     tL(gr,'Rename playlist',FONT.sect,COL.text,rx0+28,ry0+22,rw-56,26);
     var ix=rx0+28, iyf=ry0+64, iw=rw-56, ih=46;
     gr.FillRoundRect(ix,iyf,iw,ih,6,6,RGB(62,62,62));
-    var tw3=gr.CalcTextWidth(renameEdit.text,FONT.pl);
-    tL(gr,renameEdit.text,FONT.pl,COL.text,ix+14,iyf,iw-28,ih);
+    var tw3=gr.CalcTextWidth(renameEdit.text||'',FONT.pl);
+    tL(gr,renameEdit.text||'',FONT.pl,COL.text,ix+14,iyf,iw-28,ih);
     if(caretOn){ var cxr=ix+14+Math.min(iw-30,tw3)+2; gr.FillSolidRect(cxr,iyf+Math.round((ih-20)/2),2,20,COL.text); }
-    var canSave=renameEdit.text.replace(/^\s+|\s+$/g,'').length>0;
+    var canSave=(renameEdit.text||'').replace(/^\s+|\s+$/g,'').length>0;
     var bw=118, bh=40, by=ry0+rhh-bh-22, dx=rx0+rw-28-bw, ccx=dx-14-bw;
     RENAME_HB={
       panel:{x0:rx0,y0:ry0,x1:rx0+rw,y1:ry0+rhh},

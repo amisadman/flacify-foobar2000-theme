@@ -299,9 +299,9 @@ function drawMain(gr){
 }
 
 /* ------------------------- input ------------------------- */
-function seekFrac(x){ return HB_SEEK?clamp01((x-HB_SEEK.x)/HB_SEEK.w):0; }
+function seekFrac(x){ return (HB_SEEK && HB_SEEK.w>0)?clamp01((x-HB_SEEK.x)/HB_SEEK.w):0; }
 function applyVol(x){
-  if(HB_VOL){
+  if(HB_VOL && HB_VOL.w>0){
     var v=pos2vol(clamp01((x-HB_VOL.x)/HB_VOL.w));
     fb.Volume=v;
     if(v>-99) lastNonMuteVol=v;
@@ -390,7 +390,7 @@ function computeSearch(){
   var arts=getArtistList(), i;
   for(i=0;i<arts.length && searchArts.length<24;i++){ if(arts[i] && arts[i].name && arts[i].name.toLowerCase().indexOf(q)>=0) searchArts.push(arts[i]); }
   var idx=getSearchIdx(), cnt=0;
-  for(i=0;i<idx.length && cnt<150;i++){ if(idx[i].key.indexOf(q)>=0){ searchTrks.push(idx[i]); cnt++; } }
+  for(i=0;i<idx.length && cnt<150;i++){ if(idx[i] && idx[i].key && idx[i].key.indexOf(q)>=0){ searchTrks.push(idx[i]); cnt++; } }
 }
 /* The back button restarts the current track once it is past the first moment of it, and only
    steps back when pressed at the very start -- the rule every streaming player uses, because a
@@ -1273,28 +1273,28 @@ function on_char(code){
     }
     if(code===8){
       if(artistStudioModal.activeField==='listeners'){
-        artistStudioModal.listeners=artistStudioModal.listeners.slice(0,-1);
+        artistStudioModal.listeners=(artistStudioModal.listeners||'').slice(0,-1);
       } else {
-        artistStudioModal.bio=artistStudioModal.bio.slice(0,-1);
+        artistStudioModal.bio=(artistStudioModal.bio||'').slice(0,-1);
       }
       caretOn=true; repaintAll(); return;
     }
     if(code>=32){
       var ch=String.fromCharCode(code);
       if(artistStudioModal.activeField==='listeners'){
-        if(artistStudioModal.listeners.length<35) artistStudioModal.listeners+=ch;
+        if((artistStudioModal.listeners||'').length<35) artistStudioModal.listeners=(artistStudioModal.listeners||'')+ch;
       } else {
-        if(artistStudioModal.bio.length<3000) artistStudioModal.bio+=ch;
+        if((artistStudioModal.bio||'').length<3000) artistStudioModal.bio=(artistStudioModal.bio||'')+ch;
       }
       caretOn=true; repaintAll(); return;
     }
     return;
   }
   if(renameEdit){
-    if(code===8) renameEdit.text=renameEdit.text.slice(0,-1);
+    if(code===8) renameEdit.text=(renameEdit.text||'').slice(0,-1);
     else if(code===27){ cancelRename(); return; }              // Esc = cancel
     else if(code===13){ commitRename(); return; }              // Enter = commit
-    else if(code>=32) renameEdit.text+=String.fromCharCode(code);
+    else if(code>=32) renameEdit.text=(renameEdit.text||'')+String.fromCharCode(code);
     caretOn=true; repaintAll(); return;
   }
   if(code===6){ // Ctrl+F
@@ -1355,22 +1355,22 @@ function on_key_down(vkey){
     if(pasteStr && pasteStr.length){
       if(typeof artistStudioModal !== 'undefined' && artistStudioModal){
         if(artistStudioModal.activeField === 'listeners'){
-          artistStudioModal.listeners = (artistStudioModal.listeners + pasteStr.replace(/[\r\n]/g, '')).slice(0, 35);
+          artistStudioModal.listeners = ((artistStudioModal.listeners || '') + pasteStr.replace(/[\r\n]/g, '')).slice(0, 35);
         } else {
-          artistStudioModal.bio = (artistStudioModal.bio + pasteStr).slice(0, 3000);
+          artistStudioModal.bio = ((artistStudioModal.bio || '') + pasteStr).slice(0, 3000);
         }
         caretOn = true; repaintAll(); return;
       }
       if(renameEdit){
-        renameEdit.text += pasteStr.replace(/[\r\n]/g, '');
+        renameEdit.text = (renameEdit.text || '') + pasteStr.replace(/[\r\n]/g, '');
         caretOn = true; repaintAll(); return;
       }
       if(typeof inlineFilterOpen !== 'undefined' && inlineFilterOpen){
-        inlineFilterText += pasteStr.replace(/[\r\n]/g, '');
+        inlineFilterText = (inlineFilterText || '') + pasteStr.replace(/[\r\n]/g, '');
         caretOn = true; repaintAll(); return;
       }
       if(view === 'search'){
-        searchQuery += pasteStr.replace(/[\r\n]/g, '');
+        searchQuery = (searchQuery || '') + pasteStr.replace(/[\r\n]/g, '');
         searchScroll=searchScrollT=0; computeSearch();
         caretOn = true; repaintAll(); return;
       }
@@ -1381,14 +1381,14 @@ function on_key_down(vkey){
   if(vkey === 46){
     if(typeof artistStudioModal !== 'undefined' && artistStudioModal){
       if(artistStudioModal.activeField === 'listeners'){
-        artistStudioModal.listeners = artistStudioModal.listeners.slice(0, -1);
+        artistStudioModal.listeners = (artistStudioModal.listeners || '').slice(0, -1);
       } else {
-        artistStudioModal.bio = artistStudioModal.bio.slice(0, -1);
+        artistStudioModal.bio = (artistStudioModal.bio || '').slice(0, -1);
       }
       caretOn = true; repaintAll(); return;
     }
     if(renameEdit){
-      renameEdit.text = renameEdit.text.slice(0, -1);
+      renameEdit.text = (renameEdit.text || '').slice(0, -1);
       caretOn = true; repaintAll(); return;
     }
     if(typeof inlineFilterOpen !== 'undefined' && inlineFilterOpen){

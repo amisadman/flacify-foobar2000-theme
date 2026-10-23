@@ -203,7 +203,7 @@ function getArtistList(){
         if(!seen[nm]){ seen[nm]=1; out.push({name:nm, handle:lib[i]}); }
       }
     }
-    out.sort(function(a,b){ var an=a.name.toLowerCase(), bn=b.name.toLowerCase(); return an<bn?-1:(an>bn?1:0); });
+    out.sort(function(a,b){ var an=(a&&a.name?a.name:'').toLowerCase(), bn=(b&&b.name?b.name:'').toLowerCase(); return an<bn?-1:(an>bn?1:0); });
   }
   artistList=out; return out;
 }
@@ -247,9 +247,9 @@ function loadArtist(name){
   var list=artistTracksMap?artistTracksMap[name]:null;
   if(!list || !list.length){
     if(artistTracksMap && name){
-      var nLow=name.toLowerCase();
+      var nLow=(name||'').toLowerCase();
       for(var k in artistTracksMap){
-        if(k.toLowerCase()===nLow){ list=artistTracksMap[k]; break; }
+        if((k||'').toLowerCase()===nLow){ list=artistTracksMap[k]; break; }
       }
     }
   }
@@ -334,10 +334,11 @@ function loadArtist(name){
 
   // Appears on: other albums containing tracks by this artist
   getAlbumList();
-  var nameLow=name.toLowerCase();
+  var nameLow=(name||'').toLowerCase();
   var appearsSeen={};
   for(var ai=0;ai<albumList.length;ai++){
     var albL=albumList[ai];
+    if(!albL) continue;
     var albArtLow=(albL.artist||'').toLowerCase();
     if(albArtLow!==nameLow && albL.handles && albL.handles.length){
       for(var hi=0;hi<albL.handles.length;hi++){
@@ -406,7 +407,7 @@ function getSongsIdx(){
       out.push({h:lib[i], title:eT, artist:eR, aartist:eA,
                 primaryArtist:primaryA, splitArtists:parts,
                 album:eL, len:ln[i], artkey:ak[i], year:yr[i]||'', tn:parseInt(tn[i],10)||0,
-                kT:eT.toLowerCase(), kR:eR.toLowerCase(), kA:primaryA.toLowerCase(), kL:eL.toLowerCase()});
+                kT:(eT||'').toLowerCase(), kR:(eR||'').toLowerCase(), kA:(primaryA||'').toLowerCase(), kL:(eL||'').toLowerCase()});
     }
   }
   songsIdx=out; return out;
@@ -448,7 +449,7 @@ function buildSongsRows(){
       }
     }
     artistOrder.sort(function(a,b){
-      var an=a.toLowerCase(), bn=b.toLowerCase();
+      var an=(a||'').toLowerCase(), bn=(b||'').toLowerCase();
       return an<bn?-1:(an>bn?1:0);
     });
 
@@ -862,7 +863,7 @@ function loadAlbum(name, artist){
 
   for(var ani=0;ani<artistNames.length;ani++){
     var aName=artistNames[ani];
-    aLow=(aName||'').toLowerCase();
+    var aLow=(aName||'').toLowerCase();
     var aOtherAlbums=[];
     var aAlbumCount=0;
     var aHandle=null;
@@ -891,7 +892,7 @@ function loadAlbum(name, artist){
       if(artistTracksMap[aName]) aTracks=artistTracksMap[aName];
       else {
         for(var atk in artistTracksMap){
-          if(atk.toLowerCase()===aLow){ aTracks=artistTracksMap[atk]; break; }
+          if((atk||'').toLowerCase()===aLow){ aTracks=artistTracksMap[atk]; break; }
         }
       }
     }
