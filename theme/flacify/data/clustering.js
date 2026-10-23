@@ -404,55 +404,32 @@ function playHeavyRotation(startPlayback){
 /* ------------------------- Auto-Clean Mojibake Playlists ------------------------- */
 function cleanupMojibakePlaylists(){
   try {
-    var foundForgotten = false, foundHiRes = false, foundRotation = false, changed = false;
+    if(!plman || !plman.PlaylistCount) return;
+    var changed = false;
+    var seenSmart = {};
     for(var i = plman.PlaylistCount - 1; i >= 0; i--){
       var name = plman.GetPlaylistName(i);
       if(!name) continue;
-      var low = name.toLowerCase();
 
-      // Forgotten Gems cleanup: remove duplicate or malformed variants, keep one clean 'Forgotten Gems'
-      if(low.indexOf('forgotten gems') >= 0){
-        if(name === 'Forgotten Gems' && !foundForgotten){
-          foundForgotten = true;
-        } else if(foundForgotten){
+      // 1. Clean malformed / mojibake bullet prefixes from system smart playlists
+      var m = name.match(/^[\s\/\-\u2022\u2013\u2014\u00E2\u20AC\u0393\u00C7]+(Forgotten Gems|Heavy Rotation|24-bit Hi-Res Vault)$/i);
+      if(m && m[1]){
+        name = m[1];
+        try { plman.RenamePlaylist(i, name); changed = true; } catch(e){}
+      }
+
+      // 2. Remove identical duplicate smart playlists if multiple exist
+      if(name === 'Forgotten Gems' || name === 'Heavy Rotation' || name === '24-bit Hi-Res Vault'){
+        if(seenSmart[name]){
           try { plman.RemovePlaylist(i); changed = true; } catch(e){}
         } else {
-          try { plman.RenamePlaylist(i, 'Forgotten Gems'); changed = true; } catch(e){}
-          foundForgotten = true;
+          seenSmart[name] = true;
         }
         continue;
       }
 
-      // Heavy Rotation cleanup
-      if(low.indexOf('heavy rotation') >= 0){
-        if(name === 'Heavy Rotation' && !foundRotation){
-          foundRotation = true;
-        } else if(foundRotation){
-          try { plman.RemovePlaylist(i); changed = true; } catch(e){}
-        } else {
-          try { plman.RenamePlaylist(i, 'Heavy Rotation'); changed = true; } catch(e){}
-          foundRotation = true;
-        }
-        continue;
-      }
-
-      // Hi-Res Vault cleanup
-      if(low.indexOf('hi-res') >= 0 || low.indexOf('24-bit') >= 0){
-        if(name === '24-bit Hi-Res Vault' && !foundHiRes){
-          foundHiRes = true;
-        } else if(foundHiRes){
-          try { plman.RemovePlaylist(i); changed = true; } catch(e){}
-        } else {
-          try { plman.RenamePlaylist(i, '24-bit Hi-Res Vault'); changed = true; } catch(e){}
-          foundHiRes = true;
-        }
-        continue;
-      }
-
-      // Specific UTF-8/CP1252 mojibake sequence cleanup (e.g. â€¢) and stray leading bullets
-      var hasMojibake = name.indexOf('\u00E2\u20AC') >= 0 || name.indexOf('\u0393\u00C7') >= 0;
-      var hasLeadingPunct = /^[\s\/\-\u2022\u2013\u2014]+/.test(name);
-      if(hasMojibake || hasLeadingPunct){
+      // 3. Clean specific UTF-8/CP1252 mojibake artifacts from other playlists
+      if(name.indexOf('\u00E2\u20AC') >= 0 || name.indexOf('\u0393\u00C7') >= 0){
         var clean = name
           .replace(/[\u00E2\u20AC][\u00A2\u201C\u201D\u2122\u0153\u009D\u009C]*/g, '')
           .replace(/\u0393\u00C7[\s\S]?/g, '')
@@ -467,3 +444,4 @@ function cleanupMojibakePlaylists(){
   } catch(e){}
 }
 cleanupMojibakePlaylists();
+

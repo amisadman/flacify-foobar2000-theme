@@ -7,7 +7,7 @@
 *A high-fidelity, standalone music player interface that brings the sleek aesthetic, fluid responsiveness, and rich metadata of modern Spotify desktop to your personal, offline lossless FLAC and Hi-Res collection.*
 
 [![Release](https://img.shields.io/github/v/release/amisadman/flacify-foobar2000-theme?color=1DB954&label=release)](https://github.com/amisadman/flacify-foobar2000-theme/releases/latest)
-![Version](https://img.shields.io/badge/version-v1.5.5-1DB954)
+![Version](https://img.shields.io/badge/version-v1.5.6-1DB954)
 ![foobar2000](https://img.shields.io/badge/foobar2000-v2%20·%2064--bit-1DB954)
 ![Audio](https://img.shields.io/badge/Lossless-FLAC%20%7C%20ALAC%20%7C%20Hi--Res-1DB954)
 ![Windows](https://img.shields.io/badge/Windows-10%20%7C%2011-1DB954)
@@ -168,7 +168,7 @@ If you build your local high-resolution lossless music library using **[SpotiFLA
 ### Method 1: Fresh Portable Install (Recommended)
 
 1. Download and run the **foobar2000 v2 (64-bit)** installer from the [official website](https://www.foobar2000.org/download). During installation, choose **Portable mode** and select a folder (e.g. `C:\Music\foobar2000` or `D:\foobar2000`).
-2. Download **`FLACify-v1.5.5.zip`** from the **[latest release](https://github.com/amisadman/flacify-foobar2000-theme/releases/latest)**.
+2. Download **`FLACify-v1.5.6.zip`** from the **[latest release](https://github.com/amisadman/flacify-foobar2000-theme/releases/latest)**.
 3. Extract the **`profile`** folder from the zip directly into your foobar2000 directory (the folder where `foobar2000.exe` resides).
 4. Launch foobar2000. Under **Preferences → Media Library**, add your music folder (e.g. your SpotiFLAC downloads).
 
@@ -177,7 +177,7 @@ If you build your local high-resolution lossless music library using **[SpotiFLA
 ### Method 2: Existing foobar2000 Setup
 
 1. Close foobar2000.
-2. Download and extract **`FLACify-v1.5.5.zip`**.
+2. Download and extract **`FLACify-v1.5.6.zip`**.
 3. Double-click **`install.bat`** in the repository/extracted folder. The installer automatically backs up your previous configuration to `<profile>\flacify-backup\<date>\` before applying FLACify.
 4. Launch foobar2000.
 
