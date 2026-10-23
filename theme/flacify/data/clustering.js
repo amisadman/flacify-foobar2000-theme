@@ -449,16 +449,13 @@ function cleanupMojibakePlaylists(){
         continue;
       }
 
-      // General mojibake and stray leading slashes/bullets cleanup
-      var hasNonAscii = false;
-      for(var c = 0; c < name.length; c++){
-        if(name.charCodeAt(c) > 127){ hasNonAscii = true; break; }
-      }
-      var hasLeadingPunct = /^[\s\/\-\u2022]+/.test(name);
-      if(hasNonAscii || hasLeadingPunct){
+      // Specific UTF-8/CP1252 mojibake sequence cleanup (e.g. â€¢) and stray leading bullets
+      var hasMojibake = name.indexOf('\u00E2\u20AC') >= 0 || name.indexOf('\u0393\u00C7') >= 0;
+      var hasLeadingPunct = /^[\s\/\-\u2022\u2013\u2014]+/.test(name);
+      if(hasMojibake || hasLeadingPunct){
         var clean = name
-          .replace(/[\u00E2\u20AC\u00A2\u2022\uD800-\uDFFF]+/g, '')
-          .replace(/[\u0080-\uFFFF]/g, '')
+          .replace(/[\u00E2\u20AC][\u00A2\u201C\u201D\u2122\u0153\u009D\u009C]*/g, '')
+          .replace(/\u0393\u00C7[\s\S]?/g, '')
           .replace(/^[\s\/\-\u2022\u2013\u2014]+|[\s\/\-\u2022\u2013\u2014]+$/g, '')
           .replace(/\s+/g, ' ');
         if(clean && clean !== name){

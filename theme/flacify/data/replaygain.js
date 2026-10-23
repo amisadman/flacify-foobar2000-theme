@@ -204,7 +204,7 @@ function drawEqModal(gr){
   // Preset Selector Pills Row
   tL(gr,'Presets:',FONT.pl,COL.text2,px,y,64,26);
   var prx=px+68;
-  EQ_MODAL_HB={ presets:[] };
+  EQ_MODAL_HB={ presets:[], panel:{x0:cx, y0:cy, x1:cx+cw, y1:cy+ch} };
 
   for(var psi=0;psi<EQ_PRESETS.length;psi++){
     var pItem=EQ_PRESETS[psi];

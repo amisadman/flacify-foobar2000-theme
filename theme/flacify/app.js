@@ -505,6 +505,7 @@ function on_mouse_lbtn_up(x,y){
         }
       }
       if(EQ_MODAL_HB.close && inRect(x,y,EQ_MODAL_HB.close)){ closeEqModal(); return; }
+      if(EQ_MODAL_HB.panel && inRect(x,y,EQ_MODAL_HB.panel)) return;
     }
     closeEqModal();
     return;

@@ -77,8 +77,9 @@ function drawBar(gr){
   if(NP){
     // 1. Title line with Heart button & Plus (+) button
     var maxTitleW=Math.max(60, maxLeftW-64);
-    var tw=Math.min(maxTitleW, Math.max(40, Math.round(gr.CalcTextWidth(npTitleStr, FONT.npTitle))));
-    tL(gr, npTitleStr, FONT.npTitle, COL.text, tx, by+24, tw, 22);
+    var titleText=npTitleStr||'Unknown Track';
+    var tw=Math.min(maxTitleW, Math.max(40, Math.round(gr.CalcTextWidth(titleText, FONT.npTitle))));
+    tL(gr, titleText, FONT.npTitle, COL.text, tx, by+24, tw, 22);
 
     var hx=tx+tw+10, hy=by+23, hs=22;
     var liked=isLiked(NP);
@@ -100,8 +101,9 @@ function drawBar(gr){
     }
 
     var maxArtW=Math.max(30, maxLeftW-(badge?bw+8:0));
-    var aw=Math.min(maxArtW, Math.round(gr.CalcTextWidth(npArtistStr, FONT.npArtist)));
-    tL(gr, npArtistStr, FONT.npArtist, COL.text2, tx, by+50, aw, 18);
+    var artistText=npArtistStr||'Unknown Artist';
+    var aw=Math.min(maxArtW, Math.round(gr.CalcTextWidth(artistText, FONT.npArtist)));
+    tL(gr, artistText, FONT.npArtist, COL.text2, tx, by+50, aw, 18);
 
     if(badge){
       var bx=tx+aw+10, byBadge=by+49;
