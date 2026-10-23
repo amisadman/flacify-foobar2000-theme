@@ -7,11 +7,11 @@ function hash(s){ s=String(s); var h=2166136261; for(var i=0;i<s.length;i++){ h^
 function coverCol(seed){ return PALETTE[hash(seed)%PALETTE.length]; }
 function blend(c1,c2,t){ var r=(c1>>16)&255,g=(c1>>8)&255,b=c1&255,r2=(c2>>16)&255,g2=(c2>>8)&255,b2=c2&255; return RGB(Math.round(r+(r2-r)*t),Math.round(g+(g2-g)*t),Math.round(b+(b2-b)*t)); }
 function fmtTime(s){ s=Math.max(0,Math.round(s)); return Math.floor(s/60)+':'+('0'+(s%60)).slice(-2); }
-function inRect(x,y,r){ return x>=r.x0 && x<r.x1 && y>=r.y0 && y<r.y1; }
+function inRect(x,y,r){ return !!r && x>=r.x0 && x<r.x1 && y>=r.y0 && y<r.y1; }
 function cxOf(x,w,cw){ return x+Math.round((w-cw)/2); }   // x that centres a cw-wide thing inside [x,w]
 function clamp01(v){ return isNaN(v)?0:(v<0?0:(v>1?1:v)); }
 function clampPx(v,max){ return isNaN(v)?0:(v<0?0:(v>max?max:v)); }
-function hitIdx(list,x,y){ for(var i=0;i<list.length;i++) if(inRect(x,y,list[i])) return i; return -1; }
+function hitIdx(list,x,y){ if(!list) return -1; for(var i=0;i<list.length;i++) if(inRect(x,y,list[i])) return i; return -1; }
 function hit(list,x,y){ var i=hitIdx(list,x,y); return i<0?null:list[i]; }
 function labelOf(list,v,dflt){ for(var i=0;i<list.length;i++) if(list[i][1]===v) return list[i][0]; return dflt; }
 function playingLoc(){ return plman.GetPlayingItemLocation?plman.GetPlayingItemLocation():null; }

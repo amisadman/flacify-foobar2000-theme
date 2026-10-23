@@ -7,6 +7,7 @@
    hover inside the panel, and two EvalWithMetadb calls per row per frame is pure interop. */
 var qMetaCache={};
 function qRowMeta(h){
+  if(!h) return {t:'', a:''};
   var p=h.Path, e=qMetaCache[p];
   if(!e) e=qMetaCache[p]={t:TF.title.EvalWithMetadb(h), a:TF.artist.EvalWithMetadb(h)};
   return e;
