@@ -7,8 +7,16 @@
    invalidateItems(), which every callback that can change a playlist's name or contents goes
    through -- switching between playlists is not one of them and deliberately keeps the caches. */
 var plNameCache={}, plCountCache={};
-function plName(pi){ if(!plNameCache.hasOwnProperty(pi)) plNameCache[pi]=plman.GetPlaylistName(pi); return plNameCache[pi]; }
-function plCount(pi){ if(!plCountCache.hasOwnProperty(pi)) plCountCache[pi]=plman.PlaylistItemCount(pi); return plCountCache[pi]; }
+function plName(pi){
+  if(pi===undefined || pi===null || pi<0 || (plman && pi>=plman.PlaylistCount)) return '';
+  if(!plNameCache.hasOwnProperty(pi)){ try{ plNameCache[pi]=plman.GetPlaylistName(pi); }catch(e){ plNameCache[pi]=''; } }
+  return plNameCache[pi];
+}
+function plCount(pi){
+  if(pi===undefined || pi===null || pi<0 || (plman && pi>=plman.PlaylistCount)) return 0;
+  if(!plCountCache.hasOwnProperty(pi)){ try{ plCountCache[pi]=plman.PlaylistItemCount(pi); }catch(e){ plCountCache[pi]=0; } }
+  return plCountCache[pi];
+}
 function isPinnedNavPl(nm){
   if(!nm) return false;
   return nm === (typeof LIKED_PLAYLIST_NAME!=='undefined' ? LIKED_PLAYLIST_NAME : 'Liked Songs');
@@ -362,7 +370,7 @@ function loadArtist(name){
    the library. Rows: {k:'g1'|'g2'|'t'}; headers also carry kind:'artist'|'album'. */
 var songsIdx=null, songsRows=null, songsTracks=null, songsContentH=0, songsTotalSec=0;
 var songsGroup='none', songsScroll=0, songsScrollT=0, SONGS_MAXPX=0;
-var sgMenuOpen=false, SG_HB=[], HB_SG=null, HB_ALLSONGS=null;
+var sgMenuOpen=false, SG_HB=[], HB_SG=null;
 var SONGS_GROUPS=[['No grouping','none'],['By artist','artist'],['By album','album'],['By artist & album','both']];
 /* ---- group-list metrics: one indent step per nesting level (SG_IND) and one shared vertical
    rhythm per header -- GAP above (the divider sits at its top), artwork, PADB below. Header
@@ -445,7 +453,7 @@ function buildSongsRows(){
     });
 
     for(var ai=0;ai<artistOrder.length;ai++){
-      var artName=artistOrder[ai];
+      artName=artistOrder[ai];
       var artTracks=artistMap[artName];
       if(!artTracks || !artTracks.length) continue;
 
@@ -486,7 +494,7 @@ function buildSongsRows(){
           return cmpK(t1.kL,t2.kL) || cmpTrk(t1,t2);
         });
         for(i=0;i<artTracks.length;i++){
-          var t=artTracks[i];
+          t=artTracks[i];
           n++;
           tracks.push(t);
           if(ref1.cands.length<COVER_CANDS && ref1.ckey!==t.artkey){
@@ -497,7 +505,7 @@ function buildSongsRows(){
         }
       } else { // g==='both'
         for(var bi=0;bi<albOrder.length;bi++){
-          var aKey=albOrder[bi];
+          aKey=albOrder[bi];
           var aTrks=albMap[aKey];
           var firstT=aTrks[0];
           var ref2={
@@ -514,7 +522,7 @@ function buildSongsRows(){
 
           aTrks.sort(cmpTrk);
           for(i=0;i<aTrks.length;i++){
-            var t=aTrks[i];
+            t=aTrks[i];
             n++;
             tracks.push(t);
             if(ref1.cands.length<COVER_CANDS && ref1.ckey!==t.artkey){
@@ -528,9 +536,9 @@ function buildSongsRows(){
     }
   } else if(g==='album'){
     idx.sort(function(a,b){ return cmpK(a.kL,b.kL)||cmpK(a.kA,b.kA)||cmpTrk(a,b); });
-    var curAl=null, ref1=null, n=0;
+    var curAl=null; ref1=null; n=0;
     for(i=0;i<idx.length;i++){
-      var t=idx[i];
+      t=idx[i];
       if(t.artkey!==curAl){
         curAl=t.artkey; n=0;
         ref1={k:'g1',kind:'album',label:t.album,sub:(t.primaryArtist||t.aartist)+(t.year?(' '+CH_DOT+' '+t.year):''),h:SG_H1,handle:t.h,seed:t.artkey,count:0,albums:0};
@@ -577,14 +585,28 @@ function playSongsRow(ti){
 }
 
 var plCacheMap={}, plMetaMap={};
-function getItems(pi){ if(!plCacheMap[pi]){ plCacheMap[pi]=plman.GetPlaylistItems(pi); } return plCacheMap[pi]; }
+function getItems(pi){
+  if(pi===undefined || pi===null || pi<0 || (plman && pi>=plman.PlaylistCount)) return null;
+  if(!plCacheMap[pi]){ try{ plCacheMap[pi]=plman.GetPlaylistItems(pi); }catch(e){ plCacheMap[pi]=null; } }
+  return plCacheMap[pi];
+}
 function getMeta(pi){
+  if(pi===undefined || pi===null || pi<0 || (plman && pi>=plman.PlaylistCount)) return { title:[], artist:[], album:[], len:[], artkey:[], totalSec:0, keys:null };
   if(!plMetaMap[pi]){
-    var list=getItems(pi), secs=TF.lensec.EvalWithMetadbs(list), tot=0;
-    for(var i=0;i<secs.length;i++) tot+=parseInt(secs[i],10)||0;
-    plMetaMap[pi]={ title:TF.title.EvalWithMetadbs(list), artist:TF.artist.EvalWithMetadbs(list),
-                    album:TF.album.EvalWithMetadbs(list), len:TF.len.EvalWithMetadbs(list), artkey:TF.albkey.EvalWithMetadbs(list),
-                    totalSec:tot, keys:null };
+    var list=getItems(pi), secs=[], tot=0;
+    if(list && list.Count){
+      try{ secs=TF.lensec.EvalWithMetadbs(list); }catch(e){ secs=[]; }
+      for(var i=0;i<secs.length;i++) tot+=parseInt(secs[i],10)||0;
+      try{
+        plMetaMap[pi]={ title:TF.title.EvalWithMetadbs(list), artist:TF.artist.EvalWithMetadbs(list),
+                        album:TF.album.EvalWithMetadbs(list), len:TF.len.EvalWithMetadbs(list), artkey:TF.albkey.EvalWithMetadbs(list),
+                        totalSec:tot, keys:null };
+      }catch(e){
+        plMetaMap[pi]={ title:[], artist:[], album:[], len:[], artkey:[], totalSec:0, keys:null };
+      }
+    } else {
+      plMetaMap[pi]={ title:[], artist:[], album:[], len:[], artkey:[], totalSec:0, keys:null };
+    }
   }
   return plMetaMap[pi];
 }
@@ -840,7 +862,7 @@ function loadAlbum(name, artist){
 
   for(var ani=0;ani<artistNames.length;ani++){
     var aName=artistNames[ani];
-    var aLow=aName.toLowerCase();
+    aLow=aName.toLowerCase();
     var aOtherAlbums=[];
     var aAlbumCount=0;
     var aHandle=null;

@@ -394,7 +394,7 @@ function drawArtist(gr, r){
 
     var aCardW=140, aGap=16, aCardH=aCardW+56;
     var maxAlbs=Math.min(6, artistAlbums.length);
-    for(var ai=0; ai<maxAlbs; ai++){
+    for(ai=0; ai<maxAlbs; ai++){
       var acX=x0+ai*(aCardW+aGap);
       var acY=curY;
       if(acX+aCardW>x0+w) break;
@@ -435,7 +435,7 @@ function drawArtist(gr, r){
 
     var sCardW=140, sGap=16, sCardH=sCardW+56;
     var maxSingles=Math.min(6, artistSingles.length);
-    for(var si=0; si<maxSingles; si++){
+    for(si=0; si<maxSingles; si++){
       var scX=x0+si*(sCardW+sGap);
       var scY=curY;
       if(scX+sCardW>x0+w) break;

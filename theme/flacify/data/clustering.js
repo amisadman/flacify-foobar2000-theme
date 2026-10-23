@@ -164,7 +164,7 @@ function buildDailyMixes(){
 
   var result = [];
   for(var bi = 0; bi < 4; bi++){
-    var def = MIX_DEFINITIONS[bi];
+    def = MIX_DEFINITIONS[bi];
     var bItems = buckets[bi];
 
     // Shuffle bucket tracks

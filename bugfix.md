@@ -424,5 +424,41 @@
 - **Fix**:
   Standardized variable names (e.g. `metaDurW`, `artistHov`, `rowBarW`, `toastW`) and removed duplicate `var` keywords.
 
+### BUG-21: `clamp01` and `clampPx` Propagating `NaN` to GDI+ Graphics
+- **File**: [`theme/flacify/core/util.js`](file:///d:/Coding/!Git/verdant-foobar2000-theme/theme/flacify/core/util.js#L12-L13)
+- **Description**:
+  When division by zero occurred during window resizing or animations (e.g. `dist / (viewMid - top)`), `clamp01(NaN)` and `clampPx(NaN)` returned `NaN` because `NaN < 0` and `NaN > 1` are both false. Propagating `NaN` into `RGBA()`, `FillGradRectV2()`, or `DrawImage()` could trigger internal GDI+ errors or transparent drawing artifacts.
+- **Fix**:
+  Added `isNaN(v)` checks:
+  ```javascript
+  function clamp01(v){ return isNaN(v)?0:(v<0?0:(v>1?1:v)); }
+  function clampPx(v,max){ return isNaN(v)?0:(v<0?0:(v>max?max:v)); }
+  ```
+
+---
+
+### BUG-22: Unchecked Bounds in Core Playlist Helpers (`plName`, `plCount`, `getItems`, `getMeta`)
+- **File**: [`theme/flacify/data/library.js`](file:///d:/Coding/!Git/verdant-foobar2000-theme/theme/flacify/data/library.js#L10-L19) & [`L580-L600`](file:///d:/Coding/!Git/verdant-foobar2000-theme/theme/flacify/data/library.js#L580-L600)
+- **Description**:
+  `plman.GetPlaylistName(pi)`, `plman.PlaylistItemCount(pi)`, and `plman.GetPlaylistItems(pi)` were called without validating `pi >= 0 && pi < plman.PlaylistCount`. In edge cases where foobar has no playlists or an out-of-bounds index is passed from navigation history or queue lookup, host API calls threw unhandled SpiderMonkey exceptions.
+- **Fix**:
+  Guarded all 4 helpers with `if(pi===undefined || pi===null || pi<0 || (plman && pi>=plman.PlaylistCount))` and wrapped host calls in `try/catch`.
+
+---
+
+### BUG-23: Scope Variable Collisions & Implicit Global `_dpi` Cleaned to Zero
+- **Files**:
+  - [`theme/flacify/core/props.js`](file:///d:/Coding/!Git/verdant-foobar2000-theme/theme/flacify/core/props.js#L34)
+  - [`theme/flacify/app.js`](file:///d:/Coding/!Git/verdant-foobar2000-theme/theme/flacify/app.js#L456) & [`L686`](file:///d:/Coding/!Git/verdant-foobar2000-theme/theme/flacify/app.js#L686)
+  - [`theme/flacify/data/clustering.js`](file:///d:/Coding/!Git/verdant-foobar2000-theme/theme/flacify/data/clustering.js#L167)
+  - [`theme/flacify/data/library.js`](file:///d:/Coding/!Git/verdant-foobar2000-theme/theme/flacify/data/library.js#L448)
+  - [`theme/flacify/ui/chrome.js`](file:///d:/Coding/!Git/verdant-foobar2000-theme/theme/flacify/ui/chrome.js#L170)
+  - [`theme/flacify/views/artist.js`](file:///d:/Coding/!Git/verdant-foobar2000-theme/theme/flacify/views/artist.js#L397)
+  - [`theme/flacify/views/nav.js`](file:///d:/Coding/!Git/verdant-foobar2000-theme/theme/flacify/views/nav.js#L5)
+- **Description**:
+  Static analysis detected variable redeclarations and scope collisions (`modalTargetArtist` vs `aTarget`, `artShufList` vs `shufList`, `isPlayBtn`, `pit` vs `plItems`, `menuH_` / `menuW_`, `_dpi`).
+- **Fix**:
+  Standardized variable names and scope declarations across all modules. Verified exactly 0 redeclarations and 0 implicit globals remain in the entire codebase.
+
 ---
 *Report updated following full-codebase static, AST, and semantic audit of all 40 JavaScript files.*

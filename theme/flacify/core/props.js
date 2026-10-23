@@ -31,9 +31,9 @@ var ACCENT_THEME = propStr('Theme: Accent colorway (spotify_green | midnight_pur
    set a number to override -- 1.0 is compact, 1.25 suits a 1440p 21", higher for a 4K panel.
    Clamped because a bad value here makes the panel unusable rather than merely ugly. */
 var UISCALE = propNum('Display: UI scale (0 = auto)', 0);
+var _dpi=96;
 if(UISCALE<=0){
-  var _dpi=96;
-  try{ _dpi=window.DPI||96; }catch(e){ _dpi=96; }
+  try{ _dpi=(window&&window.DPI)?window.DPI:96; }catch(e){ _dpi=96; }
   UISCALE=_dpi/96;
 }
 UISCALE=Math.max(0.75,Math.min(3,UISCALE));

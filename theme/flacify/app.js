@@ -453,12 +453,12 @@ function on_mouse_lbtn_up(x,y){
   if(songDetails){
     if(SONG_DET_HB){
       if(SONG_DET_HB.artist && inRect(x,y,SONG_DET_HB.artist)){
-        var aTarget=SONG_DET_HB.artist.name;
+        var modalTargetArtist=SONG_DET_HB.artist.name;
         closeSongDetails();
-        if(aTarget){
-          loadArtist(aTarget);
+        if(modalTargetArtist){
+          loadArtist(modalTargetArtist);
           artistScroll=artistScrollT=0;
-          pushNav('artist',{artist:aTarget});
+          pushNav('artist',{artist:modalTargetArtist});
           view='artist';
           repaintAll();
         }
@@ -732,12 +732,12 @@ function on_mouse_lbtn_up(x,y){
     }
     if(HB_ARTIST_SHUFFLE && inRect(x,y,HB_ARTIST_SHUFFLE)){
       if(HB_ARTIST_SHUFFLE.handles && HB_ARTIST_SHUFFLE.handles.length){
-        var shufList=HB_ARTIST_SHUFFLE.handles.slice(0);
-        for(var si=shufList.length-1;si>0;si--){
-          var sj=Math.floor(Math.random()*(si+1));
-          var tmp=shufList[si]; shufList[si]=shufList[sj]; shufList[sj]=tmp;
+        var artShufList=HB_ARTIST_SHUFFLE.handles.slice(0);
+        for(var artSi=artShufList.length-1;artSi>0;artSi--){
+          var artSj=Math.floor(Math.random()*(artSi+1));
+          var artTmp=artShufList[artSi]; artShufList[artSi]=artShufList[artSj]; artShufList[artSj]=artTmp;
         }
-        playHandleList(shufList,0);
+        playHandleList(artShufList,0);
       }
       return;
     }
@@ -952,7 +952,7 @@ function on_mouse_lbtn_up(x,y){
     return;
   }
   if(view==='playlist' && HB_PL_SHUFFLE && inRect(x,y,HB_PL_SHUFFLE)){
-    var it=getItems(HB_PL_SHUFFLE.pl);
+    it=getItems(HB_PL_SHUFFLE.pl);
     if(it && it.Count>0){
       pbShuffle=true;
       applyPlaybackOrder();
@@ -1002,15 +1002,15 @@ function on_mouse_lbtn_up(x,y){
       playDailyMix(t.id, isPlayBtn); repaintAll(); return;
     }
     else if(t.kind==='smart_vault'){
-      var isPlayBtn = (t.pbx!==undefined && x>=t.pbx && x<t.pbx+t.pb && y>=t.pby && y<t.pby+t.pb);
+      isPlayBtn = (t.pbx!==undefined && x>=t.pbx && x<t.pbx+t.pb && y>=t.pby && y<t.pby+t.pb);
       playHiResVault(isPlayBtn); repaintAll(); return;
     }
     else if(t.kind==='smart_forgotten'){
-      var isPlayBtn = (t.pbx!==undefined && x>=t.pbx && x<t.pbx+t.pb && y>=t.pby && y<t.pby+t.pb);
+      isPlayBtn = (t.pbx!==undefined && x>=t.pbx && x<t.pbx+t.pb && y>=t.pby && y<t.pby+t.pb);
       playForgottenGems(isPlayBtn); repaintAll(); return;
     }
     else if(t.kind==='smart_rotation'){
-      var isPlayBtn = (t.pbx!==undefined && x>=t.pbx && x<t.pbx+t.pb && y>=t.pby && y<t.pby+t.pb);
+      isPlayBtn = (t.pbx!==undefined && x>=t.pbx && x<t.pbx+t.pb && y>=t.pby && y<t.pby+t.pb);
       playHeavyRotation(isPlayBtn); repaintAll(); return;
     }
     repaintAll(); return;
@@ -1026,7 +1026,7 @@ function on_mouse_lbtn_up(x,y){
       else if(t.songs && songsTracks && songsTracks[t.ti]) hh=songsTracks[t.ti].h;
       else if(t.srch && searchTrks && searchTrks[t.idx]) hh=searchTrks[t.idx].h;
       else if(t.lib && artistAlbums[t.block] && artistAlbums[t.block].tracks[t.idx]) hh=artistAlbums[t.block].tracks[t.idx].handle;
-      else if(t.pl!==undefined && t.item!==undefined){ var it=getItems(t.pl); if(it) hh=it[t.item]; }
+      else if(t.pl!==undefined && t.item!==undefined){ var plItems=getItems(t.pl); if(plItems) hh=plItems[t.item]; }
       else if(t.historyRow && t.path){
         hh = typeof getHandleByPath==='function' ? getHandleByPath(t.path) : null;
       }

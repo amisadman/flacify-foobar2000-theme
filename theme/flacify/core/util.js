@@ -9,8 +9,8 @@ function blend(c1,c2,t){ var r=(c1>>16)&255,g=(c1>>8)&255,b=c1&255,r2=(c2>>16)&2
 function fmtTime(s){ s=Math.max(0,Math.round(s)); return Math.floor(s/60)+':'+('0'+(s%60)).slice(-2); }
 function inRect(x,y,r){ return x>=r.x0 && x<r.x1 && y>=r.y0 && y<r.y1; }
 function cxOf(x,w,cw){ return x+Math.round((w-cw)/2); }   // x that centres a cw-wide thing inside [x,w]
-function clamp01(v){ return v<0?0:(v>1?1:v); }
-function clampPx(v,max){ return v<0?0:(v>max?max:v); }
+function clamp01(v){ return isNaN(v)?0:(v<0?0:(v>1?1:v)); }
+function clampPx(v,max){ return isNaN(v)?0:(v<0?0:(v>max?max:v)); }
 function hitIdx(list,x,y){ for(var i=0;i<list.length;i++) if(inRect(x,y,list[i])) return i; return -1; }
 function hit(list,x,y){ var i=hitIdx(list,x,y); return i<0?null:list[i]; }
 function labelOf(list,v,dflt){ for(var i=0;i<list.length;i++) if(list[i][1]===v) return list[i][0]; return dflt; }

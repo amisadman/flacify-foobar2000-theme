@@ -2,7 +2,7 @@
    Part of FLACify, the lossless Spotify-style experience for foobar2000. Loaded by main.js;
    every module shares one global scope, so load order is set there. */
 
-var HB_ALBUMS=null, HB_ARTISTS=null, HB_ARTIST_SYNC=null, HB_LIKED=null, HB_HISTORY=null, HB_ANALYTICS=null;
+var HB_ALLSONGS=null, HB_ALBUMS=null, HB_ARTISTS=null, HB_ARTIST_SYNC=null, HB_LIKED=null, HB_HISTORY=null, HB_ANALYTICS=null;
 // one sidebar row: cover + name + subtitle. pi<0 draws the library mosaic instead of a playlist cover.
 function drawNavRow(gr,y,h,on,hov,pi,name,sub){
   var rx=R.navLib.x+8, rw=R.navLib.w-16;
