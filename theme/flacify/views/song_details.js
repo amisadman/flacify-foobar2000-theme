@@ -214,8 +214,8 @@ function drawSongDetails(gr){
 
   if(ty>=viewTop && ty+24<=cropY){
     var aTxtW=Math.min(tw, Math.round(gr.CalcTextWidth(d.artist, FONT.sect)));
-    var artHov=hv(tx, ty, tx+aTxtW, ty+24);
-    tL(gr,d.artist,FONT.sect,artHov?COL.green:COL.text,tx,ty,tw,24);
+    var artistHov=hv(tx, ty, tx+aTxtW, ty+24);
+    tL(gr,d.artist,FONT.sect,artistHov?COL.green:COL.text,tx,ty,tw,24);
     SONG_DET_HB.artist={x0:tx, y0:ty, x1:tx+aTxtW, y1:ty+24, name:d.primaryArtist||d.artist};
   }
   ty+=30;
@@ -345,14 +345,14 @@ function drawSongDetails(gr){
       curY += previewH + 18;
     } else {
       // Expanded: all lines rendered
-      var lineH = 25;
+      lineH = 25;
       var lyCardH = d.lyrics.length * lineH + 24;
-      var cardY0 = Math.max(viewTop, curY);
-      var cardY1 = Math.min(cropY, curY + lyCardH);
+      cardY0 = Math.max(viewTop, curY);
+      cardY1 = Math.min(cropY, curY + lyCardH);
       if(cardY1 > cardY0){
         gr.FillSolidRect(px, cardY0, pw, cardY1 - cardY0, RGBA(255,255,255,8));
         for(var li=0; li<d.lyrics.length; li++){
-          var lyY = curY + 12 + li*lineH;
+          lyY = curY + 12 + li*lineH;
           if(lyY>=viewTop && lyY+lineH<=cropY){
             tL(gr, d.lyrics[li], FONT.pl, COL.text, px+22, lyY, pw-44, lineH);
           }

@@ -5,6 +5,7 @@ var historyScroll = 0, historyScrollT = 0, HISTORY_MAXPX = 0;
 var HB_HISTORY_CLEAR = null;
 
 function drawHistory(gr, r){
+  HB_TR = [];
   var x0 = r.x + M.cpad, w = r.w - M.cpad * 2;
   var items = getHistoryList();
   var count = items ? items.length : 0;

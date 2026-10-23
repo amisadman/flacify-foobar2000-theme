@@ -75,8 +75,8 @@ function drawPlaylist(gr,r){
     tL(gr, dotSep, FONT.meta, COL.text2, pRestX, curY, dotSepW, 20);
     pRestX+=dotSepW;
     var durStr=fmtDur(meta0.totalSec);
-    var durW=Math.round(gr.CalcTextWidth(durStr, FONT.meta));
-    tL(gr, durStr, FONT.meta, COL.white, pRestX, curY, durW, 20);
+    var metaDurW=Math.round(gr.CalcTextWidth(durStr, FONT.meta));
+    tL(gr, durStr, FONT.meta, COL.white, pRestX, curY, metaDurW, 20);
   }
   curY+=22;
 
@@ -121,7 +121,7 @@ function drawPlaylist(gr,r){
   var titleX=lx+numW+cgap, titleW=(rx-lx-numW-durW-heartW-albumW-cgap*4);
   var albumX=titleX+titleW+cgap;
   var heartX=albumX+albumW+cgap;
-  var loc=playingLoc();
+  loc=playingLoc();
   var items=getItems(p.i), meta=getMeta(p.i), shufHere=npIsShuffleOf(p.name);
   var order=getPlOrder(p.i);   // display position -> native item index
   var displayOrder=order;

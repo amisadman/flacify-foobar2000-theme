@@ -38,8 +38,8 @@ function drawSongs(gr,r){
     tL(gr, dotSep, FONT.meta, COL.text2, sRestX, ay+150, dotSepW, 22);
     sRestX+=dotSepW;
     var durStr=fmtDur(songsTotalSec);
-    var durW=Math.round(gr.CalcTextWidth(durStr, FONT.meta));
-    tL(gr, durStr, FONT.meta, COL.white, sRestX, ay+150, durW, 22);
+    var metaDurW=Math.round(gr.CalcTextWidth(durStr, FONT.meta));
+    tL(gr, durStr, FONT.meta, COL.white, sRestX, ay+150, metaDurW, 22);
   }
   drawFilterButton(gr,fltBtnX,ay+142,fltBtnSz);
   HB_SG=drawDropPill(gr,gpX,ay+142,gpW,38,'Group: '+labelOf(SONGS_GROUPS,songsGroup,'No grouping'),sgMenuOpen);

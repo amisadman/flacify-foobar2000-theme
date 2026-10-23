@@ -119,6 +119,14 @@ TUNING
     Scrolling: wheel step (px)     how far one wheel notch scrolls
   Reload the panel (right-click > Reload) after changing either.
 
+WINDOWS 11 NOTE (SMART APP CONTROL / APPLICATION CONTROL POLICY)
+  If foobar2000 displays: "Failed to load component: foo_uie_jsplitter.dll - Reason: An Application Control policy has blocked this file":
+  Windows 11 Smart App Control (SAC) blocks unsigned open-source community DLLs.
+  To resolve:
+    1. Open Windows Security -> App & browser control -> Smart App Control settings.
+    2. Set Smart App Control to 'Evaluation' or 'Off'.
+    (Or unblock the downloaded zip file before extracting: Right-click ZIP -> Properties -> check 'Unblock' -> Apply).
+
 UNINSTALL
   Run uninstall.ps1 from the backup folder printed at the end of the install,
   then delete <profile>\flacify\.

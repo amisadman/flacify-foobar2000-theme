@@ -268,7 +268,8 @@ function drawHome(gr,r){
   if(!artsReady){
     if(listReady || skelVisible('arts')){ skelCardsCached(gr,x0,Math.max(gridTop,gy),w,cropY-Math.max(gridTop,gy),cardW,gap); shimmer(gr,x0,Math.max(gridTop,gy),w,cropY-Math.max(gridTop,gy)); }
   } else {
-    for(i=0; i<arts.length; i++){
+    var startRow = Math.max(0, Math.floor((gy - gridTop) / rowStep));
+    for(i=startRow*cols; i<arts.length; i++){
       var col=(i%cols), row=Math.floor(i/cols), ay=gridTop+row*rowStep;
       if(ay>=cropY) break;
       if(ay+cardH<=gy) continue;

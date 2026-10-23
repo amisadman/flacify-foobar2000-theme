@@ -7,7 +7,7 @@
 *A high-fidelity, standalone music player interface that brings the sleek aesthetic, fluid responsiveness, and rich metadata of modern Spotify desktop to your personal, offline lossless FLAC and Hi-Res collection.*
 
 [![Release](https://img.shields.io/github/v/release/amisadman/flacify-foobar2000-theme?color=1DB954&label=release)](https://github.com/amisadman/flacify-foobar2000-theme/releases/latest)
-![Version](https://img.shields.io/badge/version-v1.5.1-1DB954)
+![Version](https://img.shields.io/badge/version-v1.5.2-1DB954)
 ![foobar2000](https://img.shields.io/badge/foobar2000-v2%20·%2064--bit-1DB954)
 ![Audio](https://img.shields.io/badge/Lossless-FLAC%20%7C%20ALAC%20%7C%20Hi--Res-1DB954)
 ![Windows](https://img.shields.io/badge/Windows-10%20%7C%2011-1DB954)
@@ -168,7 +168,7 @@ If you build your local high-resolution lossless music library using **[SpotiFLA
 ### Method 1: Fresh Portable Install (Recommended)
 
 1. Download and run the **foobar2000 v2 (64-bit)** installer from the [official website](https://www.foobar2000.org/download). During installation, choose **Portable mode** and select a folder (e.g. `C:\Music\foobar2000` or `D:\foobar2000`).
-2. Download **`FLACify-v1.4.0.zip`** from the **[latest release](https://github.com/amisadman/flacify-foobar2000-theme/releases/latest)**.
+2. Download **`FLACify-v1.5.2.zip`** from the **[latest release](https://github.com/amisadman/flacify-foobar2000-theme/releases/latest)**.
 3. Extract the **`profile`** folder from the zip directly into your foobar2000 directory (the folder where `foobar2000.exe` resides).
 4. Launch foobar2000. Under **Preferences → Media Library**, add your music folder (e.g. your SpotiFLAC downloads).
 
@@ -177,9 +177,25 @@ If you build your local high-resolution lossless music library using **[SpotiFLA
 ### Method 2: Existing foobar2000 Setup
 
 1. Close foobar2000.
-2. Download and extract **`FLACify-v1.4.0.zip`**.
+2. Download and extract **`FLACify-v1.5.2.zip`**.
 3. Double-click **`install.bat`** in the repository/extracted folder. The installer automatically backs up your previous configuration to `<profile>\flacify-backup\<date>\` before applying FLACify.
 4. Launch foobar2000.
+
+### ⚠️ Windows 11 Troubleshooting: Smart App Control / Application Control Policy
+
+If foobar2000 displays the following dialog on startup:
+```text
+Failed to load component: ...\foo_uie_jsplitter\foo_uie_jsplitter.dll
+Reason: An Application Control policy has blocked this file.
+```
+
+**Root Cause**: Windows 11 Smart App Control (SAC) blocks community open-source plugins (`foo_uie_jsplitter.dll`, `foo_ui_columns.dll`) because they do not have expensive commercial Authenticode EV certificates.
+
+**Resolution Steps**:
+1. Open **Windows Security** (press <kbd>Win</kbd> and search for *Windows Security*).
+2. Click **App & browser control** > **Smart App Control settings**.
+3. Set Smart App Control to **Evaluation** or **Off**.
+4. If the downloaded archive has Windows "Mark of the Web", right-click the zip before extracting > **Properties** > check **Unblock** > **Apply** (or run `Unblock-File -Path "<foobar2000-path>\profile\user-components-x64\foo_uie_jsplitter\*.dll"` in PowerShell).
 
 ---
 

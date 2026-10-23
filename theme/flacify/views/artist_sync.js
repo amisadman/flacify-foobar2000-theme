@@ -253,7 +253,7 @@ function drawArtistSync(gr, r){
     if(ary>=cropY) break;
 
     var artItem=list[ai];
-    var aName=artItem.name;
+    aName=artItem.name;
     var safe=aName.replace(/[\\/:*?"<>|]/g, '_');
     var isHov=hv(x0-4, Math.max(ary, r.y), x0+w+4, Math.min(ary+rowH, cropY));
 
@@ -274,7 +274,7 @@ function drawArtistSync(gr, r){
     tL(gr, ' tracks', FONT.meta, COL.text2, trkX+sCntW, ary, trkW-sCntW, rowH);
 
     // Cache existence test (fast in-memory index lookup)
-    var idxEntry=index ? index[aName] : null;
+    idxEntry=index ? index[aName] : null;
     var hasJpg=idxEntry ? !!idxEntry.hasImage : false;
     var hasMeta=idxEntry ? !!idxEntry.hasMeta : false;
     if(!idxEntry){
@@ -325,7 +325,7 @@ function drawArtistSync(gr, r){
 
     // Action buttons: [ View ] and [ Fetch ] / [ Re-fetch ]
     var actY=ary+Math.round((rowH-actH)/2);
-    var isRunning=!!syncProgress.running;
+    isRunning=!!syncProgress.running;
     var isCurSync=(isRunning && syncProgress.currentArtist===aName);
     var hasCache=(hasJpg && hasMeta);
 

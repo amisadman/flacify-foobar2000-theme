@@ -48,7 +48,7 @@ function libItems(){
 function libTF(field){
   if(libTFCache.hasOwnProperty(field)) return libTFCache[field];
   var lib=libItems(), out=[];
-  if(lib && lib.Count){ try{ out=TF[field].EvalWithMetadbs(lib); }catch(e){ out=[]; } }
+  if(lib && lib.Count && TF[field]){ try{ out=TF[field].EvalWithMetadbs(lib); }catch(e){ out=[]; } }
   libTFCache[field]=out; return out;
 }
 

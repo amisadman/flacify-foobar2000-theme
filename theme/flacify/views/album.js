@@ -128,8 +128,8 @@ function drawAlbum(gr, r){
     tL(gr, restStr, FONT.meta, COL.text2, mx, ty, restW, aavSz);
     mx+=restW;
     var durStr=fmtDur(alb.totalSec);
-    var durW=Math.round(gr.CalcTextWidth(durStr, FONT.meta));
-    tL(gr, durStr, FONT.meta, COL.white, mx, ty, durW, aavSz);
+    var metaDurW=Math.round(gr.CalcTextWidth(durStr, FONT.meta));
+    tL(gr, durStr, FONT.meta, COL.white, mx, ty, metaDurW, aavSz);
   }
   ty+=aavSz+18;
 

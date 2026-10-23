@@ -459,8 +459,8 @@ function drawAnalytics(gr, r){
         tC(gr, '#' + rk, FONT.eyebrow, rankCol, ax + 10, ay + 14, 32, 26);
 
         var avSz = 36, avX = ax + 50, avY = ay + 9;
-        var ah = artObj.handle || (typeof artistCover === 'function' ? artistCover(artObj.name) : null);
-        drawCircle(gr, avX, avY, avSz, ah, artObj.name);
+        var avH = artObj.handle || (typeof artistCover === 'function' ? artistCover(artObj.name) : null);
+        drawCircle(gr, avX, avY, avSz, avH, artObj.name);
 
         var nameX = avX + avSz + 12;
         var nameW = Math.max(60, itemW - (nameX - ax) - 96);
@@ -469,10 +469,10 @@ function drawAnalytics(gr, r){
         var timeStr = (artObj.seconds >= 3600) ? (artObj.seconds / 3600).toFixed(1) + ' hrs' : Math.max(1, Math.round(artObj.seconds / 60)) + ' mins';
         tL(gr, artObj.plays + ' play' + (artObj.plays === 1 ? '' : 's') + ' ' + CH_DOT + ' ' + timeStr, FONT.plSub, COL.text2, nameX, ay + 28, nameW, 16);
 
-        var barW = 70, barH = 5, barX = ax + itemW - barW - 16, barY = ay + 24;
-        gr.FillRoundRect(barX, barY, barW, barH, 2, 2, RGB(35, 35, 40));
-        var fillW = Math.max(4, Math.round(barW * (artObj.plays / maxPlays)));
-        gr.FillRoundRect(barX, barY, fillW, barH, 2, 2, isHov ? COL.green : RGB(16, 185, 129));
+        var rowBarW = 70, rowBarH = 5, rowBarX = ax + itemW - rowBarW - 16, rowBarY = ay + 24;
+        gr.FillRoundRect(rowBarX, rowBarY, rowBarW, rowBarH, 2, 2, RGB(35, 35, 40));
+        var fillW = Math.max(4, Math.round(rowBarW * (artObj.plays / maxPlays)));
+        gr.FillRoundRect(rowBarX, rowBarY, fillW, rowBarH, 2, 2, isHov ? COL.green : RGB(16, 185, 129));
 
         HB_ARTIST_ROW.push({ x0: ax, y0: ay, x1: ax + itemW, y1: ay + rowH, artist: artObj.name });
       }
@@ -482,10 +482,10 @@ function drawAnalytics(gr, r){
 
   // ---- 5) Toast Notification ----
   if(analyticsToastTimer > Date.now() && analyticsToastMsg){
-    var tw = Math.min(420, w), th = 42, tx = x0 + Math.floor((w - tw) / 2), ty = r.y + r.h - th - 20;
-    gr.FillRoundRect(tx, ty, tw, th, 8, 8, RGB(22, 101, 52));
-    drawIcon(gr, 'check', COL.white, tx + 14, ty + 12, 18, 18, 16);
-    tL(gr, analyticsToastMsg, FONT.card, COL.white, tx + 40, ty + 11, tw - 50, 20);
+    var toastW = Math.min(420, w), toastH = 42, toastX = x0 + Math.floor((w - toastW) / 2), toastY = r.y + r.h - toastH - 20;
+    gr.FillRoundRect(toastX, toastY, toastW, toastH, 8, 8, RGB(22, 101, 52));
+    drawIcon(gr, 'check', COL.white, toastX + 14, toastY + 12, 18, 18, 16);
+    tL(gr, analyticsToastMsg, FONT.card, COL.white, toastX + 40, toastY + 11, toastW - 50, 20);
   }
 
   // Vertical Scrollbar

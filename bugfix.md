@@ -369,5 +369,60 @@
 - **Recommended Fix**:
   Add an `on_key_down(vkey)` callback to handle `VK_DELETE` (46), cursor navigation, and `Ctrl+V` pasting from clipboard via `doc.parentWindow.clipboardData.getData('Text')`.
 
+### BUG-16: Missing Hitbox Reset (`HB_TR = []`) in Listening History View
+- **File**: [`theme/flacify/views/history.js`](file:///d:/Coding/!Git/verdant-foobar2000-theme/theme/flacify/views/history.js#L7-L10)
+- **Description**:
+  Unlike all other tracklist views (`songs.js`, `playlist.js`, `album.js`, `search.js`), `drawHistory()` failed to reset `HB_TR = [];` at the start of rendering. On every frame, scroll movement, or hover event, dozens of duplicate hitboxes were appended infinitely to `HB_TR`. Furthermore, if the user navigated to History from another view, the previous view's hitboxes remained active at index 0, causing clicks to misfire.
+- **Fix**:
+  Added `HB_TR = [];` at the very beginning of `drawHistory(gr, r)`.
+
 ---
-*Report generated automatically following comprehensive AST and static analysis of 40 JavaScript theme files and PowerShell build scripts.*
+
+### BUG-17: Double-Click Playback Failure on Listening History Tracks
+- **File**: [`theme/flacify/app.js`](file:///d:/Coding/!Git/verdant-foobar2000-theme/theme/flacify/app.js#L1045-L1053)
+- **Description**:
+  When a row is double-clicked, `on_mouse_lbtn_dblclk` delegates directly to `playRow(t)`. However, `playRow(t)` handled `t.srch`, `t.songs`, `t.lib`, and `t.albumRow`, but lacked an `else if(t.historyRow && t.path)` branch. Double-clicking any track in the Listening History view fell through to `playPlaylistItem(t.pl, t.item)` with `undefined` parameters, failing to play the song.
+- **Fix**:
+  Added the history playback handler to `playRow(t)`:
+  ```javascript
+  else if(t.historyRow && t.path){
+    var hlh = typeof getHandleByPath==='function' ? getHandleByPath(t.path) : null;
+    if(hlh) playHandleList([hlh],0);
+  }
+  ```
+
+---
+
+### BUG-18: Unprotected Property Access in `libTF(field)`
+- **File**: [`theme/flacify/data/library.js`](file:///d:/Coding/!Git/verdant-foobar2000-theme/theme/flacify/data/library.js#L48-L53)
+- **Description**:
+  `libTF(field)` executed `TF[field].EvalWithMetadbs(lib)` without checking if `TF[field]` exists. If an unregistered or dynamic title-format field was queried, it threw a `TypeError` on every call, falling back via exception catching.
+- **Fix**:
+  Added `&& TF[field]` guard in the evaluation condition.
+
+---
+
+### BUG-19: Unbounded Loop in Home View Artist Grid Scrolling
+- **File**: [`theme/flacify/views/home.js`](file:///d:/Coding/!Git/verdant-foobar2000-theme/theme/flacify/views/home.js#L271-L277)
+- **Description**:
+  The artist grid rendering loop always started at `i = 0` (`for(i=0; i<arts.length; i++)`), performing unnecessary iterations and geometry checks for hundreds of offscreen rows when scrolled down in large music libraries.
+- **Fix**:
+  Compute `startRow = Math.max(0, Math.floor((gy - gridTop) / rowStep))` and begin the loop at `i = startRow * cols`.
+
+---
+
+### BUG-20: Scope Variable Redeclarations in Track & Analytics Views
+- **Files**:
+  - [`theme/flacify/views/playlist.js`](file:///d:/Coding/!Git/verdant-foobar2000-theme/theme/flacify/views/playlist.js#L78) & [`L119`](file:///d:/Coding/!Git/verdant-foobar2000-theme/theme/flacify/views/playlist.js#L119)
+  - [`theme/flacify/views/songs.js`](file:///d:/Coding/!Git/verdant-foobar2000-theme/theme/flacify/views/songs.js#L41) & [`L59`](file:///d:/Coding/!Git/verdant-foobar2000-theme/theme/flacify/views/songs.js#L59)
+  - [`theme/flacify/views/album.js`](file:///d:/Coding/!Git/verdant-foobar2000-theme/theme/flacify/views/album.js#L131) & [`L203`](file:///d:/Coding/!Git/verdant-foobar2000-theme/theme/flacify/views/album.js#L203)
+  - [`theme/flacify/views/song_details.js`](file:///d:/Coding/!Git/verdant-foobar2000-theme/theme/flacify/views/song_details.js#L217) & [`L348`](file:///d:/Coding/!Git/verdant-foobar2000-theme/theme/flacify/views/song_details.js#L348)
+  - [`theme/flacify/views/analytics.js`](file:///d:/Coding/!Git/verdant-foobar2000-theme/theme/flacify/views/analytics.js#L372) & [`L462`](file:///d:/Coding/!Git/verdant-foobar2000-theme/theme/flacify/views/analytics.js#L462)
+  - [`theme/flacify/views/artist_sync.js`](file:///d:/Coding/!Git/verdant-foobar2000-theme/theme/flacify/views/artist_sync.js#L115) & [`L256`](file:///d:/Coding/!Git/verdant-foobar2000-theme/theme/flacify/views/artist_sync.js#L256)
+- **Description**:
+  Variables were redeclared with `var` in nested blocks within the same function scope (`durW`, `loc`, `artHov`, `lineH`, `cardY0`, `cardY1`, `lyY`, `ah`, `barW`, `aName`, `idxEntry`, `isRunning`).
+- **Fix**:
+  Standardized variable names (e.g. `metaDurW`, `artistHov`, `rowBarW`, `toastW`) and removed duplicate `var` keywords.
+
+---
+*Report updated following full-codebase static, AST, and semantic audit of all 40 JavaScript files.*

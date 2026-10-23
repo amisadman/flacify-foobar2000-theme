@@ -1047,6 +1047,10 @@ function playRow(t){
   else if(t.songs) playSongsRow(t.ti);
   else if(t.lib) playArtistTrack(t.block,t.idx);
   else if(t.albumRow) playHandleList(t.handles,t.idx);
+  else if(t.historyRow && t.path){
+    var hlh = typeof getHandleByPath==='function' ? getHandleByPath(t.path) : null;
+    if(hlh) playHandleList([hlh],0);
+  }
   else playPlaylistItem(t.pl,t.item);
   repaintAll();
 }
