@@ -753,7 +753,7 @@ function getAlbumList(){
     }
 
     out.sort(function(a,b){
-      var an=a.name.toLowerCase(), bn=b.name.toLowerCase();
+      var an=(a && a.name ? a.name : '').toLowerCase(), bn=(b && b.name ? b.name : '').toLowerCase();
       return an<bn?-1:(an>bn?1:0);
     });
   }
@@ -767,15 +767,15 @@ function loadAlbum(name, artist){
   currentAlbum=null;
   if(!lib || !lib.Count) return null;
   getAlbumList();
-  var k=(name+'|'+(artist||'')).toLowerCase();
+  var k=((name||'')+'|'+(artist||'')).toLowerCase();
   var entry=albumMap[k];
   if(!entry){
-    var nLow=name.toLowerCase();
+    var nLow=(name||'').toLowerCase();
     var aLow=(artist||'').toLowerCase();
     for(var j=0;j<albumList.length;j++){
       var item=albumList[j];
-      if(item.name.toLowerCase()===nLow){
-        if(!aLow || item.artist.toLowerCase()===aLow || (item.key && item.key.indexOf(aLow)!==-1)){
+      if(item && item.name && item.name.toLowerCase()===nLow){
+        if(!aLow || (item.artist && item.artist.toLowerCase()===aLow) || (item.key && item.key.indexOf(aLow)!==-1)){
           entry=item; break;
         }
         if(!entry) entry=item;
@@ -862,7 +862,7 @@ function loadAlbum(name, artist){
 
   for(var ani=0;ani<artistNames.length;ani++){
     var aName=artistNames[ani];
-    aLow=aName.toLowerCase();
+    aLow=(aName||'').toLowerCase();
     var aOtherAlbums=[];
     var aAlbumCount=0;
     var aHandle=null;
@@ -872,7 +872,7 @@ function loadAlbum(name, artist){
       var albParts=splitArtists(albItem.artist||'');
       var matches=false;
       for(var pi=0;pi<albParts.length;pi++){
-        if(albParts[pi].toLowerCase()===aLow){ matches=true; break; }
+        if(albParts[pi] && albParts[pi].toLowerCase()===aLow){ matches=true; break; }
       }
       if(!matches && (albItem.artist||'').toLowerCase().indexOf(aLow)!==-1){
         matches=true;
@@ -880,7 +880,7 @@ function loadAlbum(name, artist){
       if(matches){
         aAlbumCount++;
         if(!aHandle && albItem.handle) aHandle=albItem.handle;
-        if(albItem.name.toLowerCase()!==currentNameLower){
+        if((albItem.name||'').toLowerCase()!==currentNameLower){
           aOtherAlbums.push(albItem);
         }
       }

@@ -611,16 +611,16 @@ function saveArtistStudio(){
   var m=artistStudioModal;
   var meta=getArtistMeta(m.artist)||(m.meta||{});
   meta.name=m.artist;
-  meta.bio=m.bio.trim();
+  meta.bio=(m.bio||'').trim();
   meta.isCustom=true;
   meta.imageSource=meta.imageSource||"Custom Studio";
 
-  var lisRaw=m.listeners.replace(/[^\d]/g, '');
+  var lisRaw=(m.listeners||'').replace(/[^\d]/g, '');
   if(lisRaw.length>0){
     meta.fans=parseInt(lisRaw, 10)||0;
-    meta.fansFormatted=m.listeners.trim();
+    meta.fansFormatted=(m.listeners||'').trim();
   } else {
-    meta.fansFormatted=m.listeners.trim();
+    meta.fansFormatted=(m.listeners||'').trim();
   }
 
   saveArtistMeta(m.artist, meta);

@@ -388,7 +388,7 @@ function computeSearch(){
   searchQ2=q; searchArts=[]; searchTrks=[];
   if(!q) return;
   var arts=getArtistList(), i;
-  for(i=0;i<arts.length && searchArts.length<24;i++){ if(arts[i].name.toLowerCase().indexOf(q)>=0) searchArts.push(arts[i]); }
+  for(i=0;i<arts.length && searchArts.length<24;i++){ if(arts[i] && arts[i].name && arts[i].name.toLowerCase().indexOf(q)>=0) searchArts.push(arts[i]); }
   var idx=getSearchIdx(), cnt=0;
   for(i=0;i<idx.length && cnt<150;i++){ if(idx[i].key.indexOf(q)>=0){ searchTrks.push(idx[i]); cnt++; } }
 }
