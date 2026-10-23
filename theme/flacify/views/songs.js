@@ -84,7 +84,7 @@ function drawSongs(gr,r){
         var matchArtist=(stArtist.indexOf(sfq)!==-1);
         if(!matchArtist && sRow.t.splitArtists){
           for(var sp=0; sp<sRow.t.splitArtists.length; sp++){
-            if(sRow.t.splitArtists[sp] && sRow.t.splitArtists[sp].toLowerCase().indexOf(sfq)!==-1){
+            if(sRow.t.splitArtists[sp] && (sRow.t.splitArtists[sp]||'').toLowerCase().indexOf(sfq)!==-1){
               matchArtist=true; break;
             }
           }

@@ -59,9 +59,12 @@ function openSongDetails(h){
 
   if(!rawLyrics && h && h.Path){
     try{
-      var dir=h.Path.substring(0,h.Path.lastIndexOf('\\')+1);
-      var fn=h.Path.substring(h.Path.lastIndexOf('\\')+1);
-      var base=fn.substring(0,fn.lastIndexOf('.'));
+      var p=String(h.Path);
+      var lastSep=p.lastIndexOf('\\');
+      var dir=lastSep>=0?p.substring(0,lastSep+1):'';
+      var fn=lastSep>=0?p.substring(lastSep+1):p;
+      var lastDot=fn.lastIndexOf('.');
+      var base=lastDot>=0?fn.substring(0,lastDot):fn;
       if(typeof readFirst==='function') rawLyrics=readFirst([dir+base+'.lrc',dir+base+'.txt'])||'';
     }catch(e3){}
   }

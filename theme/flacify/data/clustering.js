@@ -57,8 +57,9 @@ function loadDailyMixesFromDisk(){
         var validCount = 0;
         for(var mi = 0; mi < data.mixes.length; mi++){
           var m = data.mixes[mi];
-          if(m.category){
-            m.category = m.category.replace(/[\u2022\u00E2\u20AC\u0178]+/g, '/').replace(/\s+/g, ' ');
+          if(!m) continue;
+          if(m.category && typeof m.category === 'string'){
+            m.category = (m.category || '').replace(/[\u2022\u00E2\u20AC\u0178]+/g, '/').replace(/\s+/g, ' ');
           }
           m.handles = [];
           if(m.paths && m.paths.length){

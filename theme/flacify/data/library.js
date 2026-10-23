@@ -168,7 +168,7 @@ function splitArtists(str){
   var raw=s.split(/\s*,\s*&\s*|\s*,\s*|\s*;\s*|\s*\/+\s*|\s*\\+\s*|\s+&\s*|\s*&\s+|\s+feat\.?\s+|\s+ft\.?\s+|\s+featuring\s+|\s+with\s+/i);
   var out=[], seen={};
   for(var i=0;i<raw.length;i++){
-    var a=raw[i].trim();
+    var a=(raw[i]||'').trim();
     for(var p=0;p<preserved.length;p++){
       if(a===preserved[p].token){
         a=preserved[p].name;
@@ -775,8 +775,8 @@ function loadAlbum(name, artist){
     var aLow=(artist||'').toLowerCase();
     for(var j=0;j<albumList.length;j++){
       var item=albumList[j];
-      if(item && item.name && item.name.toLowerCase()===nLow){
-        if(!aLow || (item.artist && item.artist.toLowerCase()===aLow) || (item.key && item.key.indexOf(aLow)!==-1)){
+      if(item && item.name && (item.name||'').toLowerCase()===nLow){
+        if(!aLow || (item.artist && (item.artist||'').toLowerCase()===aLow) || (item.key && item.key.indexOf(aLow)!==-1)){
           entry=item; break;
         }
         if(!entry) entry=item;
@@ -838,10 +838,10 @@ function loadAlbum(name, artist){
   // Gather collaborating artists, library statistics, other albums, and tracks
   getArtistList();
   var artistNames=splitArtists(entry.artist||'');
-  if(!artistNames.length && entry.artist) artistNames=[entry.artist.trim()];
+  if(!artistNames.length && entry.artist) artistNames=[(entry.artist||'').trim()];
 
   // If album artist is Various Artists / VA, collect top distinct track artists
-  if(artistNames.length===1 && (artistNames[0].toLowerCase()==='various artists' || artistNames[0].toLowerCase()==='va')){
+  if(artistNames.length===1 && (((artistNames[0]||'').toLowerCase()==='various artists') || ((artistNames[0]||'').toLowerCase()==='va'))){
     var vaSeen={}, vaList=[];
     for(var tri=0;tri<trackRows.length;tri++){
       var trkA=trackRows[tri].artist;
@@ -873,7 +873,7 @@ function loadAlbum(name, artist){
       var albParts=splitArtists(albItem.artist||'');
       var matches=false;
       for(var pi=0;pi<albParts.length;pi++){
-        if(albParts[pi] && albParts[pi].toLowerCase()===aLow){ matches=true; break; }
+        if(albParts[pi] && (albParts[pi]||'').toLowerCase()===aLow){ matches=true; break; }
       }
       if(!matches && (albItem.artist||'').toLowerCase().indexOf(aLow)!==-1){
         matches=true;
